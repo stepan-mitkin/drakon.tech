@@ -1,0 +1,17 @@
+Ваша подписка на ДРАКОН Тех истекла.
+
+Имя пользователя: USER_NAME
+Тарифный план: PRODUCT_NAME
+Дата истечения срока действия: EXPIRY_DATE
+
+Продлите подписку здесь:
+RENEW_LINK
+
+Служба поддержки: support@drakonhub.com
+
+С уважением,
+
+Команда ДРАКОН Тех
+https://drakon.tech/
+
+DRAKON Labs Stepan Mitkin

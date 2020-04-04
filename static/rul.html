@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>Rul</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  </meta>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet" />
+  <link rel="stylesheet" type="text/css" href="https://app.drakon.tech/gen/common/css/reset.css" />
+  <style>
+    *,
+    *::after,
+    *::before {
+      margin: 0px;
+      padding: 0px;
+      box-sizing: inherit;
+    }
+
+    body {
+      margin: 0px;
+      padding: 0px;
+      box-sizing: border-box;
+    }
+  </style>
+
+  <style>
+    /* editor */
+    .toolbar {
+      background: white;
+      border-right: solid 1px #E0E0E0;
+      overflow-y: auto;
+    }
+
+
+    .toolbox {
+      border-collapse: collapse;
+      margin-bottom: 5px;
+
+    }
+
+    .toolbox img {
+      border: 1px solid #EEEEEE;
+      vertical-align: middle;
+      margin: 3px;
+      padding: 0px;
+      border-radius: 11px;
+      box-shadow: 1px 1px 1px #c5c5c5;
+      cursor: pointer;
+      transition: box-shadow 0.3s;
+    }
+
+    .toolbox img:active {
+      box-shadow: none;
+      transform: translate(0px, 2px);
+    }
+  </style>
+
+  <style>
+    @font-face {
+      font-family: 'Liberation Sans';
+      src: url('/static/fonts/LiberationSans.ttf') format('truetype');
+    }
+
+    @font-face {
+      font-family: 'Liberation Sans';
+      src: url('/static/fonts/LiberationSans-Italic.ttf') format('truetype');
+      font-style: italic;
+    }
+
+    @font-face {
+      font-family: 'Liberation Sans';
+      src: url('/static/fonts/LiberationSans-Bold.ttf') format('truetype');
+      font-weight: bold;
+    }
+
+    @font-face {
+      font-family: 'Liberation Sans';
+      src: url('/static/fonts/LiberationSans-BoldItalic.ttf') format('truetype');
+      font-style: italic;
+      font-weight: bold;
+    }
+
+    body,
+    select,
+    input,
+    textarea,
+    button {
+      font-family: 'Liberation Sans', Arial;
+      font-size: 15px;
+    }
+
+    strong {
+      font-weight: bold;
+    }
+
+
+    @keyframes donut-spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    .donut {
+      display: inline-block;
+      border: 4px solid rgba(0, 0, 0, 0.1);
+      border-left-color: #7983ff;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: donut-spin 1.2s linear infinite;
+    }
+
+    .loading__background {
+      background: #ffffff;
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+    }
+
+    .loading__badge {
+      display: inline-block;
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+
+    .loading__text {
+      color: white;
+      font-size: 30px;
+    }
+
+    a.open-button:link, a.open-button:visited {
+      text-decoration: none;
+      color:white;
+    }
+
+    .open-button {
+      display: inline-block;
+      border-radius:3px;
+      padding:10px;
+      margin:20px;
+      background:#4040ff;
+    }
+  </style>
+
+</head>
+
+<body>
+  <div id="root">
+    <div class="loading__background">
+      <div class="loading__badge">
+        <img src="/static/images/rul-s.png" ></img>
+        <br />
+        <a href="/edit" class="open-button">Open editor</a>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>

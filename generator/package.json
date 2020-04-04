@@ -1,0 +1,24 @@
+{
+  "name": "generator",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.19.0",
+    "body-parser": "^1.18.3",
+    "cookie-parser": "^1.4.4",
+    "escodegen": "^1.11.1",
+    "esprima": "^4.0.1",
+    "express": "^4.16.4",
+    "lodash": "^4.17.14",
+    "morgan": "^1.9.1",
+    "multer": "^1.4.1",
+    "winston": "^3.2.1"
+  }
+}

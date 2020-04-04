@@ -1,0 +1,16 @@
+Your subscription for Drakon Tech will expire soon.
+
+User name: USER_NAME
+Product: PRODUCT_NAME
+Expiry date: EXPIRY_DATE
+
+Сontinue your subscription here:
+RENEW_LINK
+
+Customer support: support@drakonhub.com
+
+Regards
+
+Drakon Tech team
+https://drakon.tech/
+

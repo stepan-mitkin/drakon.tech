@@ -1,0 +1,17 @@
+
+
+# IDE - VSCode
+
+node_modules
+.vscode
+.rocks
+package-lock.json
+*.beam
+.DS_Store
+tmp/*.*
+*.orig
+_build
+priv/static
+*~
+crash/*.*
+external_creds.lua
