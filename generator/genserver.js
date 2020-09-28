@@ -850,6 +850,7 @@ function buildAwait(build, diagram, aname, states) {
     )
     // item 2868
     sw = createSwitch("self.state")
+    sw.defReturn = true
     fun.body.items.push(sw)
     // item 28660001
     var _ind2866 = 0;
