@@ -5691,12 +5691,12 @@ function deleteSelect(node) {
         node.itemId
     )
     toKeep = {}
+    toKeep[node.itemId] = true
     markToStay(
         null,
         below.itemId,
         toKeep
     )
-    toKeep[node.itemId] = true
     markToDelete(
         toKeep,
         node,
