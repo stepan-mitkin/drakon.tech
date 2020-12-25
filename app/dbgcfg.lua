@@ -37,6 +37,7 @@ global_cfg = {
 	file_timeout = 2,
 	static_dir = "/home/stipan/drakon.tech/static",
 	emails_dir = "/home/stipan/drakon.tech/emails",
+	content_dir = "/home/stipan/drakon.tech/content",
 	feedback_dir = "/dkt/feedback",
 	journal_dir = "/dkt/journal",
 	gen_dir = "/dkt/gen",
