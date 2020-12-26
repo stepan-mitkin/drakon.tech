@@ -193,15 +193,6 @@ function BuildManager_Building_onData(self, msg) {
 }
 
 function BuildManager_Building_onError(self, msg) {
-    var options
-    options = {
-        state : "error",
-        module : self.current.module_name,
-        errors : []
-    }
-    browser.showBuild(
-        options
-    )
     self.state = "Idle";
 }
 
@@ -322,7 +313,7 @@ function Builder_Checking_onData(self, msg) {
 }
 
 function Builder_Checking_onError(self, msg) {
-    panic(msg)
+    onBuilderError(self, msg)
     self.state = null;
 }
 
@@ -332,6 +323,7 @@ function Builder_Created_default(self, msg) {
 
 function Builder_Created_onData(self, msg) {
     self.spaceId = msg.spaceId
+    self.module = msg.module
     self.folderId = msg.folderId
     startBuild(
         self,
@@ -357,16 +349,8 @@ function Builder_Starting_onData(self, msg) {
 }
 
 function Builder_Starting_onError(self, msg) {
-    if (msg.error) {
-        browser.showBuild({
-        	state: "error",
-        	errors: [{message: msg.error}]
-        })
-        self.state = null;
-    } else {
-        panic(msg)
-        self.state = null;
-    }
+    onBuilderError(self, msg)
+    self.state = null;
 }
 
 function Builder_Working_cancelBuild(self, msg) {
@@ -5513,6 +5497,21 @@ function onActionsClick(evt, type, widget, id, cellId) {
     }
 }
 
+function onBuilderError(self, msg) {
+    var message
+    if (msg.error) {
+        message = msg.error
+    } else {
+        message = "An error has occurred"
+    }
+    browser.showBuild({
+    	state: "error",
+    	module: self.module,
+    	errors: [{message: message}]
+    })
+    self.target.onError(msg)
+}
+
 function onCheckAll(evt, type, widget, id, cellId) {
     var checked, folders
     folders = getWidget("folder_grid")
@@ -6793,7 +6792,8 @@ function sendBuild(self) {
     var msg, options
     msg = {
         spaceId : self.current.spaceId,
-        folderId : self.current.module
+        folderId : self.current.module,
+        module : self.current.module_name
     }
     self.builder = startMachine(
         new Builder(),
