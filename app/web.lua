@@ -826,7 +826,6 @@ function api_get_build_status(req, session, headers)
     local output = json.decode(
     	result.body or "{}"
     )
-    log.info(url .. " > " .. result.body)
     if result.status == 200 then
         return make_json_success(headers, output)
     else
