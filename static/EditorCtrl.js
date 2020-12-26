@@ -3511,7 +3511,6 @@ function saveDiagramPosition() {
     if (globals.id) {
         var origin = globals.view.getOrigin();
         globals.positions[globals.id]=origin
-        console.log("saveDiagramPosition", globals.id, origin)
     }
 }
 
