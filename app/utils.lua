@@ -218,6 +218,8 @@ function build_needle(text)
     special[utf8.codepoint("^")] = true
     special[utf8.codepoint("$")] = true
     special[utf8.codepoint(".")] = true
+    special[utf8.codepoint("\"")] = true
+    special[utf8.codepoint("\'")] = true
     local space = utf8.codepoint(" ")
     local current = ""
     for i, code in utf8.next, text do

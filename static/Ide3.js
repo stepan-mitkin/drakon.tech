@@ -509,7 +509,7 @@ function bindEditor(shortcuts, method) {
 }
 
 function bindKey(shortcuts, action, aux) {
-    var wrapped = wrapException(action, shortcuts[0])
+    var wrapped = wrapShortcut(action, shortcuts)
     Mousetrap.bind(shortcuts, wrapped, aux)
 }
 
@@ -3715,18 +3715,19 @@ function registerEvent(div, widget, eventName) {
 }
 
 function registerShortcuts() {
-    bindKey(["escape"], onEscape)
-    bindKey(["enter"], onEnter)
-    bindKey(["mod+enter"], onCtrlEnter)
-    bindKey(["backspace", "del"], onDeleteKey)
-    bindKey(["space"], startPan, "keydown")
-    bindKey(["space"], endPan, "keyup")
-    bindKey(["mod+g"], focusSearch)
-    bindKey(["mod+f"], quickSearch)
-    bindKey(["mod+b"], build)
-    bindEditor(["mod+z"], onCtrlZ)
-    bindEditor(["mod+y"], onCtrlY)
-    bindEditor(["mod+a"], onCtrlA)
+    bindKey("escape", onEscape)
+    bindKey("enter", onEnter)
+    bindKey("mod+enter", onCtrlEnter)
+    bindKey("backspace", "del", onDeleteKey)
+    bindKey("space", startPan, "keydown")
+    bindKey("space", endPan, "keyup")
+    bindKey("mod+g", focusSearch)
+    bindKey("mod+f", quickSearch)
+    bindKey("mod+b", build)
+    bindKey("mod+d", build)
+    bindEditor("mod+z", onCtrlZ)
+    bindEditor("mod+y", onCtrlY)
+    bindEditor("mod+a", onCtrlA)
     var editor = getEditor()
     bindEditor("f2", startEdit)
     bindEditor("f3", searchNext)
@@ -5941,6 +5942,21 @@ function wrapException(action, actionName) {
     	try {
     		CallTrace.add(actionName, [])
     		action(arg1, arg2, arg3)
+    	} catch (e) {
+    		CallTrace.error(e)
+    		panic(e)
+    	}
+    }
+    return wrapped
+}
+
+function wrapShortcut(action, actionName) {
+    var wrapped = function(evt) {
+    	evt.preventDefault()
+    	evt.stopPropagation()
+    	try {
+    		CallTrace.add(actionName, [])
+    		action(evt)
     	} catch (e) {
     		CallTrace.error(e)
     		panic(e)
