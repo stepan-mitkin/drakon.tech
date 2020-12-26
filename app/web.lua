@@ -809,6 +809,36 @@ function api_get_adm(req, session, headers)
     end
 end
 
+function api_get_build_status(req, session, headers)
+    local build_id = req:stash("first")
+    local method = "GET"
+    local options = {headers={}}
+    options.headers["Content-Type"] = "application/json"
+    local url = "http://localhost:" ..
+     tostring(global_cfg.gen_port) .. "/build/" ..
+     build_id
+    local result = http_client:request(
+    	method,
+    	url,
+    	"",
+    	options
+    )
+    local output = json.decode(
+    	result.body or "{}"
+    )
+    log.info(url .. " > " .. result.body)
+    if result.status == 200 then
+        return make_json_success(headers, output)
+    else
+        local message = output.message or result.reason
+        return make_json_error(
+        	result.status,
+        	headers, 
+        	message
+        )
+    end
+end
+
 function api_get_diatest(req, session, headers)
     if global_cfg.diatest then
         local paths = fio.glob(
@@ -4475,6 +4505,7 @@ function start()
     api("prog_modules", "GET", false, false, api_get_prog_modules)
     api("module", "GET", false, false, api_get_module)
     api("build", "POST", false, false, api_build)
+    api("build", "GET", false, false, api_get_build_status)
     api("folder_props", "GET", false, false, api_get_folder_props)
     api("folder_props", "POST", true, false, api_set_folder_props)
     api("search", "POST", false, false, api_start_search)

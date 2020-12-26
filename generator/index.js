@@ -1,4 +1,4 @@
-const fs = require("fs")
+const fse = require('fs-extra')
 const axios = require("axios");
 var express = require('express');
 var bodyParser = require('body-parser')
@@ -91,7 +91,7 @@ app.post('/private/:space/:folder', async function (req, res) {
     try {
         var result = await createBuild(req)
         if (result.ok) {
-            var url = "/build/" + result.id
+            var url = "/api/build/" + result.id
             res.json({url})
         } else {
             res.status(400)
@@ -249,12 +249,7 @@ async function jsBuild(buildId) {
 }
 
 async function writeAllText(path, text) {
-    return new Promise(function(resolve, reject) {
-        fs.writeFile(path, text, "utf8", function(err) {
-            if (err) reject(err);
-            else resolve(text);
-        });
-    });
+    await fse.outputFile(path, text)
 }
 
 function pushGenericError(record, message) {
