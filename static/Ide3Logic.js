@@ -6045,6 +6045,16 @@ function onTreeContextFolder(evt, tree, id) {
                             function() {showAccessScreen(folder.spaceId, null)}
                         )
                     }
+                    makeTextListItem(
+                        list,
+                        "MES_SAVE_TO_FILE",
+                        function() {saveToFile(id)}
+                    )
+                    makeTextListItem(
+                        list,
+                        "MES_LOAD_FROM_FILE",
+                        function() {loadFromFile(id)}
+                    )
                 } else {
                     makeTextListItem(
                         list,
@@ -6063,6 +6073,9 @@ function onTreeContextFolder(evt, tree, id) {
                     )
                 }
             }
+            makeSeparator(
+                list
+            )
             makeTextListItem(
                 list,
                 "MES_DESCRIPTION",
