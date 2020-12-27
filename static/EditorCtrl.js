@@ -4709,6 +4709,13 @@ function showThemeMenu() {
     	buildThemeMenuItem("night")
     ]
     rows.push(row2)
+    var row3 = [
+    	buildThemeMenuItem("red"),
+    	buildThemeMenuItem("black"),
+    	buildThemeMenuItem("dark3"),
+    	buildThemeMenuItem("night2")
+    ]
+    rows.push(row3)
     var menu = {
     	rows: rows,
     	isGrid: true
