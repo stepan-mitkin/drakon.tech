@@ -1,5 +1,6 @@
 function Ide3Logic(gUserId, browser, translate) {
 
+var FEATURE_SAVE_PROJECT = false
 var Root = "https://drakon.tech/"
 var IDE = "ide"
 
@@ -1771,6 +1772,308 @@ function ProjectDeleter_Waiting_timeout(self, data) {
     var dialog = makeSure2(self.spaceId)
     browser.createCentral(dialog, self)
     self.state = "Sure2";
+}
+
+function ProjectLoader_AccessScreen_addUser(self, data) {
+    self.role = data
+    var machine = new UserAdder()
+    machine.target = self
+    machine.existing = Utils.copyObject(
+        self.access.roles[data]
+    )
+    browser.showAddUserScreen(
+        machine
+    )
+    self.state = "AddingUser";
+}
+
+function ProjectLoader_AccessScreen_cancel(self, data) {
+    browser.hideCentral()
+    complete(self, data)
+    self.state = null;
+}
+
+function ProjectLoader_AccessScreen_onData(self, data) {
+    var admins = Object.keys(
+        self.access.roles.admin
+    )
+    if (admins.length == 0) {
+        browser.setAccessError(
+            translate("ERR_NO_ADMINS")
+        )
+        self.state = "AccessScreen";
+    } else {
+        var change = buildAccessChange(
+            self.oldAccess,
+            self.access
+        )
+        if (change) {
+            browser.showWorking()
+            browser.sendPost(
+            	"/api/multi_access",
+            	change,
+            	self
+            )
+            self.state = "SavingAccess";
+        } else {
+            browser.hideCentral()
+            complete(self, data)
+            self.state = null;
+        }
+    }
+}
+
+function ProjectLoader_AccessScreen_onError(self, data) {
+    forwardError(self, data)
+    self.state = null;
+}
+
+function ProjectLoader_AccessScreen_removeUser(self, data) {
+    self.access.remove(
+        data.role,
+        data.user
+    )
+    self.state = "AccessScreen";
+}
+
+function ProjectLoader_AccessScreen_togglePublic(self, data) {
+    var old = self.access.isPublic
+    self.access.isPublic = !old
+    self.access.setPublicAccess = true
+    self.state = "AccessScreen";
+}
+
+function ProjectLoader_AddingUser_cancel(self, data) {
+    browser.showAccessScreen(
+        self.access,
+        null
+    )
+    self.state = "AccessScreen";
+}
+
+function ProjectLoader_AddingUser_onData(self, data) {
+    self.access.add(
+        self.role,
+        data
+    )
+    browser.showAccessScreen(
+        self.access,
+        null
+    )
+    self.state = "AccessScreen";
+}
+
+function ProjectLoader_GettingAccess_onData(self, data) {
+    browser.hideWorking()
+    self.access = createAccess(
+        self.spaceId,
+        data
+    )
+    self.oldAccess = Utils.copyObjectDeep(
+        self.access
+    )
+    browser.showAccessScreen(
+        self.access,
+        self
+    )
+    self.state = "AccessScreen";
+}
+
+function ProjectLoader_GettingAccess_onError(self, data) {
+    forwardError(self, data)
+    self.state = null;
+}
+
+function ProjectLoader_SavingAccess_onData(self, data) {
+    browser.hideWorking()
+    browser.hideCentral()
+    saveAccessData(
+        self.access
+    )
+    complete(self, data)
+    self.state = null;
+}
+
+function ProjectLoader_SavingAccess_onError(self, data) {
+    browser.hideWorking()
+    browser.hideCentral()
+    if ((data.error == "ERR_USER_LIMIT") && (data.suggested)) {
+        browser.suggest(
+            data.error,
+            data.suggested,
+            "access"
+        )
+    } else {
+        panic(data)
+    }
+    self.state = "AccessScreen";
+}
+
+function ProjectLoader_Start_onData(self, data) {
+    self.spaceId = data
+    var url = "/api/access/" + 
+     self.spaceId
+    browser.showWorking()
+    browser.sendGet(
+        url,
+        self
+    )
+    self.state = "GettingAccess";
+}
+
+function ProjectLoader_Start_onError(self, data) {
+    self.state = null;
+}
+
+function ProjectSaver_AccessScreen_addUser(self, data) {
+    self.role = data
+    var machine = new UserAdder()
+    machine.target = self
+    machine.existing = Utils.copyObject(
+        self.access.roles[data]
+    )
+    browser.showAddUserScreen(
+        machine
+    )
+    self.state = "AddingUser";
+}
+
+function ProjectSaver_AccessScreen_cancel(self, data) {
+    browser.hideCentral()
+    complete(self, data)
+    self.state = null;
+}
+
+function ProjectSaver_AccessScreen_onData(self, data) {
+    var admins = Object.keys(
+        self.access.roles.admin
+    )
+    if (admins.length == 0) {
+        browser.setAccessError(
+            translate("ERR_NO_ADMINS")
+        )
+        self.state = "AccessScreen";
+    } else {
+        var change = buildAccessChange(
+            self.oldAccess,
+            self.access
+        )
+        if (change) {
+            browser.showWorking()
+            browser.sendPost(
+            	"/api/multi_access",
+            	change,
+            	self
+            )
+            self.state = "SavingAccess";
+        } else {
+            browser.hideCentral()
+            complete(self, data)
+            self.state = null;
+        }
+    }
+}
+
+function ProjectSaver_AccessScreen_onError(self, data) {
+    forwardError(self, data)
+    self.state = null;
+}
+
+function ProjectSaver_AccessScreen_removeUser(self, data) {
+    self.access.remove(
+        data.role,
+        data.user
+    )
+    self.state = "AccessScreen";
+}
+
+function ProjectSaver_AccessScreen_togglePublic(self, data) {
+    var old = self.access.isPublic
+    self.access.isPublic = !old
+    self.access.setPublicAccess = true
+    self.state = "AccessScreen";
+}
+
+function ProjectSaver_AddingUser_cancel(self, data) {
+    browser.showAccessScreen(
+        self.access,
+        null
+    )
+    self.state = "AccessScreen";
+}
+
+function ProjectSaver_AddingUser_onData(self, data) {
+    self.access.add(
+        self.role,
+        data
+    )
+    browser.showAccessScreen(
+        self.access,
+        null
+    )
+    self.state = "AccessScreen";
+}
+
+function ProjectSaver_GettingAccess_onData(self, data) {
+    browser.hideWorking()
+    self.access = createAccess(
+        self.spaceId,
+        data
+    )
+    self.oldAccess = Utils.copyObjectDeep(
+        self.access
+    )
+    browser.showAccessScreen(
+        self.access,
+        self
+    )
+    self.state = "AccessScreen";
+}
+
+function ProjectSaver_GettingAccess_onError(self, data) {
+    forwardError(self, data)
+    self.state = null;
+}
+
+function ProjectSaver_SavingAccess_onData(self, data) {
+    browser.hideWorking()
+    browser.hideCentral()
+    saveAccessData(
+        self.access
+    )
+    complete(self, data)
+    self.state = null;
+}
+
+function ProjectSaver_SavingAccess_onError(self, data) {
+    browser.hideWorking()
+    browser.hideCentral()
+    if ((data.error == "ERR_USER_LIMIT") && (data.suggested)) {
+        browser.suggest(
+            data.error,
+            data.suggested,
+            "access"
+        )
+    } else {
+        panic(data)
+    }
+    self.state = "AccessScreen";
+}
+
+function ProjectSaver_Start_onData(self, data) {
+    self.spaceId = data
+    var url = "/api/access/" + 
+     self.spaceId
+    browser.showWorking()
+    browser.sendGet(
+        url,
+        self
+    )
+    self.state = "GettingAccess";
+}
+
+function ProjectSaver_Start_onError(self, data) {
+    self.state = null;
 }
 
 function PropChanger_Done_onData(self, data) {
@@ -6034,28 +6337,36 @@ function onTreeContextFolder(evt, tree, id) {
                         function(){pasteFoldersCore(into)}
                     )
                 }
-                makeSeparator(
-                    list
-                )
                 if (isSpace) {
                     if (isAdmin) {
+                        makeSeparator(
+                            list
+                        )
                         makeTextListItem(
                             list,
                             "MES_ACCESS",
                             function() {showAccessScreen(folder.spaceId, null)}
                         )
                     }
-                    makeTextListItem(
-                        list,
-                        "MES_SAVE_TO_FILE",
-                        function() {saveToFile(id)}
-                    )
-                    makeTextListItem(
-                        list,
-                        "MES_LOAD_FROM_FILE",
-                        function() {loadFromFile(id)}
-                    )
+                    if (FEATURE_SAVE_PROJECT) {
+                        makeSeparator(
+                            list
+                        )
+                        makeTextListItem(
+                            list,
+                            "MES_SAVE_TO_FILE",
+                            function() {showSaveToFile(folder.spaceId)}
+                        )
+                        makeTextListItem(
+                            list,
+                            "MES_LOAD_FROM_FILE",
+                            function() {showLoadFromFile(folder.spaceId)}
+                        )
+                    }
                 } else {
+                    makeSeparator(
+                        list
+                    )
                     makeTextListItem(
                         list,
                         "MES_DELETE",
@@ -7326,6 +7637,22 @@ function showHelp() {
     browser.showHelp()
 }
 
+function showLoadFromFile(spaceId, target) {
+    if (target) {
+        
+    } else {
+        target = makeTarget(
+            hideCentral,
+            panic
+        )
+    }
+    startMachine(
+        new ProjectLoader(),
+        spaceId,
+        target
+    )
+}
+
 function showMainMenu() {
     var items
     items = buildMainMenu()
@@ -7435,6 +7762,22 @@ function showRenameDialog(folder, onSave, language) {
         onSave,
         validate,
         true
+    )
+}
+
+function showSaveToFile(spaceId, target) {
+    if (target) {
+        
+    } else {
+        target = makeTarget(
+            hideCentral,
+            panic
+        )
+    }
+    startMachine(
+        new ProjectSaver(),
+        spaceId,
+        target
     )
 }
 
@@ -9815,6 +10158,150 @@ function DiaPropChanger() {
     }
     else if (_state_ == "Saved") {
       return DiaPropChanger_Saved_onError(_self, data);
+    }
+    return null;
+  };
+}
+
+function ProjectSaver() {
+  var _self = this;
+  _self.type_name = "ProjectSaver";
+  _self.state = "Start";
+  _self.addUser = function(data) {
+    var _state_ = _self.state;
+    if (_state_ == "AccessScreen") {
+      return ProjectSaver_AccessScreen_addUser(_self, data);
+    }
+    return null;
+  };
+  _self.cancel = function(data) {
+    var _state_ = _self.state;
+    if (_state_ == "AccessScreen") {
+      return ProjectSaver_AccessScreen_cancel(_self, data);
+    }
+    else if (_state_ == "AddingUser") {
+      return ProjectSaver_AddingUser_cancel(_self, data);
+    }
+    return null;
+  };
+  _self.onData = function(data) {
+    var _state_ = _self.state;
+    if (_state_ == "Start") {
+      return ProjectSaver_Start_onData(_self, data);
+    }
+    else if (_state_ == "GettingAccess") {
+      return ProjectSaver_GettingAccess_onData(_self, data);
+    }
+    else if (_state_ == "AccessScreen") {
+      return ProjectSaver_AccessScreen_onData(_self, data);
+    }
+    else if (_state_ == "AddingUser") {
+      return ProjectSaver_AddingUser_onData(_self, data);
+    }
+    else if (_state_ == "SavingAccess") {
+      return ProjectSaver_SavingAccess_onData(_self, data);
+    }
+    return null;
+  };
+  _self.onError = function(data) {
+    var _state_ = _self.state;
+    if (_state_ == "Start") {
+      return ProjectSaver_Start_onError(_self, data);
+    }
+    else if (_state_ == "GettingAccess") {
+      return ProjectSaver_GettingAccess_onError(_self, data);
+    }
+    else if (_state_ == "AccessScreen") {
+      return ProjectSaver_AccessScreen_onError(_self, data);
+    }
+    else if (_state_ == "SavingAccess") {
+      return ProjectSaver_SavingAccess_onError(_self, data);
+    }
+    return null;
+  };
+  _self.removeUser = function(data) {
+    var _state_ = _self.state;
+    if (_state_ == "AccessScreen") {
+      return ProjectSaver_AccessScreen_removeUser(_self, data);
+    }
+    return null;
+  };
+  _self.togglePublic = function(data) {
+    var _state_ = _self.state;
+    if (_state_ == "AccessScreen") {
+      return ProjectSaver_AccessScreen_togglePublic(_self, data);
+    }
+    return null;
+  };
+}
+
+function ProjectLoader() {
+  var _self = this;
+  _self.type_name = "ProjectLoader";
+  _self.state = "Start";
+  _self.addUser = function(data) {
+    var _state_ = _self.state;
+    if (_state_ == "AccessScreen") {
+      return ProjectLoader_AccessScreen_addUser(_self, data);
+    }
+    return null;
+  };
+  _self.cancel = function(data) {
+    var _state_ = _self.state;
+    if (_state_ == "AccessScreen") {
+      return ProjectLoader_AccessScreen_cancel(_self, data);
+    }
+    else if (_state_ == "AddingUser") {
+      return ProjectLoader_AddingUser_cancel(_self, data);
+    }
+    return null;
+  };
+  _self.onData = function(data) {
+    var _state_ = _self.state;
+    if (_state_ == "Start") {
+      return ProjectLoader_Start_onData(_self, data);
+    }
+    else if (_state_ == "GettingAccess") {
+      return ProjectLoader_GettingAccess_onData(_self, data);
+    }
+    else if (_state_ == "AccessScreen") {
+      return ProjectLoader_AccessScreen_onData(_self, data);
+    }
+    else if (_state_ == "AddingUser") {
+      return ProjectLoader_AddingUser_onData(_self, data);
+    }
+    else if (_state_ == "SavingAccess") {
+      return ProjectLoader_SavingAccess_onData(_self, data);
+    }
+    return null;
+  };
+  _self.onError = function(data) {
+    var _state_ = _self.state;
+    if (_state_ == "Start") {
+      return ProjectLoader_Start_onError(_self, data);
+    }
+    else if (_state_ == "GettingAccess") {
+      return ProjectLoader_GettingAccess_onError(_self, data);
+    }
+    else if (_state_ == "AccessScreen") {
+      return ProjectLoader_AccessScreen_onError(_self, data);
+    }
+    else if (_state_ == "SavingAccess") {
+      return ProjectLoader_SavingAccess_onError(_self, data);
+    }
+    return null;
+  };
+  _self.removeUser = function(data) {
+    var _state_ = _self.state;
+    if (_state_ == "AccessScreen") {
+      return ProjectLoader_AccessScreen_removeUser(_self, data);
+    }
+    return null;
+  };
+  _self.togglePublic = function(data) {
+    var _state_ = _self.state;
+    if (_state_ == "AccessScreen") {
+      return ProjectLoader_AccessScreen_togglePublic(_self, data);
     }
     return null;
   };
