@@ -509,6 +509,11 @@ function bindEditor(shortcuts, method) {
 }
 
 function bindKey(shortcuts, action, aux) {
+    var wrapped = wrapException(action, shortcuts)
+    Mousetrap.bind(shortcuts, wrapped, aux)
+}
+
+function bindKeyOver(shortcuts, action, aux) {
     var wrapped = wrapShortcut(action, shortcuts)
     Mousetrap.bind(shortcuts, wrapped, aux)
 }
@@ -3723,8 +3728,7 @@ function registerShortcuts() {
     bindKey("space", endPan, "keyup")
     bindKey("mod+g", focusSearch)
     bindKey("mod+f", quickSearch)
-    bindKey("mod+b", build)
-    bindKey("mod+d", build)
+    bindKeyOver("mod+b", build)
     bindEditor("mod+z", onCtrlZ)
     bindEditor("mod+y", onCtrlY)
     bindEditor("mod+a", onCtrlA)
