@@ -146,6 +146,20 @@ function api_account(req, session, headers)
     end
 end
 
+function api_backup(req, session, headers)
+    local space_id = req:stash("first")
+    local ok, result = space.backup(
+    	space_id,
+    	session.user_id,
+    	session.roles
+    )
+    if ok then
+        return make_json_success(headers, result)
+    else
+        return result_from_message(headers, result)
+    end
+end
+
 function api_build(req, session, headers)
     local space_id = req:stash("first")
     local folder_id = req:stash("second")
@@ -1227,6 +1241,20 @@ function api_get_trash(req, session, headers)
     end
 end
 
+function api_get_whole_project(req, session, headers)
+    local space_id = req:stash("first")
+    local ok, result = space.get_whole_project(
+    	space_id,
+    	session.user_id,
+    	session.roles
+    )
+    if ok then
+        return make_json_success(headers, result)
+    else
+        return result_from_message(headers, result)
+    end
+end
+
 function api_handler(req)
     local ok, result = xpcall(
     	function()
@@ -1666,6 +1694,22 @@ function api_restore(req, session, headers)
         return result_from_message(headers, msg)
     else
         return make_empty_response(headers)
+    end
+end
+
+function api_restore_backup(req, session, headers)
+    local space_id = req:stash("first")
+    local body = req:read()
+    local ok, result = space.restore_backup(
+    	space_id,
+    	body,
+    	session.user_id,
+    	session.roles
+    )
+    if ok then
+        return make_json_success(headers, result)
+    else
+        return result_from_message(headers, result)
     end
 end
 
@@ -4515,6 +4559,9 @@ function start()
     api("download", "GET", false, false, api_get_download)
     api("download", "POST", false, false, api_download)
     api("download_svg", "POST", false, false, api_download_svg)
+    api("backup", "GET", true, false, api_backup)
+    api("restore_backup", "POST", true, false, api_restore_backup)
+    api("get_whole_project", "GET", true, false, api_get_whole_project)
     api("adm", "GET", true, true, api_get_adm)
     api("adm", "POST", true, true, api_post_adm)
     api("summary", "GET", true, true, api_get_summary)

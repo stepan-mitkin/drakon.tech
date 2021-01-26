@@ -304,6 +304,67 @@ function add_tree_node(space_id, folder_id, fdata, depth, lines)
     end
 end
 
+function backup(space_id, user_id, roles)
+    local ok, data = prepare_backup(
+    	space_id,
+    	user_id,
+    	roles
+    )
+    if ok then
+        local names = data
+        backup_project(space_id, names.tmp)
+        local command = "zip -r -j " .. names.path ..
+        	" " .. names.tmp
+        log.info(command)
+        local cmd_result = os.execute(command)
+        log.info(cmd_result)
+        local time = os.date("%Y%m%d_%H%M", os.time())
+        local down_name = space_id .. time .. ".zip"
+        result = {
+        	filename = down_name,
+        	url = names.url
+        }
+        return true, result
+    else
+        return false, data
+    end
+end
+
+function backup_folder(row, tmp)
+    local space_id = row[1]
+    local folder_id = row[2]
+    local folder = row[3]
+    local parent_id = db.folder_tree_get(
+    	space_id,
+    	folder_id
+    )
+    if folder.deleted then
+        
+    else
+        folder.items = {}
+        folder.parent_id = parent_id
+        local items = db.item_get_by_folder(
+        	space_id,
+        	folder_id
+        )
+        for _, item_row in ipairs(items) do
+            local item_id = item_row[3]
+            local item = item_row[4]
+            folder.items[item_id] = item
+        end
+        local content = json.encode(folder)
+        local path = tmp .. "/" .. folder_id .. ".json"
+        utils.write_all_bytes(path, content)
+    end
+end
+
+function backup_project(space_id, tmp)
+    local folders = db.folder_get_by_space(space_id)
+    for _, folder in ipairs(folders) do
+        backup_folder(folder, tmp)
+    end
+end
+
 function build_copy_plan(space_id, folder_id, plan)
     fiber.yield()
     local children = get_child_folders(
@@ -2234,6 +2295,45 @@ function norm_contains(haystack, needle)
     end
 end
 
+function prepare_backup(space_id, user_id, roles)
+    local message = check_write_access(
+    	space_id,
+    	user_id,
+    	roles
+    )
+    if message then
+        return false, message
+    else
+        local ok, gentoken_result = get_create_gentoken(
+        	space_id,
+        	user_id,
+        	roles
+        )
+        if ok then
+            local names = {}
+            names.filename = space_id .. ".zip"
+            names.url = "/gen/" .. gentoken_result.gentoken ..
+            	"/" .. names.filename
+            names.folder = global_cfg.gen_dir .. "/" .. 
+            	gentoken_result.gentoken .. "/"
+            names.path = names.folder .. names.filename
+            names.tmp = names.folder .. space_id
+            fio.rmtree(names.tmp)
+            os.remove(names.path)
+            ok, message = fio.mktree(names.tmp)
+            if ok then
+                return ok, names
+            else
+                log.error("Could not re-create tmp dir for backup/restore: " ..
+                	message)
+                return false, "ERR_SERVER"
+            end
+        else
+            return false, gentoken_result
+        end
+    end
+end
+
 function read_access(space_id, user_id, roles)
     local space_error, access = check_read_access(
     	space_id,
@@ -3022,5 +3122,6 @@ return {
 	reset_gentoken = reset_gentoken,
 	get_prog_modules = get_prog_modules,
 	get_module = get_module,
-	check_write_access = check_write_access
+	check_write_access = check_write_access,
+	backup = backup
 }

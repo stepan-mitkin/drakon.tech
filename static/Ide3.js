@@ -1352,6 +1352,7 @@ function createState() {
     state.myHandlers.removeWriter = removeWriter
     state.myHandlers.foundUser = foundUser
     state.myHandlers.saveAccess = saveAccess
+    state.myHandlers.saveProject = saveAccess
     state.myHandlers.hideDemo = hideDemo
     state.myHandlers.saveProps = saveProps
     state.myHandlers.saveDiaProps = saveDiaProps
@@ -1452,6 +1453,14 @@ function doSendFeedback(text) {
     	success,
     	error
     )
+}
+
+function downloadFile(url, filename) {
+    console.log("downloadFile", url, filename)
+    var link = document.createElement("a")
+    link.href = url
+    link.download = filename
+    link.click()
 }
 
 function editBasement() {
@@ -5627,6 +5636,57 @@ function showPopupListAt(x, y, items) {
     HtmlUtils.setPosCorrected(x, y, div)
 }
 
+function showSaveProjectScreen(spaceId, machine) {
+    var cancel = {
+    	signalId: "cancelMachine",
+    	type: "text_button",
+    	text: "MES_CANCEL",
+    	style: {
+    		color: "white",
+    		background: NormalBack,
+    		padding: "12px",
+    		textAlign: "center",
+    		borderRadius: "5px"
+    	}
+    }
+    var save = {
+    	signalId: "saveProject",
+    	type: "text_button",
+    	text: "MES_SAVE",
+    	style: {
+    		color: "white",
+    		background: SpecialBack,
+    		padding: "12px",
+    		textAlign: "center",
+    		borderRadius: "5px"
+    	}
+    }
+    var buttons = {
+    	type: "hdock",
+    	height: 40,
+    	lefts: [cancel],
+    	rights: [save]
+    }
+    var label = {
+    	type: "custom",
+    	builder: function(div) {
+    		var top = make(div, "div")
+    		HtmlUtils.setDivText(top, translate("MES_SAVE_TO_FILE"))
+    		top.style.textAlign = "center"
+    		var name = make(div, "div")
+    		HtmlUtils.setDivText(name, spaceId)
+    		name.style.textAlign = "center"
+    		name.style.fontWeight = "bold"
+    	}
+    }
+    var topPage = {
+    	type: "page",
+    	padding: 10,
+    	kids: [buttons, label]
+    }
+    addCentral(topPage, machine)
+}
+
 function showShareScreen(spaceId, folderId, type, isPublic, isAdmin, machine) {
     var url = buildUrlForFolder(
     	spaceId,
@@ -6068,4 +6128,6 @@ this.showBuild = showBuild
 this.showNoModules = showNoModules
 this.showChooseModule = showChooseModule
 this.showChangeDiaProps = showChangeDiaProps
+this.showSaveProjectScreen = showSaveProjectScreen
+this.downloadFile = downloadFile
 }
