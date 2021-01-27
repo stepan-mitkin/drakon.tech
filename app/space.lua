@@ -24,6 +24,7 @@ local utils = require("utils")
 local fun = require("fun")
 local lic = require("lic")
 local json = require("json")
+local pretty = require("pretty.json")
 local fio = require("fio")
 
 local utf8 = require("lua-utf8")
@@ -352,7 +353,7 @@ function backup_folder(row, tmp)
             local item = item_row[4]
             folder.items[item_id] = item
         end
-        local content = json.encode(folder)
+        local content = pretty.stringify(folder, nil, 4)
         local path = tmp .. "/" .. folder_id .. ".json"
         utils.write_all_bytes(path, content)
     end
