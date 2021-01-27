@@ -2506,6 +2506,10 @@ function restore(space_id, folder_id, user_id, roles)
     end
 end
 
+function restore_backup(space_id, body, user_id, roles)
+    return true, {}
+end
+
 function restore_recursive(space_id, folder_id)
     local fdata = db.folder_get(
     	space_id,
@@ -3124,5 +3128,6 @@ return {
 	get_prog_modules = get_prog_modules,
 	get_module = get_module,
 	check_write_access = check_write_access,
-	backup = backup
+	backup = backup,
+	restore_backup = restore_backup
 }

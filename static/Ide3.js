@@ -950,6 +950,10 @@ function changeId(node, id) {
     return copy
 }
 
+function chooseFile() {
+    get("file-input").click()
+}
+
 function chooseModule() {
     var select = get("choose_module_list")
     sendToCentralMachine(select.value)
@@ -1365,6 +1369,8 @@ function createState() {
     state.myHandlers.chooseModule = chooseModule
     state.myHandlers.quickSearch = quickSearch
     state.myHandlers.createModule = createModule
+    state.myHandlers.chooseFile = chooseFile
+    state.myHandlers.loadFile = loadFile
     state.widgets.wrapException = wrapException
     return state
 }
@@ -1822,6 +1828,16 @@ function goToUrl(url) {
     window.location.href = url
 }
 
+function handleBasicStatusChange(machine, request) {
+    if (request.readyState === 4) {
+        var result = {
+            responseText: request.responseText,
+            status: request.status
+        }
+        machine.onData(result)
+    }
+}
+
 function hideCentral() {
     if (globs.centralMachines.length == 0) {
         
@@ -2032,6 +2048,19 @@ function isReadonly() {
 function killCentral() {
     clearMachines()
     hideCentralCore()
+}
+
+function loadFile() {
+    var input = get("file-input")
+    var path = input.files[0]
+    if (path) {
+        sendToCentralMachine(path)
+    } else {
+        HtmlUtils.setText(
+        	"file-error",
+        	translate("MES_NO_FILE_CHOSEN")
+        )
+    }
 }
 
 function loadFont(italic, bold, family, file, onLoaded) {
@@ -3487,6 +3516,13 @@ function onEvent(evt, type, widget, rowId, cellId) {
 
 function onExportChange() {
     
+}
+
+function onFileChange() {
+    HtmlUtils.setText(
+    	"file-error",
+    	""
+    )
 }
 
 function onFontLoaded(file, target, font) {
@@ -5329,6 +5365,74 @@ function showInputBox(isAsync, header, old, onSave, validate, enterSave, x, y) {
     )
 }
 
+function showLoadFromFile(spaceId, machine) {
+    var label = {
+    	type: "custom",
+    	builder: function(div) {
+    		var top = make(div, "div")
+    		HtmlUtils.setDivText(top, translate("MES_LOAD_FROM_FILE_EX"))
+    		top.style.textAlign = "center"
+    		var name = make(div, "div")
+    		HtmlUtils.setDivText(name, spaceId)
+    		name.style.textAlign = "center"
+    		name.style.fontWeight = "bold"
+    		var input = make(div, "input")
+    		input.id = "file-input"
+    		input.type = "file"
+    		input.name = "Project file"
+    		input.addEventListener("change", onFileChange)
+    		input.style.marginTop = "15px"
+    		input.style.marginBottom = "15px"
+    		var error = make(div, "div")
+    		error.id = "file-error"
+    		error.style.color = "darkred"
+    		error.style.height = "15px"
+    	}
+    }
+    var choose = {
+    	signalId: "chooseFile",
+    	type: "wbutton",
+    	text: "MES_CHOOSE_FILE",
+    	style: {
+    		color: "white",
+    		background: NormalBack,
+    		padding: "12px",
+    		textAlign: "center"
+    	}
+    }
+    var confirm = {
+    	signalId: "loadFile",
+    	type: "wbutton",
+    	text: "MES_LOAD_AND_REPLACE",
+    	style: {
+    		color: "white",
+    		background: NormalBack,
+    		padding: "12px",
+    		textAlign: "center"
+    	}
+    }
+    var cancel = {
+    	signalId: "hideCentral",
+    	type: "wbutton",
+    	text: "MES_CANCEL",
+    	style: {
+    		color: "white",
+    		background: DarkBackground,
+    		padding: "12px",
+    		textAlign: "center"
+    	}
+    }
+    var root = {
+    	type: "page",
+    	style: {
+    		background: "white"
+    	},
+    	padding: 10,
+    	kids: [label, confirm, cancel]
+    }
+    addCentral(root, machine)
+}
+
 function showLogon(machine) {
     var ui = buildLogonGui()
     addCentral(ui, machine)
@@ -5977,6 +6081,17 @@ function updateSignupButton() {
     }
 }
 
+function upload(url, name, file, machine) {
+    var req = new XMLHttpRequest()
+    var formData = new FormData()
+    req.onreadystatechange = function () {
+        handleBasicStatusChange(machine, req)
+    }
+    formData.append(name, file);
+    req.open("POST", url);
+    req.send(formData)
+}
+
 function validateFolderName(name) {
     name = name || ""
     name = name.trim()
@@ -6130,4 +6245,6 @@ this.showChooseModule = showChooseModule
 this.showChangeDiaProps = showChangeDiaProps
 this.showSaveProjectScreen = showSaveProjectScreen
 this.downloadFile = downloadFile
+this.showLoadFromFile = showLoadFromFile
+this.upload = upload
 }
