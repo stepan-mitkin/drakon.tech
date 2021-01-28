@@ -404,6 +404,12 @@ function delete_row2(table_ref, key1, key2)
     return table_ref.data:delete({key1, key2})
 end
 
+function ends_with(what, with)
+    local start = #what - #with + 1
+    local sub = what:sub(start, #what)
+    return sub == with
+end
+
 function filter(list, criterion)
     local result = {}
     if list then
@@ -1788,5 +1794,6 @@ return {
 	create_table = create_table,
 	insert1 = insert1,
 	utc_time = utc_time,
-sort_by_prop = sort_by_prop
+	sort_by_prop = sort_by_prop,
+	ends_with = ends_with
 }

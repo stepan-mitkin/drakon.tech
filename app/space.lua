@@ -360,8 +360,7 @@ function backup_folder(row, tmp)
 end
 
 function backup_project(space_id, tmp)
-    local sdata = db.space_get(space_id)
-    local sdata2 = {next_id=sdata.next_id}
+    local sdata2 = {}
     local content = pretty.stringify(sdata2, nil, 4)
     local path = tmp .. "/project.json"
     utils.write_all_bytes(path, content)
@@ -497,6 +496,39 @@ function check_read_access(space_id, user_id, roles)
         end
     else
         return "ERR_NOT_FOUND"
+    end
+end
+
+function check_tree(diagrams, start_id, good)
+    local visited = {}
+    local id = start_id
+    while true do
+        if good[id] then
+            return nil
+        end
+        if visited[id] then
+            return "Cycle detected"
+        end
+        visited[id] = true
+        local diagram = diagrams[id]
+        if utils.is_empty(diagram.parent_id) then
+            if id == "1" then
+                id = start_id
+                while true do
+                    good[id] = true
+                    local diagram = diagrams[id]
+                    id = diagram.parent_id
+                    if utils.is_empty(id) then
+                        break
+                    end
+                end
+                return nil
+            else
+                return "Wrong root"
+            end
+            break
+        end
+        id = diagram.parent_id
     end
 end
 
@@ -733,9 +765,7 @@ function create_folder_kernel(space_id, fields, user_id, version, parent_id)
     if (diagrams >= limit) and (not (is_folder(fields))) then
         return false, "ERR_DIAGRAM_LIMIT", diagrams + 1
     else
-        local id = sdata.next_id
-        sdata.next_id = id + 1
-        local folder_id = tostring(id)
+        local folder_id = generate_folder_id(space_id)
         db.space_update(
         	space_id,
         	sdata
@@ -767,9 +797,7 @@ function create_space(space_id, owner, root_id)
     local sdata = {
     	public = false,
     	when_created = now,
-    	when_updated = now,
-    	next_id = 2,
-    	root_id = root_id
+    	when_updated = now
     }
     db.space_insert(space_id, sdata)
     db.rights_insert(
@@ -871,11 +899,22 @@ function delete_folder(space_id, folder_id)
     )
 end
 
-function delete_forever(space_id, folder_id)
+function delete_folder_core(space_id, folder_id)
     db.folder_tree_delete(
     	space_id,
     	folder_id
     )
+    db.folder_props_delete(
+    	space_id,
+    	folder_id
+    )
+    delete_folder(
+    	space_id,
+    	folder_id
+    )
+end
+
+function delete_forever(space_id, folder_id)
     local children = get_child_folders(
     	space_id,
     	folder_id
@@ -883,11 +922,10 @@ function delete_forever(space_id, folder_id)
     for _, child_id in ipairs(children) do
         delete_forever(space_id, child_id)
     end
-    db.folder_props_delete(
+    delete_folder_core(
     	space_id,
     	folder_id
     )
-    delete_folder(space_id, folder_id)
 end
 
 function delete_items(space_id, folder_id)
@@ -1002,6 +1040,27 @@ function delete_recent(user_id)
     log_user_event(user_id, "delete_recent", {})
 end
 
+function delete_recent_and_folders(space_id)
+    local recent = db.recent_by_space(space_id)
+    for _, row in ipairs(recent) do
+        db.recent_delete(
+        	row[1],
+        	row[2],
+        	row[3]
+        )
+    end
+    local folders = db.folder_get_by_space(
+    	space_id
+    )
+    for _, folder in ipairs(folders) do
+        local folder_id = folder[2]
+        delete_folder_core(
+        	space_id,
+        	folder_id
+        )
+    end
+end
+
 function delete_space(space_id, user_id, roles)
     local space = {}
     local message = check_admin_access(
@@ -1014,20 +1073,9 @@ function delete_space(space_id, user_id, roles)
     else
         space = db.space_get(space_id)
         db.rights_delete_by_space(space_id)
-        local folders = db.folder_get_by_space(
+        delete_recent_and_folders(
         	space_id
         )
-        for _, folder in ipairs(folders) do
-            local folder_id = folder[2]
-            remove_from_recent(
-            	space_id,
-            	folder_id
-            )
-            delete_folder(
-            	space_id,
-            	folder_id
-            )
-        end
         db.space_delete(space_id)
         log_user_event(
         	user_id,
@@ -1332,6 +1380,20 @@ function for_space_folders(space_id, action)
             )
         end
     end
+end
+
+function generate_folder_id(space_id)
+    local id
+    while true do
+        local rnd = utils.random_string()
+        id = rnd:sub(1, 8)
+        if db.folder_get(space_id, id) then
+            
+        else
+            break
+        end
+    end
+    return id
 end
 
 function get_access(sdata, space_id, user_id, roles)
@@ -2080,13 +2142,6 @@ function import_space(space_id, filename, owner)
     	space_id,
     	"1"
     )
-    local obj = utils.read_json(filename)
-    local min_id = 1
-    for _, folder in ipairs(obj.folders) do
-        local id = tonumber(folder.folder_id)
-        min_id = math.max(min_id, id)
-    end
-    local next_id = min_id + 1
     for _, folder in ipairs(obj.folders) do
         db.folder_insert(
         	space_id,
@@ -2102,12 +2157,6 @@ function import_space(space_id, filename, owner)
         	item.fields
         )
     end
-    local sdata = db.space_get(space_id)
-    sdata.next_id = next_id
-    db.space_update(
-    	space_id,
-    	sdata
-    )
 end
 
 function insert_items_from_map(space_id, folder_id, items_map)
@@ -2152,6 +2201,53 @@ function is_folder(obj)
         return true
     else
         return false
+    end
+end
+
+function load_project(folder)
+    local ext = ".json"
+    local files = fio.listdir(folder)
+    local diagrams = {}
+    for _, filename in ipairs(files) do
+        if utils.ends_with(filename, ext) then
+            local id = filename:sub(
+            	1,
+            	#filename - #ext
+            )
+            if id == "project" then
+                
+            else
+                local path = folder .. "/" .. filename
+                local content = utils.read_all_bytes(path)
+                local obj = json.decode(content)
+                diagrams[id] = obj
+            end
+        end
+    end
+    local good = {}
+    local error = nil
+    local root = diagrams["1"]
+    if root then
+        if utils.is_empty(root.parent_id) then
+            for id, diagram in pairs(diagrams) do
+                error = check_tree(
+                	diagrams,
+                	id,
+                	good
+                )
+                if error then
+                    log.error(error)
+                    return false, ""
+                end
+            end
+            return diagrams
+        else
+            log.error("1 is not root")
+            return false, ""
+        end
+    else
+        log.error("No root")
+        return false, ""
     end
 end
 
@@ -2555,12 +2651,61 @@ function restore_backup(space_id, body, user_id, roles)
         cmd_result = os.execute(command)
         log.info(cmd_result)
         if cmd_result == 0 then
-            return true, {}
+            local diagrams = load_project(
+            	names.tmp
+            )
+            if diagrams then
+                delete_recent_and_folders(
+                	space_id
+                )
+                local parents = {}
+                for folder_id, diagram in pairs(diagrams) do
+                    if diagram.parent_id then
+                        parents[folder_id] = diagram.parent_id
+                    end
+                    restore_diagram(
+                    	space_id,
+                    	folder_id,
+                    	diagram
+                    )
+                end
+                for folder_id, diagram in pairs(diagrams) do
+                    local parent_id = parents[folder_id]
+                    if utils.is_empty(parent_id) then
+                        
+                    else
+                        add_child(
+                        	space_id,
+                        	parent_id,
+                        	folder_id,
+                        	diagram.created_by
+                        )
+                    end
+                end
+                return true, {}
+            else
+                return false, "Errors in structure"
+            end
         else
             return false, "Could not unzip"
         end
     else
         return false, data
+    end
+end
+
+function restore_diagram(space_id, folder_id, diagram)
+    local items = diagram.items or {}
+    diagram.parent_id = nil
+    diagram.items = {}
+    db.folder_insert(space_id, folder_id, diagram)
+    for item_id, item in pairs(items) do
+        db.item_insert(
+        	space_id,
+        	folder_id,
+        	item_id,
+        	item
+        )
     end
 end
 
