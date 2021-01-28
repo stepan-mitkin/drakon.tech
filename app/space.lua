@@ -360,6 +360,11 @@ function backup_folder(row, tmp)
 end
 
 function backup_project(space_id, tmp)
+    local sdata = db.space_get(space_id)
+    local sdata2 = {next_id=sdata.next_id}
+    local content = pretty.stringify(sdata2, nil, 4)
+    local path = tmp .. "/project.json"
+    utils.write_all_bytes(path, content)
     local folders = db.folder_get_by_space(space_id)
     for _, folder in ipairs(folders) do
         backup_folder(folder, tmp)
@@ -1175,6 +1180,12 @@ function extend_life(self)
     self.expiry = os.time() + timeout
 end
 
+function extract_multipart_body(payload)
+    start = find_body_start(payload)
+    body_end = find_body_end(payload)
+    return payload:sub(start, body_end)
+end
+
 function extract_parent_id(fields)
     local parent_id = fields.parent
     fields.parent = nil
@@ -1183,6 +1194,28 @@ function extract_parent_id(fields)
     else
         return parent_id
     end
+end
+
+function find_body_end(payload)
+    i = #payload - 1
+    while true do
+        if i > 0 then
+            
+        else
+            return -1
+        end
+        b1 = payload:byte(i)
+        b2 = payload:byte(i + 1)
+        if (b1 == 13) and (b2 == 10) then
+            return i - 1
+        end
+        i = i - 1
+    end
+end
+
+function find_body_start(payload)
+    first, last = payload:find("\r\n\r\n")
+    return last + 1
 end
 
 function find_cycle(space_id, moving_id, target_id)
@@ -2507,7 +2540,28 @@ function restore(space_id, folder_id, user_id, roles)
 end
 
 function restore_backup(space_id, body, user_id, roles)
-    return true, {}
+    ok, data = prepare_backup(
+    	space_id,
+    	user_id,
+    	roles
+    )
+    if ok then
+        names = data
+        content = extract_multipart_body(body)
+        utils.write_all_bytes(names.path, content)
+        command = "unzip " .. names.path ..
+        	" -d " .. names.tmp
+        log.info(command)
+        cmd_result = os.execute(command)
+        log.info(cmd_result)
+        if cmd_result == 0 then
+            return true, {}
+        else
+            return false, "Could not unzip"
+        end
+    else
+        return false, data
+    end
 end
 
 function restore_recursive(space_id, folder_id)

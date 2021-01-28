@@ -5373,7 +5373,7 @@ function showLoadFromFile(spaceId, machine) {
     		HtmlUtils.setDivText(top, translate("MES_LOAD_FROM_FILE_EX"))
     		top.style.textAlign = "center"
     		var name = make(div, "div")
-    		HtmlUtils.setDivText(name, spaceId)
+    		HtmlUtils.setDivText(name, translate("MES_SPACE") + ": " + spaceId)
     		name.style.textAlign = "center"
     		name.style.fontWeight = "bold"
     		var input = make(div, "input")
@@ -5778,7 +5778,7 @@ function showSaveProjectScreen(spaceId, machine) {
     		HtmlUtils.setDivText(top, translate("MES_SAVE_TO_FILE"))
     		top.style.textAlign = "center"
     		var name = make(div, "div")
-    		HtmlUtils.setDivText(name, spaceId)
+    		HtmlUtils.setDivText(name, translate("MES_SPACE") + ": " + spaceId)
     		name.style.textAlign = "center"
     		name.style.fontWeight = "bold"
     	}
@@ -5786,7 +5786,7 @@ function showSaveProjectScreen(spaceId, machine) {
     var topPage = {
     	type: "page",
     	padding: 10,
-    	kids: [buttons, label]
+    	kids: [label, buttons]
     }
     addCentral(topPage, machine)
 }
