@@ -343,6 +343,7 @@ function backup_folder(row, tmp)
         
     else
         folder.items = {}
+        folder.props = {}
         folder.parent_id = parent_id
         local items = db.item_get_by_folder(
         	space_id,
@@ -352,6 +353,15 @@ function backup_folder(row, tmp)
             local item_id = item_row[3]
             local item = item_row[4]
             folder.items[item_id] = item
+        end
+        local props = db.folder_props_get_by_folder(
+        	space_id,
+        	folder_id
+        )
+        for _, prop in ipairs(props) do
+            local prop_name = prop[3]
+            local prop_value = prop[4]
+            folder.props[prop_name] = prop_value
         end
         local content = pretty.stringify(folder, nil, 4)
         local path = tmp .. "/" .. folder_id .. ".json"
@@ -891,14 +901,6 @@ function def_query(data, user_id, roles)
     end
 end
 
-function delete_folder(space_id, folder_id)
-    delete_items(space_id, folder_id)
-    db.folder_delete(
-    	space_id,
-    	folder_id
-    )
-end
-
 function delete_folder_core(space_id, folder_id)
     db.folder_tree_delete(
     	space_id,
@@ -908,7 +910,8 @@ function delete_folder_core(space_id, folder_id)
     	space_id,
     	folder_id
     )
-    delete_folder(
+    delete_items(space_id, folder_id)
+    db.folder_delete(
     	space_id,
     	folder_id
     )
@@ -957,6 +960,7 @@ function delete_many(items, user_id, roles)
         	true
         )
         if message then
+            log.error(message)
             db.rollback()
             return message
         end
@@ -1020,10 +1024,14 @@ function delete_one(space_id, folder_id, user_id, roles, deleted, tell_parent)
                 	false
                 )
                 if message then
+                    log.info("delete one: " .. 
+                    	message .. " " ..
+                    	child_id  )
                     break
                 end
             end
         else
+            log.info("can edit: " .. result)
             message = result
         end
     end
@@ -1049,12 +1057,30 @@ function delete_recent_and_folders(space_id)
         	row[3]
         )
     end
+    local trash = db.trash_get_by_space(space_id)
+    for _, titem in ipairs(trash) do
+        local folder_id = titem[2]
+        remove_from_trash(
+        	space_id,
+        	folder_id
+        )
+    end
     local folders = db.folder_get_by_space(
     	space_id
     )
     for _, folder in ipairs(folders) do
         local folder_id = folder[2]
         delete_folder_core(
+        	space_id,
+        	folder_id
+        )
+    end
+    local tree = db.folder_tree_get_by_space(
+    	space_id
+    )
+    for _, item in ipairs(tree) do
+        local folder_id = item[2]
+        db.folder_tree_delete(
         	space_id,
         	folder_id
         )
@@ -2696,9 +2722,19 @@ end
 
 function restore_diagram(space_id, folder_id, diagram)
     local items = diagram.items or {}
+    local props = diagram.props or {}
     diagram.parent_id = nil
-    diagram.items = {}
+    diagram.items = nil
+    diagram.props = nil
     db.folder_insert(space_id, folder_id, diagram)
+    for name, value in pairs(props) do
+        db.folder_props_insert(
+        	space_id,
+        	folder_id,
+        	name,
+        	value
+        )
+    end
     for item_id, item in pairs(items) do
         db.item_insert(
         	space_id,

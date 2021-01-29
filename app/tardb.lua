@@ -286,6 +286,10 @@ function folder_tree_get_by_parent(space_id, parent_id)
     }
 end
 
+function folder_tree_get_by_space(space_id, folder_id)
+    return folder_tree:select{space_id}
+end
+
 function folder_tree_upsert(space_id, folder_id, parent_id)
     folder_tree:replace {
     	space_id,
@@ -892,5 +896,6 @@ user_props_upsert = user_props_upsert,
 user_props_delete = user_props_delete,
 user_props_get_by_user = user_props_get_by_user,
 
-recent_by_space = recent_by_space
+recent_by_space = recent_by_space,
+folder_tree_get_by_space = folder_tree_get_by_space
 }

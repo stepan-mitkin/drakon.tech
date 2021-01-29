@@ -1818,10 +1818,9 @@ function ProjectLoader_Confirm_onError(self, data) {
 
 function ProjectLoader_Loading_onData(self, data) {
     browser.hideWorking()
-    console.log(data)
     if (data.status === 200) {
-        //browser.goToUrl("/ide/doc/" + 
-        //	self.spaceId + "/1)
+        browser.goToUrl("/ide/doc/" + 
+        	self.spaceId + "/1")
     } else {
         forwardError(self, data.responseText)
     }
