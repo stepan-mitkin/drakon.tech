@@ -463,7 +463,7 @@ function appendQuestion(machine, seq, node) {
 }
 
 function appendReceive(machine, seq, node) {
-    var current, names
+    var current, names, variable
     addLine(seq, "self.state = \"" + 
       waitState(node.id) + "\";")
     addLine(seq, "work = false;")
@@ -472,11 +472,16 @@ function appendReceive(machine, seq, node) {
         if (current.text) {
             names = parseReceiveCase(current.text)
             if (names) {
+                if (names.argName) {
+                    variable = "self." + names.argName
+                } else {
+                    variable = undefined
+                }
                 addAwait(
                     machine,
                     names.functionName,
                     node.id,
-                    "self." + names.argName,
+                    variable,
                     current.one.id
                 )
                 addScenarioStep(
@@ -1481,7 +1486,7 @@ function createStrings() {
     strings.BUILD_EMPTY_CASE_NOT_LAST = "Only last Case icon can be empty"
     strings.BUILD_NO_VAR_SCEN = "Local variables are not allowed in scenarios"
     strings.BUILD_EMPTY_RECEIVE_CASE = "Empty Case icons are not allowed in \"receive\" construct"
-    strings.BUILD_BAD_RECEIVE_CASE = "Bad expression under  \"receive\" construct. Expected: foo(bar)"
+    strings.BUILD_BAD_RECEIVE_CASE = "Bad expression under \"receive\" construct. Expected: foo() or foo(bar)"
     strings.BUILD_EMPTY_INSERTION = "An insertion icon cannot be empty. Add a function call expression " +
      "and an optional assignment"
     strings.BUILD_ERROR_INSERTION = "Error in the insertion icon. Expected a function call expression " +
@@ -2613,6 +2618,8 @@ function parseReceiveCase(text) {
                 open + 1,
                 close
             )
+            arg = arg || ""
+            arg = arg.trim()
             if ((arg.indexOf(".") === -1) && (fun.indexOf(".") === -1)) {
                 return {
                     functionName : fun,
