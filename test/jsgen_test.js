@@ -237,7 +237,7 @@ function makeFakeParent(assert, expected) {
 
     self.onChildCompleted = function(data) {
         self.result = data
-        self.assert.equal(self.expected, self.result)
+        self.assert.equal(self.result, self.expected)
         self.done()
     }
 
@@ -249,6 +249,8 @@ function testScenario(assert, expected, machine) {
     machine.parent = parent
     machine.run()
 }
+
+QUnit.module( "JavaScript - Scenario" );
 
 QUnit.test("nonCanonicalSc", function(assert) {
     testScenario(assert, 1500, nonCanonicalSc(undefined, 20, 10))
@@ -282,4 +284,14 @@ QUnit.test("insertionTest", function(assert) {
 
 QUnit.test("pauseTest", function(assert) {
     testScenario(assert, 222, pauseSc(undefined))
+})
+
+QUnit.test("Receive", function(assert) {    
+    var parent = makeFakeParent(assert, 25217)
+    var machine = Receive(parent)    
+    machine.run()
+    machine.funOne()
+    machine.funTwo(4000)
+    machine.funOne()
+    machine.funThree(7)
 })

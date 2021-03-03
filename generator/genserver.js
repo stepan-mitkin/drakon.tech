@@ -1527,20 +1527,28 @@ function equal(varName, value) {
     return varName + " === " + value
 }
 
+function extractAssignedFromNode(node, lambda, output) {
+    if (((lambda) || (!(node.type === "AssignmentExpression"))) || (!(node.left.type === "Identifier"))) {
+        
+    } else {
+        output[node.left.name] = true
+        console.log(node.left.name)
+    }
+}
+
+function extractAssignedVariables(script, output) {
+    var visitor
+    visitor = function(node, lambda) {
+        extractAssignedFromNode(node, lambda, output)
+    }
+    traverseAst(script, visitor, false)
+}
+
 function extractAssignment(build, diagram, item, expression) {
     var work
     if (expression.left.type === "Identifier") {
-        if (isScenario(diagram)) {
-            addItemError(
-            	build,
-            	diagram,
-            	item.id,
-            	"BUILD_NO_VAR_SCEN"
-            )
-        } else {
-            work = diagram.work
-            work.assigned[expression.left.name] = true
-        }
+        work = diagram.work
+        work.assigned[expression.left.name] = true
     }
 }
 
@@ -2080,13 +2088,9 @@ function parseAction(build, diagram, item) {
         	)
         	return
         }
+        console.log(JSON.stringify(script, null, 2))
         item.script = script
-        findVariables(
-            build,
-            diagram,
-            item,
-            getBody(item)
-        )
+        extractAssignedVariables(script, diagram.work.assigned)
     }
 }
 
@@ -3476,6 +3480,47 @@ function translate(build, textId) {
         return globals.strings[textId]
     } else {
         return textId
+    }
+}
+
+function traverseAst(node, visitor, lambda) {
+    if ((node) && (typeof node === "object")) {
+        if (Array.isArray(node)) {
+            var _ind3103 = 0;
+            var _col3103 = node;
+            var _len3103 = _col3103.length;
+            while (true) {
+                if (_ind3103 < _len3103) {
+                    
+                } else {
+                    break;
+                }
+                var item = _col3103[_ind3103];
+                traverseAst(item, visitor, lambda)
+                _ind3103++;
+            }
+        } else {
+            if (node.type) {
+                if (node.type === "FunctionExpression") {
+                    lambda = true
+                }
+                visitor(node, lambda)
+                var _ind3107 = 0;
+                var _col3107 = node;
+                var _keys3107 = Object.keys(_col3107); 
+                var _len3107 = _keys3107.length;
+                while (true) {
+                    if (_ind3107 < _len3107) {
+                        
+                    } else {
+                        break;
+                    }
+                    var name = _keys3107[_ind3107]; var prop = _col3107[name];
+                    traverseAst(prop, visitor, lambda)
+                    _ind3107++;
+                }
+            }
+        }
     }
 }
 
