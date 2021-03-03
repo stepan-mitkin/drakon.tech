@@ -166,7 +166,7 @@ async function createBuild(req) {
         }
     }
 
-    if (props.language == "LANG_JS") {
+    if (props.language == "LANG_JS" || props.language == "LANG_JS2") {
         var userLanguage = req.body.language || "en"
         var buildId = createBuildRecord(spaceId, folderId, props, userLanguage)
         var buildFun = () => {
