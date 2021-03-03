@@ -444,6 +444,7 @@
 	"MES_MODULE_FORMAT": "Module format",
 	"LANG_JS": "JavaScript",
 	"LANG_HUMAN": "Human",
+	"LANG_JS2": "Experimental",
 	"MES_PROPERTIES": "Properties",
 	"MES_GET_URL": "Get URL",
 	"MES_GET_LINK_TO_GEN": "The URL to the generated code",

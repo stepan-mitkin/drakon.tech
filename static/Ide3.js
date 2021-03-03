@@ -2465,6 +2465,7 @@ function makeLanguageList(div, node, widget) {
     select.id = "language_list"
     addOption(select, "LANG_JS", translate("LANG_JS"))
     addOption(select, "LANG_HUMAN", translate("LANG_HUMAN"))
+    addOption(select, "LANG_JS2", translate("LANG_JS2"))
     select.value = globs.props.language || "LANG_JS"
 }
 

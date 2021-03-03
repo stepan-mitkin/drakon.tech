@@ -183,7 +183,7 @@ function add_child(space_id, folder_id, child_id, user_id)
 end
 
 function add_default_html(space_id, folder_id, user_id, roles, props)
-    if props.language == "LANG_JS" then
+    if is_js(props) then
         if props.html then
             content = utils.trim(props.html)
             if #content == 0 then
@@ -2224,6 +2224,14 @@ function is_folder(obj)
     local _sw31850000_ = 0
     _sw31850000_ = obj.type
     if ((_sw31850000_ == "folder") or (_sw31850000_ == "module")) or (_sw31850000_ == "class") then
+        return true
+    else
+        return false
+    end
+end
+
+function is_js(props)
+    if (props.language == "LANG_JS") or (props.language == "LANG_JS2") then
         return true
     else
         return false

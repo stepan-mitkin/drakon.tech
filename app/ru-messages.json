@@ -448,6 +448,7 @@
 	"MES_MODULE_FORMAT": "Формат модуля",
 	"LANG_JS": "JavaScript",
 	"LANG_HUMAN": "Человеческий",
+	"LANG_JS2": "Экспериментальный",
 	"MES_PROPERTIES": "Свойства",
 	"MES_GET_URL": "Получить ссылку",
 	"MES_GET_LINK_TO_GEN": "Ссылка на сегенерированный код",
