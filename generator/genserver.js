@@ -1527,7 +1527,7 @@ function equal(varName, value) {
     return varName + " === " + value
 }
 
-function extractAssignedFromNode(node, lambda, output) {
+function extractAssignedFromNode(property, node, lambda, output) {
     if (((lambda) || (!(node.type === "AssignmentExpression"))) || (!(node.left.type === "Identifier"))) {
         
     } else {
@@ -1538,17 +1538,26 @@ function extractAssignedFromNode(node, lambda, output) {
 
 function extractAssignedVariables(script, output) {
     var visitor
-    visitor = function(node, lambda) {
-        extractAssignedFromNode(node, lambda, output)
+    visitor = function(prop, node, lambda) {
+        extractAssignedFromNode(prop, node, lambda, output)
     }
-    traverseAst(script, visitor, false)
+    traverseAst("", script, visitor, false)
 }
 
 function extractAssignment(build, diagram, item, expression) {
     var work
     if (expression.left.type === "Identifier") {
-        work = diagram.work
-        work.assigned[expression.left.name] = true
+        if (isScenario(diagram)) {
+            addItemError(
+            	build,
+            	diagram,
+            	item.id,
+            	"BUILD_NO_VAR_SCEN"
+            )
+        } else {
+            work = diagram.work
+            work.assigned[expression.left.name] = true
+        }
     }
 }
 
@@ -3483,7 +3492,7 @@ function translate(build, textId) {
     }
 }
 
-function traverseAst(node, visitor, lambda) {
+function traverseAst(property, node, visitor, lambda) {
     if ((node) && (typeof node === "object")) {
         if (Array.isArray(node)) {
             var _ind3103 = 0;
@@ -3496,7 +3505,7 @@ function traverseAst(node, visitor, lambda) {
                     break;
                 }
                 var item = _col3103[_ind3103];
-                traverseAst(item, visitor, lambda)
+                traverseAst(property, item, visitor, lambda)
                 _ind3103++;
             }
         } else {
@@ -3504,7 +3513,7 @@ function traverseAst(node, visitor, lambda) {
                 if (node.type === "FunctionExpression") {
                     lambda = true
                 }
-                visitor(node, lambda)
+                visitor(property, node, lambda)
                 var _ind3107 = 0;
                 var _col3107 = node;
                 var _keys3107 = Object.keys(_col3107); 
@@ -3516,7 +3525,7 @@ function traverseAst(node, visitor, lambda) {
                         break;
                     }
                     var name = _keys3107[_ind3107]; var prop = _col3107[name];
-                    traverseAst(prop, visitor, lambda)
+                    traverseAst(name, prop, visitor, lambda)
                     _ind3107++;
                 }
             }
