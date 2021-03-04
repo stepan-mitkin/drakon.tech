@@ -1841,7 +1841,7 @@ function findVariables(build, diagram, item, statements) {
 }
 
 function getBody(item) {
-    return item.script.body[0].body.body
+    return item.script
 }
 
 function getBranchById(machine, branchId) {
@@ -2029,6 +2029,10 @@ function isScenario(diagram) {
     return result
 }
 
+function isV2(build) {
+    return build.props.language === "LANG_JS2"
+}
+
 function ln(output, line) {
     output.push(line)
 }
@@ -2079,27 +2083,35 @@ function or(left, right) {
 }
 
 function parseAction(build, diagram, item) {
-    var script, work, wrapped
+    var script, work
     work = diagram.work
     if (item.text) {
-        wrapped = "async function foo() {" +
-        	item.text + "}"
-        try {
-        	script = esprima.parseScript(
-        		wrapped
-        	)
-        } catch (e) {
-        	addItemError(
-        		build,
-        		diagram,
-        		item.id,
-        		e.description
-        	)
-        	return
+        script = parseActionJs(
+            item.text,
+            build,
+            diagram,
+            item
+        )
+        if (script) {
+            console.log(JSON.stringify(script, null, 2))
+            item.script = script
+            extractAssignedVariables(script, diagram.work.assigned)
         }
-        console.log(JSON.stringify(script, null, 2))
-        item.script = script
-        extractAssignedVariables(script, diagram.work.assigned)
+    }
+}
+
+function parseActionJs(text, build, diagram, item) {
+    var script, wrapped
+    wrapped = "async function foo() {" +
+    	text + "}"
+    script = tryParseJs(
+        wrapped,
+        build,
+        diagram,
+        item
+    )
+    if (script) {
+        return script.body[0].body.body
     }
 }
 
@@ -2436,48 +2448,42 @@ function parseItems(build, diagram) {
 }
 
 function parseLoop(build, diagram, item) {
-    var text
+    var script, text
     var _sw7050000_ = 0;
     text = (item.text || "").trim()
     if (text) {
-        var script
-        try {
-        	script = esprima.parseScript(
-        		text
-        	)
-        } catch (e) {
-        	addItemError(
-        		build,
-        		diagram,
-        		item.id,
-        		e.description
-        	)
-        	return
-        }
-        _sw7050000_ = script.body.length;
-        if (_sw7050000_ === 2) {
-            parseForeachLoop(
-                build,
-                diagram,
-                item,
-                script.body[0],
-                script.body[1]
-            )
-        } else {
-            if (_sw7050000_ === 3) {
-                parseForLoop(
+        script = tryParseJs(
+            text,
+            build,
+            diagram,
+            item
+        )
+        if (script) {
+            _sw7050000_ = script.body.length;
+            if (_sw7050000_ === 2) {
+                parseForeachLoop(
                     build,
                     diagram,
                     item,
-                    script.body[0]
+                    script.body[0],
+                    script.body[1]
                 )
             } else {
-                addItemError(
-                	build,
-                	diagram,
-                	item.id,
-                	"BUILD_BAD_LOOP"
-                )
+                if (_sw7050000_ === 3) {
+                    parseForLoop(
+                        build,
+                        diagram,
+                        item,
+                        script.body[0]
+                    )
+                } else {
+                    addItemError(
+                    	build,
+                    	diagram,
+                    	item.id,
+                    	"BUILD_BAD_LOOP"
+                    )
+                }
             }
         }
     } else {
@@ -2571,39 +2577,33 @@ function parseParams(build, diagram) {
 }
 
 function parseQuestion(build, diagram, item) {
-    var st, text
+    var script, st, text
     text = (item.text || "").trim()
     if (text) {
-        var script
-        try {
-        	script = esprima.parseScript(
-        		text
-        	)
-        } catch (e) {
-        	addItemError(
-        		build,
-        		diagram,
-        		item.id,
-        		e.description
-        	)
-        	return
-        }
-        if (script.body.length > 1) {
-            addItemError(
-            	build,
-            	diagram,
-            	item.id,
-            	"BUILD_ONE_EXPRESSION_EXPECTED"
-            )
-        } else {
-            st = script.body[0]
-            if ((st.type === "ExpressionStatement") && (st.expression.type === "AssignmentExpression")) {
+        script = tryParseJs(
+            text,
+            build,
+            diagram,
+            item
+        )
+        if (script) {
+            if (script.body.length > 1) {
                 addItemError(
                 	build,
                 	diagram,
                 	item.id,
-                	"BUILD_ASSIGNMENT_NOT_ALLOWED"
+                	"BUILD_ONE_EXPRESSION_EXPECTED"
                 )
+            } else {
+                st = script.body[0]
+                if ((st.type === "ExpressionStatement") && (st.expression.type === "AssignmentExpression")) {
+                    addItemError(
+                    	build,
+                    	diagram,
+                    	item.id,
+                    	"BUILD_ASSIGNMENT_NOT_ALLOWED"
+                    )
+                }
             }
         }
     } else {
@@ -3530,6 +3530,22 @@ function traverseAst(property, node, visitor, lambda) {
                 }
             }
         }
+    }
+}
+
+function tryParseJs(text, build, diagram, item) {
+    try {
+    	return esprima.parseScript(
+    		text
+    	)
+    } catch (e) {
+    	addItemError(
+    		build,
+    		diagram,
+    		item.id,
+    		e.description
+    	)
+    	return undefined
     }
 }
 

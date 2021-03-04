@@ -215,6 +215,7 @@ async function jsBuild(buildId) {
         record.htmlPath = config.genPath + "/" + record.gentoken + "/" + record.htmlName
         record.lines = []
 
+        console.log("Language", record.props.language)
         genserver.beginBuild(record)
 
         if (shouldStop(record)) {
