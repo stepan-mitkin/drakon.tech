@@ -10,10 +10,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "axios": "^0.19.0",
+    "axios": "^0.21.1",
     "body-parser": "^1.18.3",
     "cookie-parser": "^1.4.4",
-    "escodegen": "^1.11.1",
+    "escodegen": "^1.14.3",
     "esprima": "^4.0.1",
     "express": "^4.16.4",
     "fs-extra": "^9.0.1",

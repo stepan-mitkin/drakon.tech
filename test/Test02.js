@@ -5,9 +5,10 @@ function blueScenario_run(self) {
     while (work) {
         switch (self.state) {
             case "3":
-                result = left + right
+                self._result = self._left + self._right;
+                
                 self.state = undefined;
-                sm.sendMessage(self.parent, "onChildCompleted", result);
+                sm.sendMessage(self.parent, "onChildCompleted", self._result);
                 work = false;
                 break;
             default:
@@ -18,8 +19,8 @@ function blueScenario_run(self) {
 
 function blueScenario(parent, left, right) {
     var self = sm.createMachine("blueScenario");
-    self.left = left;
-    self.right = right;
+    self._left = left;
+    self._right = right;
     sm.addChild(parent, self);
     sm.addMethod(self, "run", blueScenario_run);
     self.state = "3";
@@ -54,22 +55,31 @@ function foreachArraySc_run(self) {
     while (work) {
         switch (self.state) {
             case "3":
-                array = [10, 20, 30]
-                result = 0
-                _5_it = 0;
-                _5_col = array;
-                _5_length = _5_col.length;
+                self._array = [
+                    10,
+                    20,
+                    30
+                ];
+                self._result = 0;
+                
+                self.__5_it = 0;
+                self.__5_col = self._array;
+                self.__5_length = self.__5_col.length;
+                
                 self.state = "_5_loop";
                 break;
             case "_5_loop":
-                if (_5_it < _5_length) {
-                    item = _5_col[_5_it];
-                    result += item
-                    _5_it++;
+                if (self.__5_it < self.__5_length) {
+                    self._item = self.__5_col[self.__5_it];
+                    
+                    self._result += self._item;
+                    
+                    self.__5_it++;
+                    
                     self.state = "_5_loop";
                 } else {
                     self.state = undefined;
-                    sm.sendMessage(self.parent, "onChildCompleted", result);
+                    sm.sendMessage(self.parent, "onChildCompleted", self._result);
                     work = false;
                 }
                 break;
@@ -92,29 +102,35 @@ function foreachMapSc_run(self) {
     while (work) {
         switch (self.state) {
             case "8":
-                sum = 0
-                map = {
+                self._sum = 0;
+                
+                self._map = {
                     ten: 10,
                     twenty: 20,
                     thirty: 30,
                     forty: 40
-                }
-                _5_it = 0;
-                _5_col = map;
-                _5_keys = Object.keys(_5_col);
-                _5_length = _5_keys.length;
+                };
+                
+                self.__5_it = 0;
+                self.__5_col = self._map;
+                self.__5_keys = Object.keys(self.__5_col);
+                self.__5_length = self.__5_keys.length;
+                
                 self.state = "_5_loop";
                 break;
             case "_5_loop":
-                if (_5_it < _5_length) {
-                    key = _5_keys[_5_it];
-                    value = _5_col[key];
-                    sum += value
-                    _5_it++;
+                if (self.__5_it < self.__5_length) {
+                    self._key = self.__5_keys[self.__5_it];
+                    self._value = self.__5_col[self._key];
+                    
+                    self._sum += self._value;
+                    
+                    self.__5_it++;
+                    
                     self.state = "_5_loop";
                 } else {
                     self.state = undefined;
-                    sm.sendMessage(self.parent, "onChildCompleted", sum);
+                    sm.sendMessage(self.parent, "onChildCompleted", self._sum);
                     work = false;
                 }
                 break;
@@ -161,7 +177,8 @@ function inputTest_run(self) {
     while (work) {
         switch (self.state) {
             case "3":
-                foo = 8
+                self._foo = 8;
+                
                 self.state = "4_wait";
                 work = false;
                 break;
@@ -171,7 +188,7 @@ function inputTest_run(self) {
                 break;
             case "5":
                 self.state = undefined;
-                sm.sendMessage(self.parent, "onChildCompleted", value + foo + self.foo);
+                sm.sendMessage(self.parent, "onChildCompleted", value + self._foo + self.foo);
                 work = false;
                 break;
             default:
@@ -193,7 +210,7 @@ function inputTest(parent) {
 function insertionTest_onChildCompleted(self, data) {
     switch (self.state) {
         case "4_wait":
-            moo = data;
+            self._moo = data;
             self.state = "5";
             break;
         default:
@@ -207,16 +224,17 @@ function insertionTest_run(self) {
     while (work) {
         switch (self.state) {
             case "3":
-                left = 10
-                right = 20
+                self._left = 10;
+                self._right = 20;
+                
                 self.state = "4_wait";
                 work = false;
-                var machine = blueScenario(self, left, right);
+                var machine = blueScenario(self, self._left, self._right);
                 machine.run();
                 break;
             case "5":
                 self.state = undefined;
-                sm.sendMessage(self.parent, "onChildCompleted", moo + 5);
+                sm.sendMessage(self.parent, "onChildCompleted", self._moo + 5);
                 work = false;
                 break;
             default:
@@ -239,14 +257,16 @@ function nonCanonicalSc_run(self) {
     while (work) {
         switch (self.state) {
             case "18":
-                result = 0
+                self._result = 0;
+                
                 if (a > b) {
-                    result += 1000
+                    self._result += 1000;
+                    
                     self.state = "9";
                 } else {
                     if (a > 10) {
                         self.state = undefined;
-                        sm.sendMessage(self.parent, "onChildCompleted", result + 300);
+                        sm.sendMessage(self.parent, "onChildCompleted", self._result + 300);
                         work = false;
                     } else {
                         self.state = "9";
@@ -255,7 +275,7 @@ function nonCanonicalSc_run(self) {
                 break;
             case "9":
                 self.state = undefined;
-                sm.sendMessage(self.parent, "onChildCompleted", result + 500);
+                sm.sendMessage(self.parent, "onChildCompleted", self._result + 500);
                 work = false;
                 break;
             default:
@@ -266,8 +286,8 @@ function nonCanonicalSc_run(self) {
 
 function nonCanonicalSc(parent, a, b) {
     var self = sm.createMachine("nonCanonicalSc");
-    self.a = a;
-    self.b = b;
+    self._a = a;
+    self._b = b;
     sm.addChild(parent, self);
     sm.addMethod(self, "run", nonCanonicalSc_run);
     self.state = "18";
@@ -290,14 +310,15 @@ function pauseSc_run(self) {
     while (work) {
         switch (self.state) {
             case "3":
-                x = 222
+                self._x = 222;
+                
                 self.state = "12_wait";
                 work = false;
                 sm.sendMessage(self, "onTimeout", undefined, 500);
                 break;
             case "4":
                 self.state = undefined;
-                sm.sendMessage(self.parent, "onChildCompleted", x);
+                sm.sendMessage(self.parent, "onChildCompleted", self._x);
                 work = false;
                 break;
             default:
@@ -320,18 +341,21 @@ function simpleUpSc_run(self) {
     while (work) {
         switch (self.state) {
             case "3":
-                i = 0
-                result = {m: 0}
+                self._i = 0;
+                self._result = { m: 0 };
+                
                 self.state = "7";
                 break;
             case "7":
-                result.m += (i * 10)
-                i++
+                self._result.m += self._i * 10;
+                
+                self._i++;
+                
                 if (i < 5) {
                     self.state = "7";
                 } else {
                     self.state = undefined;
-                    sm.sendMessage(self.parent, "onChildCompleted", result.m);
+                    sm.sendMessage(self.parent, "onChildCompleted", self._result.m);
                     work = false;
                 }
                 break;

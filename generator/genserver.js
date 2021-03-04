@@ -103,6 +103,7 @@ function addCase(sw, value) {
 
 function addCompleted(seq, value) {
     var text
+    value = stripSemi(value)
     addLine(seq, "self.state = undefined;")
     text = "sm.sendMessage(self.parent, \"" +
       completeMethod + "\", " + value + ");"
@@ -235,9 +236,7 @@ function addSilBranches(diagram) {
 
 function addThrow(step, value) {
     var text
-    if (value[value.length - 1] === ";") {
-        value = value.substring(0, value.length - 1)
-    }
+    value = stripSemi(value)
     text = "sm.handleError(self, " + value + ");"
     addLine(step, text)
     addLine(step, "work = false;")
@@ -934,8 +933,9 @@ function buildEnds(item, context) {
 
 function buildScenario(build, diagram) {
     var args, branches, ctr, first, loop, machine, run, sw, text
-    console.log(diagram.name)
-    console.log(diagram.work)
+    if (isV2(build)) {
+        rewriteLocals(diagram)
+    }
     branches = diagram.work.branches
     run = createFunction(
         runName(diagram),
@@ -985,8 +985,13 @@ function buildScenario(build, diagram) {
             break;
         }
         var arg = _col2800[_ind2800];
-        addLine(ctr.body, "self." + arg +
-         " = " + arg + ";")
+        if (isV2(build)) {
+            addLine(ctr.body, "self._" + arg +
+             " = " + arg + ";")
+        } else {
+            addLine(ctr.body, "self." + arg +
+             " = " + arg + ";")
+        }
         _ind2800++;
     }
     var _ind2833 = 0;
@@ -3017,6 +3022,11 @@ function replaceAddresses(diagram) {
     
 }
 
+function replaceGenerate(expression, allVars) {
+    rewriteVars(expression, allVars)
+    return escodegen.generate(expression)
+}
+
 function replaceOne(item) {
     var one, two, victim
     victim = item.one
@@ -3255,6 +3265,12 @@ function rewireLoopCore(diagram, item, texts) {
         true
     )
     values.text = texts.values
+    values.script = parseActionJs(
+        values.text,
+        undefined,
+        undefined,
+        undefined
+    )
     end.type = "action"
     end.text = texts.increment
     end.script = parseActionJs(
@@ -3335,6 +3351,69 @@ function rewireSelects(build, diagram) {
         }
         _ind359++;
     }
+}
+
+function rewriteLocals(diagram) {
+    var allVars, assigned, text
+    assigned = Object.keys(diagram.work.assigned)
+    allVars = assigned.concat(
+    	diagram.work.args
+    )
+    var _ind3189 = 0;
+    var _col3189 = diagram.work.items;
+    var _keys3189 = Object.keys(_col3189); 
+    var _len3189 = _keys3189.length;
+    while (true) {
+        if (_ind3189 < _len3189) {
+            
+        } else {
+            break;
+        }
+        var itemId = _keys3189[_ind3189]; var item = _col3189[itemId];
+        if (item.script) {
+            if (Array.isArray(item.script)) {
+                text = ""
+                var _ind3199 = 0;
+                var _col3199 = item.script;
+                var _len3199 = _col3199.length;
+                while (true) {
+                    if (_ind3199 < _len3199) {
+                        
+                    } else {
+                        break;
+                    }
+                    var expr = _col3199[_ind3199];
+                    text += replaceGenerate(expr, allVars)
+                    text += "\n"
+                    _ind3199++;
+                }
+                item.text = text
+            } else {
+                item.text = replaceGenerate(
+                    item.script,
+                    allVars
+                )
+            }
+        }
+        if (item.type === "question") {
+            item.text = stripSemi(item.text)
+        }
+        _ind3189++;
+    }
+}
+
+function rewriteNodeVars(prop, node, allVars) {
+    if (((node.type === "Identifier") && (!(prop === "property"))) && (!(allVars.indexOf(node.name) === -1))) {
+        node.name = "self._" + node.name
+    }
+}
+
+function rewriteVars(expression, allVars) {
+    var visitor
+    visitor = function(prop, node) {
+        rewriteNodeVars(prop, node, allVars)
+    }
+    traverseAst("", expression, visitor, false)
 }
 
 function runName(diagram) {
@@ -3516,6 +3595,23 @@ function startsWithWord(text, word) {
     }
 }
 
+function stripSemi(line) {
+    var last
+    if (line) {
+        last = line[line.length - 1]
+        if (last === ";") {
+            return line.substring(
+                0,
+                line.length - 1
+            )
+        } else {
+            return line
+        }
+    } else {
+        return line
+    }
+}
+
 function switchError(varName) {
     return "throw new Error(\"Unexpected Choice value: \" + " +
     	varName + ");"
@@ -3530,6 +3626,7 @@ function translate(build, textId) {
 }
 
 function traverseAst(property, node, visitor, lambda) {
+    var propName
     if ((node) && (typeof node === "object")) {
         if (Array.isArray(node)) {
             var _ind3103 = 0;
@@ -3562,7 +3659,12 @@ function traverseAst(property, node, visitor, lambda) {
                         break;
                     }
                     var name = _keys3107[_ind3107]; var prop = _col3107[name];
-                    traverseAst(name, prop, visitor, lambda)
+                    if ((node.computed) && (name === "property")) {
+                        propName = "indexer"
+                    } else {
+                        propName = name
+                    }
+                    traverseAst(propName, prop, visitor, lambda)
                     _ind3107++;
                 }
             }
