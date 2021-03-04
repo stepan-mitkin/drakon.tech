@@ -934,6 +934,8 @@ function buildEnds(item, context) {
 
 function buildScenario(build, diagram) {
     var args, branches, ctr, first, loop, machine, run, sw, text
+    console.log(diagram.name)
+    console.log(diagram.work)
     branches = diagram.work.branches
     run = createFunction(
         runName(diagram),
@@ -1532,7 +1534,6 @@ function extractAssignedFromNode(property, node, lambda, output) {
         
     } else {
         output[node.left.name] = true
-        console.log(node.left.name)
     }
 }
 
@@ -2093,7 +2094,6 @@ function parseAction(build, diagram, item) {
             item
         )
         if (script) {
-            console.log(JSON.stringify(script, null, 2))
             item.script = script
             extractAssignedVariables(script, diagram.work.assigned)
         }
@@ -2115,7 +2115,7 @@ function parseActionJs(text, build, diagram, item) {
     }
 }
 
-function parseForLoop(build, diagram, item, one) {
+function parseForLoop(build, diagram, item, one, two, three) {
     var semi1, semi2, text, varName, work
     var _sw8110000_ = 0;
     work = diagram.work
@@ -2149,7 +2149,10 @@ function parseForLoop(build, diagram, item, one) {
                     type : "for",
                     one : text.substring(0, semi1).trim(),
                     two : text.substring(semi1 + 1, semi2).trim(),
-                    three : text.substring(semi2 + 1).trim()
+                    three : text.substring(semi2 + 1).trim(),
+                    expr1 : one,
+                    expr2 : two,
+                    expr3 : three
                 }
             }
         }
@@ -2183,7 +2186,10 @@ function parseForLoop(build, diagram, item, one) {
                         type : "for",
                         one : text.substring(0, semi1).trim(),
                         two : text.substring(semi1 + 1, semi2).trim(),
-                        three : text.substring(semi2 + 1).trim()
+                        three : text.substring(semi2 + 1).trim(),
+                        expr1 : one,
+                        expr2 : two,
+                        expr3 : three
                     }
                 }
             }
@@ -2232,7 +2238,8 @@ function parseForeachLoop(build, diagram, item, it, collection) {
                         loopInfo = {
                             type : "foreach",
                             key : key,
-                            value : value
+                            value : value,
+                            expr : collection
                         }
                         loopInfo.collection = item.text.substring(
                         	semiIndex + 1
@@ -2284,7 +2291,8 @@ function parseForeachLoop(build, diagram, item, it, collection) {
                                 loopInfo = {
                                     type : "foreach",
                                     key : key,
-                                    value : value
+                                    value : value,
+                                    expr : collection
                                 }
                                 loopInfo.collection = item.text.substring(
                                 	semiIndex + 1
@@ -2407,11 +2415,13 @@ function parseItems(build, diagram) {
             if (item.loopInfo.type == "foreach") {
                 if (item.loopInfo.key) {
                     rewireForeachMap(
+                        build,
                         diagram,
                         item
                     )
                 } else {
                     rewireForeachArray(
+                        build,
                         diagram,
                         item
                     )
@@ -2474,7 +2484,9 @@ function parseLoop(build, diagram, item) {
                         build,
                         diagram,
                         item,
-                        script.body[0]
+                        script.body[0],
+                        script.body[1],
+                        script.body[2]
                     )
                 } else {
                     addItemError(
@@ -2596,13 +2608,17 @@ function parseQuestion(build, diagram, item) {
                 )
             } else {
                 st = script.body[0]
-                if ((st.type === "ExpressionStatement") && (st.expression.type === "AssignmentExpression")) {
-                    addItemError(
-                    	build,
-                    	diagram,
-                    	item.id,
-                    	"BUILD_ASSIGNMENT_NOT_ALLOWED"
-                    )
+                if (st.type === "ExpressionStatement") {
+                    if (st.expression.type === "AssignmentExpression") {
+                        addItemError(
+                        	build,
+                        	diagram,
+                        	item.id,
+                        	"BUILD_ASSIGNMENT_NOT_ALLOWED"
+                        )
+                    }
+                } else {
+                    item.script = st
                 }
             }
         }
@@ -3124,7 +3140,7 @@ function rewireFor(diagram, item) {
     )
 }
 
-function rewireForeachArray(diagram, item) {
+function rewireForeachArray(build, diagram, item) {
     var col, it, length, loop, text, texts, work
     loop = item.loopInfo
     work = diagram.work
@@ -3132,7 +3148,7 @@ function rewireForeachArray(diagram, item) {
     it = "_" + item.id + "_it"
     col = "_" + item.id + "_col"
     length = "_" + item.id + "_length"
-    if (isScenario(diagram)) {
+    if ((isScenario(diagram)) && (!(isV2(build)))) {
         it = "self." + it
         col = "self." + col
         length = "self." + length
@@ -3156,7 +3172,7 @@ function rewireForeachArray(diagram, item) {
     )
 }
 
-function rewireForeachMap(diagram, item) {
+function rewireForeachMap(build, diagram, item) {
     var col, it, keys, length, loop, text, texts, work
     loop = item.loopInfo
     work = diagram.work
@@ -3165,7 +3181,7 @@ function rewireForeachMap(diagram, item) {
     col = "_" + item.id + "_col"
     length = "_" + item.id + "_length"
     keys = "_" + item.id + "_keys"
-    if (isScenario(diagram)) {
+    if ((isScenario(diagram)) && (!(isV2(build)))) {
         it = "self." + it
         col = "self." + col
         length = "self." + length
@@ -3195,12 +3211,18 @@ function rewireForeachMap(diagram, item) {
 }
 
 function rewireLoopCore(diagram, item, texts) {
-    var arrowLoop, check, end, next, values, work
+    var arrowLoop, check, end, next, script, st, values, work
     work = diagram.work
     end = findEnd(item)
     next = end.one
     item.type = "action"
     item.text = texts.init
+    item.script = parseActionJs(
+        item.text,
+        undefined,
+        undefined,
+        undefined
+    )
     arrowLoop = insertAfter(
         work,
         item,
@@ -3217,6 +3239,14 @@ function rewireLoopCore(diagram, item, texts) {
     check.two = check.one
     check.one = next
     replacePrev(next, end, check)
+    script = tryParseJs(
+        texts.check,
+        undefined,
+        undefined,
+        undefined
+    )
+    st = script.body[0]
+    check.script = st
     values = insertAfter(
         work,
         check,
@@ -3227,6 +3257,12 @@ function rewireLoopCore(diagram, item, texts) {
     values.text = texts.values
     end.type = "action"
     end.text = texts.increment
+    end.script = parseActionJs(
+        end.text,
+        undefined,
+        undefined,
+        undefined
+    )
     end.one = arrowLoop
     arrowLoop.aprev.push(end)
 }
@@ -3311,6 +3347,7 @@ function scanIf(seq, item, loop, broken) {
         item.text,
         item.flag1
     )
+    step.script = item.script
     seq.items.push(step)
     next = scanSequence(
         step.down,
