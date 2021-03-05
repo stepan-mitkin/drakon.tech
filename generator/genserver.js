@@ -163,6 +163,27 @@ function addFlag(node, flag, acc) {
     }
 }
 
+function addInputAwait(machine, node) {
+    var variable
+    if ((node.text) && (!(node.text.startsWith("self.")))) {
+        if (machine.v2) {
+            machine.diagram.work.assigned[node.text] = true
+            variable = "self._" + node.text
+        } else {
+            variable = "self." + node.text
+        }
+    } else {
+        variable = node.text
+    }
+    addAwait(
+        machine,
+        node.text2,
+        node.id,
+        variable,
+        node.one.id
+    )
+}
+
 function addItemError(build, diagram, itemId, message) {
     var error, id
     id = makeId(diagram)
@@ -193,6 +214,55 @@ function addQuestion(seq, node) {
     step = createIf(node.text, node.flag1)
     seq.items.push(step)
     return step
+}
+
+function addReceiveAwait(machine, node) {
+    var current, names, variable
+    current = node.one
+    while (true) {
+        if (current.text) {
+            names = parseReceiveCase(current.text)
+            if (names) {
+                if (names.argName) {
+                    if (machine.v2) {
+                        machine.diagram.work.assigned[names.argName] = true
+                        variable = "self._" + names.argName
+                    } else {
+                        variable = "self." + names.argName
+                    }
+                } else {
+                    variable = undefined
+                }
+                addAwait(
+                    machine,
+                    names.functionName,
+                    node.id,
+                    variable,
+                    current.one.id
+                )
+            } else {
+                addItemError(
+                	machine.build,
+                	machine.diagram,
+                	current.id,
+                	"BUILD_BAD_RECEIVE_CASE"
+                )
+            }
+        } else {
+            addItemError(
+            	machine.build,
+            	machine.diagram,
+            	current.id,
+            	"BUILD_EMPTY_RECEIVE_CASE"
+            )
+        }
+        current = current.two
+        if (current) {
+            
+        } else {
+            break;
+        }
+    }
 }
 
 function addScenarioStep(machine, node) {
@@ -315,13 +385,6 @@ function appendEnd(machine, step, node) {
 }
 
 function appendInput(machine, seq, node) {
-    addAwait(
-        machine,
-        node.text2,
-        node.id,
-        node.text,
-        node.one.id
-    )
     addLine(seq, "self.state = \"" + 
       waitState(node.id) + "\";")
     addLine(seq, "work = false;")
@@ -462,47 +525,16 @@ function appendQuestion(machine, seq, node) {
 }
 
 function appendReceive(machine, seq, node) {
-    var current, names, variable
+    var current
     addLine(seq, "self.state = \"" + 
       waitState(node.id) + "\";")
     addLine(seq, "work = false;")
     current = node.one
     while (true) {
-        if (current.text) {
-            names = parseReceiveCase(current.text)
-            if (names) {
-                if (names.argName) {
-                    variable = "self." + names.argName
-                } else {
-                    variable = undefined
-                }
-                addAwait(
-                    machine,
-                    names.functionName,
-                    node.id,
-                    variable,
-                    current.one.id
-                )
-                addScenarioStep(
-                    machine,
-                    current.one
-                )
-            } else {
-                addItemError(
-                	machine.build,
-                	machine.diagram,
-                	current.id,
-                	"BUILD_BAD_RECEIVE_CASE"
-                )
-            }
-        } else {
-            addItemError(
-            	machine.build,
-            	machine.diagram,
-            	current.id,
-            	"BUILD_EMPTY_RECEIVE_CASE"
-            )
-        }
+        addScenarioStep(
+            machine,
+            current.one
+        )
         current = current.two
         if (current) {
             
@@ -933,7 +965,15 @@ function buildEnds(item, context) {
 
 function buildScenario(build, diagram) {
     var args, branches, ctr, first, loop, machine, run, sw, text
-    if (isV2(build)) {
+    machine = {
+        build : build,
+        diagram : diagram,
+        visited : {},
+        awaits : {},
+        v2 : isV2(build)
+    }
+    inputsReceives(machine)
+    if (machine.v2) {
         rewriteLocals(diagram)
     }
     branches = diagram.work.branches
@@ -954,13 +994,7 @@ function buildScenario(build, diagram) {
         sw = createSwitch("self.state")
         sw.defReturn = true
         loop.body.items.push(sw)
-        machine = {
-            build : build,
-            diagram : diagram,
-            sw : sw,
-            visited : {},
-            awaits : {}
-        }
+        machine.sw = sw
         addScenarioStep(
             machine,
             first
@@ -1494,6 +1528,7 @@ function createStrings() {
     strings.BUILD_NO_VAR_SCEN = "Local variables are not allowed in scenarios"
     strings.BUILD_EMPTY_RECEIVE_CASE = "Empty Case icons are not allowed in \"receive\" construct"
     strings.BUILD_BAD_RECEIVE_CASE = "Bad expression under \"receive\" construct. Expected: foo() or foo(bar)"
+    strings.BUILD_NO_DECL = "Variable declarations are not allowed"
     strings.BUILD_EMPTY_INSERTION = "An insertion icon cannot be empty. Add a function call expression " +
      "and an optional assignment"
     strings.BUILD_ERROR_INSERTION = "Error in the insertion icon. Expected a function call expression " +
@@ -1534,105 +1569,37 @@ function equal(varName, value) {
     return varName + " === " + value
 }
 
-function extractAssignedFromNode(property, node, lambda, output) {
-    if (((lambda) || (!(node.type === "AssignmentExpression"))) || (!(node.left.type === "Identifier"))) {
+function extractAssignedFromNode(property, node, lambda, context) {
+    var _sw33620000_ = 0;
+    if (lambda) {
         
     } else {
-        output[node.left.name] = true
+        _sw33620000_ = node.type;
+        if (_sw33620000_ === "AssignmentExpression") {
+            if (node.left.type === "Identifier") {
+                context.assigned[node.left.name] = true
+            }
+        } else {
+            if (_sw33620000_ === "VariableDeclaration") {
+                context.onError("BUILD_NO_DECL")
+            }
+        }
     }
 }
 
-function extractAssignedVariables(script, output) {
-    var visitor
+function extractAssignedVariables(script, build, diagram, item) {
+    var context, onError, visitor
+    onError = function(message) {
+        addItemError(build, diagram, item.id, message)
+    }
+    context = {
+        assigned : diagram.work.assigned,
+        onError : onError
+    }
     visitor = function(prop, node, lambda) {
-        extractAssignedFromNode(prop, node, lambda, output)
+        extractAssignedFromNode(prop, node, lambda, context)
     }
     traverseAst("", script, visitor, false)
-}
-
-function extractAssignment(build, diagram, item, expression) {
-    var work
-    if (expression.left.type === "Identifier") {
-        if (isScenario(diagram)) {
-            addItemError(
-            	build,
-            	diagram,
-            	item.id,
-            	"BUILD_NO_VAR_SCEN"
-            )
-        } else {
-            work = diagram.work
-            work.assigned[expression.left.name] = true
-        }
-    }
-}
-
-function extractDeclarators(build, diagram, item, statement) {
-    var forbidVar, work
-    var _sw20130000_ = 0;
-    work = diagram.work
-    forbidVar = work.branches.length > 1
-    if (isScenario(diagram)) {
-        addItemError(
-        	build,
-        	diagram,
-        	item.id,
-        	"BUILD_NO_VAR_SCEN"
-        )
-    } else {
-        _sw20130000_ = statement.kind;
-        if (_sw20130000_ === "var") {
-            if ((forbidVar) || (globalForbidVar)) {
-                addItemError(
-                	build,
-                	diagram,
-                	item.id,
-                	"BUILD_NO_VAR"
-                )
-            } else {
-                var _ind525 = 0;
-                var _col525 = statement.declarations;
-                var _len525 = _col525.length;
-                while (true) {
-                    if (_ind525 < _len525) {
-                        
-                    } else {
-                        break;
-                    }
-                    var dec = _col525[_ind525];
-                    if (((dec.type === "VariableDeclarator") && (dec.id)) && (dec.id.name)) {
-                        work.declared[dec.id.name] = true
-                    }
-                    _ind525++;
-                }
-            }
-        } else {
-            if (_sw20130000_ === "const") {
-                addItemError(
-                	build,
-                	diagram,
-                	item.id,
-                	"BUILD_NO_CONST"
-                )
-            } else {
-                if (_sw20130000_ === "let") {
-                    addItemError(
-                    	build,
-                    	diagram,
-                    	item.id,
-                    	"BUILD_NO_LET"
-                    )
-                } else {
-                    addItemError(
-                    	build,
-                    	diagram,
-                    	item.id,
-                    	"BUILD_BAD_DECLARATION"
-                    )
-                }
-            }
-        }
-    }
 }
 
 function filterLoopLoops(map) {
@@ -1793,59 +1760,6 @@ function findParentLoops(work) {
     )
 }
 
-function findVariables(build, diagram, item, statements) {
-    var _sw23480000_ = 0;
-    var _ind2345 = 0;
-    var _col2345 = statements;
-    var _len2345 = _col2345.length;
-    while (true) {
-        if (_ind2345 < _len2345) {
-            
-        } else {
-            break;
-        }
-        var statement = _col2345[_ind2345];
-        _sw23480000_ = statement.type;
-        if (_sw23480000_ === "VariableDeclaration") {
-            extractDeclarators(
-                build,
-                diagram,
-                item,
-                statement
-            )
-        } else {
-            if (_sw23480000_ === "ExpressionStatement") {
-                if (statement.expression.type === "AssignmentExpression") {
-                    extractAssignment(
-                        build,
-                        diagram,
-                        item,
-                        statement.expression
-                    )
-                }
-            } else {
-                if (_sw23480000_ === "TryStatement") {
-                    findVariables(
-                        build,
-                        diagram,
-                        item,
-                        statement.block.body
-                    )
-                    if ((statement.handler) && (statement.handler.body.body)) {
-                        findVariables(
-                            build,
-                            diagram,
-                            item,
-                            statement.handler.body.body
-                        )
-                    }
-                }
-            }
-        }
-        _ind2345++;
-    }
-}
-
 function getBody(item) {
     return item.script
 }
@@ -1959,6 +1873,39 @@ function hasReturn(seq) {
 
 function init() {
     globals.strings = createStrings()
+}
+
+function inputsReceives(machine) {
+    var diagram
+    var _sw32970000_ = 0;
+    diagram = machine.diagram
+    var _ind3295 = 0;
+    var _col3295 = diagram.work.items;
+    var _keys3295 = Object.keys(_col3295); 
+    var _len3295 = _keys3295.length;
+    while (true) {
+        if (_ind3295 < _len3295) {
+            
+        } else {
+            break;
+        }
+        var itemId = _keys3295[_ind3295]; var item = _col3295[itemId];
+        _sw32970000_ = item.type;
+        if (_sw32970000_ === "input") {
+            addInputAwait(
+                machine,
+                item
+            )
+        } else {
+            if (_sw32970000_ === "select") {
+                addReceiveAwait(
+                    machine,
+                    item
+                )
+            }
+        }
+        _ind3295++;
+    }
 }
 
 function insertAfter(work, before, id, type, two) {
@@ -2100,7 +2047,12 @@ function parseAction(build, diagram, item) {
         )
         if (script) {
             item.script = script
-            extractAssignedVariables(script, diagram.work.assigned)
+            extractAssignedVariables(
+                script,
+                build,
+                diagram,
+                item
+            )
         }
     }
 }
@@ -2126,41 +2078,12 @@ function parseForLoop(build, diagram, item, one, two, three) {
     work = diagram.work
     _sw8110000_ = one.type;
     if (_sw8110000_ === "VariableDeclaration") {
-        varName = one.declarations[0].id.name
-        work.declared[varName] = true
-        text = item.text
-        semi1 = text.indexOf(";")
-        if (semi1 === -1) {
-            addItemError(
-            	build,
-            	diagram,
-            	item.id,
-            	"BUILD_BAD_LOOP"
-            )
-        } else {
-            semi2 = text.indexOf(
-                ";",
-                semi1 + 1
-            )
-            if (semi2 === -2) {
-                addItemError(
-                	build,
-                	diagram,
-                	item.id,
-                	"BUILD_BAD_LOOP"
-                )
-            } else {
-                item.loopInfo = {
-                    type : "for",
-                    one : text.substring(0, semi1).trim(),
-                    two : text.substring(semi1 + 1, semi2).trim(),
-                    three : text.substring(semi2 + 1).trim(),
-                    expr1 : one,
-                    expr2 : two,
-                    expr3 : three
-                }
-            }
-        }
+        addItemError(
+        	build,
+        	diagram,
+        	item.id,
+        	"BUILD_NO_DECL"
+        )
     } else {
         if (((_sw8110000_ === "ExpressionStatement") && (one.expression.type == "AssignmentExpression")) && (one.expression.left.type == "Identifier")) {
             varName = one.expression.left.name
@@ -2613,15 +2536,13 @@ function parseQuestion(build, diagram, item) {
                 )
             } else {
                 st = script.body[0]
-                if (st.type === "ExpressionStatement") {
-                    if (st.expression.type === "AssignmentExpression") {
-                        addItemError(
-                        	build,
-                        	diagram,
-                        	item.id,
-                        	"BUILD_ASSIGNMENT_NOT_ALLOWED"
-                        )
-                    }
+                if ((st.type === "ExpressionStatement") && (st.expression.type === "AssignmentExpression")) {
+                    addItemError(
+                    	build,
+                    	diagram,
+                    	item.id,
+                    	"BUILD_ASSIGNMENT_NOT_ALLOWED"
+                    )
                 } else {
                     item.script = st
                 }

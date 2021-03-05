@@ -1,5 +1,106 @@
 // Created with Drakon Tech https://drakon.tech/
 
+function Receive_funOne(self, data) {
+    switch (self.state) {
+        case "7_wait":
+            self.state = "18";
+            break;
+        case "12_wait":
+            self.state = "21";
+            break;
+        default:
+            return;
+    }
+    Receive_run(self);
+}
+
+function Receive_funTwo(self, data) {
+    switch (self.state) {
+        case "7_wait":
+            self._foo = data;
+            self.state = "19";
+            break;
+        default:
+            return;
+    }
+    Receive_run(self);
+}
+
+function Receive_funThree(self, data) {
+    switch (self.state) {
+        case "12_wait":
+            self._foo = data;
+            self.state = "22";
+            break;
+        default:
+            return;
+    }
+    Receive_run(self);
+}
+
+function Receive_run(self) {
+    var work = true;
+    while (work) {
+        switch (self.state) {
+            case "27":
+                self._result = 0;
+                
+                self.state = "10";
+                break;
+            case "10":
+                self._result += 10000;
+                
+                self.state = "7_wait";
+                work = false;
+                break;
+            case "18":
+                self._result += 1000;
+                
+                self.state = "10";
+                break;
+            case "19":
+                self._result += self._foo;
+                
+                self.state = "20";
+                break;
+            case "20":
+                self._result += 100;
+                
+                self.state = "12_wait";
+                work = false;
+                break;
+            case "21":
+                self._result += 10;
+                
+                self.state = "20";
+                break;
+            case "22":
+                self._result += self._foo;
+                
+                self.state = "25";
+                break;
+            case "25":
+                self.state = undefined;
+                sm.sendMessage(self.parent, "onChildCompleted", self._result);
+                work = false;
+                break;
+            default:
+                return;
+        }
+    }
+}
+
+function Receive(parent) {
+    var self = sm.createMachine("Receive");
+    sm.addMethod(self, "funOne", Receive_funOne);
+    sm.addMethod(self, "funTwo", Receive_funTwo);
+    sm.addMethod(self, "funThree", Receive_funThree);
+    sm.addChild(parent, self);
+    sm.addMethod(self, "run", Receive_run);
+    self.state = "27";
+    return self;
+}
+
 function blueScenario_run(self) {
     var work = true;
     while (work) {
@@ -46,6 +147,50 @@ function emptySc(parent) {
     var self = sm.createMachine("emptySc");
     sm.addChild(parent, self);
     sm.addMethod(self, "run", emptySc_run);
+    self.state = "3";
+    return self;
+}
+
+function forLoopSc_run(self) {
+    var work = true;
+    while (work) {
+        switch (self.state) {
+            case "3":
+                self._names = [
+                    'Oslo',
+                    'Gjøvik',
+                    'Hamar'
+                ];
+                self._result = '';
+                
+                self._i = 0;
+                
+                self.state = "_5_loop";
+                break;
+            case "_5_loop":
+                if (self._i < self._names.length) {
+                    self._name = self._names[self._i];
+                    self._result += self._name + ' ';
+                    
+                    self._i++;
+                    
+                    self.state = "_5_loop";
+                } else {
+                    self.state = undefined;
+                    sm.sendMessage(self.parent, "onChildCompleted", self._result);
+                    work = false;
+                }
+                break;
+            default:
+                return;
+        }
+    }
+}
+
+function forLoopSc(parent) {
+    var self = sm.createMachine("forLoopSc");
+    sm.addChild(parent, self);
+    sm.addMethod(self, "run", forLoopSc_run);
     self.state = "3";
     return self;
 }
@@ -151,7 +296,7 @@ function foreachMapSc(parent) {
 function inputTest_onHop(self, data) {
     switch (self.state) {
         case "4_wait":
-            value = data;
+            self._value = data;
             self.state = "6";
             break;
         default:
@@ -188,7 +333,7 @@ function inputTest_run(self) {
                 break;
             case "5":
                 self.state = undefined;
-                sm.sendMessage(self.parent, "onChildCompleted", value + self._foo + self.foo);
+                sm.sendMessage(self.parent, "onChildCompleted", self._value + self._foo + self.foo);
                 work = false;
                 break;
             default:
@@ -252,6 +397,37 @@ function insertionTest(parent) {
     return self;
 }
 
+function lambda_run(self) {
+    var work = true;
+    while (work) {
+        switch (self.state) {
+            case "3":
+                self._y = 20;
+                
+                self._m = function () {
+                    var u = 30;
+                    return u + self._y + self._x;
+                };
+                
+                self.state = undefined;
+                sm.sendMessage(self.parent, "onChildCompleted", self._m());
+                work = false;
+                break;
+            default:
+                return;
+        }
+    }
+}
+
+function lambda(parent, x) {
+    var self = sm.createMachine("lambda");
+    self._x = x;
+    sm.addChild(parent, self);
+    sm.addMethod(self, "run", lambda_run);
+    self.state = "3";
+    return self;
+}
+
 function nonCanonicalSc_run(self) {
     var work = true;
     while (work) {
@@ -259,12 +435,12 @@ function nonCanonicalSc_run(self) {
             case "18":
                 self._result = 0;
                 
-                if (a > b) {
+                if (self._a > self._b) {
                     self._result += 1000;
                     
                     self.state = "9";
                 } else {
-                    if (a > 10) {
+                    if (self._a > 10) {
                         self.state = undefined;
                         sm.sendMessage(self.parent, "onChildCompleted", self._result + 300);
                         work = false;
@@ -351,7 +527,7 @@ function simpleUpSc_run(self) {
                 
                 self._i++;
                 
-                if (i < 5) {
+                if (self._i < 5) {
                     self.state = "7";
                 } else {
                     self.state = undefined;
