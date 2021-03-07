@@ -485,6 +485,20 @@ function addToSearchList(found) {
     }
 }
 
+function addWButton(div, textId, action) {
+    var button = make(div, "div")
+    button.className = "common_button"
+    HtmlUtils.setDivText(button, translate(textId))
+    button.addEventListener("click", action)
+    button.style.color = "black"
+    button.style.background = DockHeaderColor
+    button.style.padding = "12px"
+    button.style.textAlign = "center"
+    button.style.marginBottom = "10px"
+    button.style.borderRadius = "5px"
+    return button
+}
+
 function addWriter() {
     onAddUserClicked("write")
 }
@@ -1473,6 +1487,10 @@ function editBasement() {
     editTextProp("basement", "MES_BASEMENT")
 }
 
+function editDependencies() {
+    editTextProp("dependencies", "MES_DEPENDENCIES")
+}
+
 function editFooter() {
     editTextProp("footer", "MES_FOOTER")
 }
@@ -1483,6 +1501,10 @@ function editHeader() {
 
 function editHtml() {
     editTextProp("html", "MES_EDIT_HTML")
+}
+
+function editInit() {
+    editTextProp("init", "Init")
 }
 
 function editRoof() {
@@ -1501,6 +1523,10 @@ function editTextProp(prop, title) {
     	null,
     	false
     )
+}
+
+function editVariables() {
+    editTextProp("vars", "MES_VARIABLES")
 }
 
 function enableSignupOk() {
@@ -2395,12 +2421,7 @@ function makeFontSpec2(italic, bold) {
 function makeFormatList(div, node, widget) {
     var select = make(div, "select")
     select.id = "format_list"
-    addOption(select, "MES_NONE", translate("MES_NONE"))
-    addOption(select, "MES_IFFE", "IIFE")
-    addOption(select, "MES_FUNCTION", "Factory")
-    addOption(select, "MES_COMMONJS", "CommonJS")
-    addOption(select, "MES_ES6", "ES6")
-    select.value = globs.props.mformat || "MES_NONE"
+    updateFormatList()
 }
 
 function makeFunTypeList(div, node, widget) {
@@ -2467,6 +2488,7 @@ function makeLanguageList(div, node, widget) {
     addOption(select, "LANG_HUMAN", translate("LANG_HUMAN"))
     addOption(select, "LANG_JS2", translate("LANG_JS2"))
     select.value = globs.props.language || "LANG_JS"
+    select.addEventListener("change", onLanguageChange)
 }
 
 function makeModulesCombo(div, node, widget) {
@@ -2505,6 +2527,32 @@ function makePngName() {
         sanitized = "diagram"
     }
     return sanitized + ".png";
+}
+
+function makePropButtons(div, node, widget) {
+    var many = make(div, "div")
+    many.style.height = "260px"
+    many.id = "module_props_many"
+    var js1 = make(many, "div")
+    var js2 = make(many, "div")
+    var human = make(many, "div")
+    js1.id = "module_props_js1"
+    js2.id = "module_props_js2"
+    human.id = "module_props_human"
+    js1.style.display = "none"
+    js2.style.display = "none"
+    human.style.display = "none"
+    addWButton(js1, "MES_ROOF", editRoof)
+    addWButton(js1, "MES_HEADER", editHeader)
+    addWButton(js1, "MES_FOOTER", editFooter)
+    addWButton(js1, "MES_BASEMENT", editBasement)
+    var html1 = addWButton(js1, "MES_EDIT_HTML", editHtml)
+    html1.style.background = "#B3D7F8"
+    addWButton(js2, "MES_DEPENDENCIES", editDependencies)
+    addWButton(js2, "MES_VARIABLES", editVariables)
+    addWButton(js2, "Init", editInit)
+    var html2 = addWButton(js2, "MES_EDIT_HTML", editHtml)
+    html2.style.background = "#B3D7F8"
 }
 
 function makeRecoverLink(div) {
@@ -3562,6 +3610,11 @@ function onInitCompleted() {
 function onIsPublicChange() {
     var div = get("access_is_public_check")
     getMachine().togglePublic()
+}
+
+function onLanguageChange() {
+    updateFormatList()
+    updatePropButtons()
 }
 
 function onPassDown(evt) {
@@ -4913,6 +4966,26 @@ function showChangeFolderProps(machine, name, props, saveLabel, userProps, ro) {
     		textAlign: "center"
     	}
     }
+    var space = {
+    	type: "dummy",
+    	height: 10
+    }
+    var normal = {
+    	type: "vpanel",
+    	kids: [
+    		roof,
+    		space,
+    		header,
+    		space,
+    		footer,
+    		space,
+    		basement
+    	]
+    }
+    var many = {
+    	type: "custom",
+    	builder: makePropButtons
+    }
     var html = {
     	signalId: "editHtml",
     	type: "wbutton",
@@ -4923,10 +4996,6 @@ function showChangeFolderProps(machine, name, props, saveLabel, userProps, ro) {
     		padding: "12px",
     		textAlign: "center"
     	}
-    }
-    var space = {
-    	type: "dummy",
-    	height: 10
     }
     var cancel = {
     	signalId: "cancelMachine",
@@ -4959,11 +5028,7 @@ function showChangeFolderProps(machine, name, props, saveLabel, userProps, ro) {
     	formatLabel,
     	format,
     	space,
-    	roof,
-    	header,
-    	footer,
-    	basement,
-    	html,
+    	many,
     	space
     ]
     if (ro) {
@@ -4981,6 +5046,7 @@ function showChangeFolderProps(machine, name, props, saveLabel, userProps, ro) {
     	kids: kids
     }
     addCentral(root, machine)
+    updatePropButtons()
 }
 
 function showChooseModule(modules, machine) {
@@ -6071,6 +6137,82 @@ function trialAllowed() {
         return true
     } else {
         return false
+    }
+}
+
+function updateFormatList() {
+    var _sw51980000_ = 0;
+    var allowed
+    var select = get("format_list")
+    select.innerHTML = ""
+    var value = globs.props.mformat || "MES_NONE"
+    _sw51980000_ = get("language_list").value;
+    if (_sw51980000_ === "LANG_JS") {
+        addOption(select, "MES_NONE", translate("MES_NONE"))
+        addOption(select, "MES_IFFE", "IIFE")
+        addOption(select, "MES_FUNCTION", "Factory")
+        addOption(select, "MES_COMMONJS", "CommonJS")
+        addOption(select, "MES_ES6", "ES6")
+        allowed = [
+        	"MES_NONE",
+        	"MES_IFFE",
+        	"MES_FUNCTION",
+        	"MES_COMMONJS",
+        	"MES_ES6"
+        ]
+    } else {
+        if (_sw51980000_ === "LANG_JS2") {
+            addOption(select, "MES_NORMAL", translate("MES_NORMAL"))
+            addOption(select, "MES_NODE_PROGRAM", translate("MES_NODE_PROGRAM"))
+            allowed = [
+            	"MES_NORMAL",
+            	"MES_NODE_PROGRAM"
+            ]
+        } else {
+            if (_sw51980000_ === "LANG_HUMAN") {
+                
+            } else {
+                throw "Unexpected switch value: " + _sw51980000_;
+            }
+            addOption(select, "MES_NONE", translate("MES_NONE"))
+            allowed = [
+            	"MES_NONE"
+            ]
+        }
+    }
+    if (allowed.indexOf(value) === -1) {
+        value = allowed[0]
+    }
+    select.value = value
+}
+
+function updatePropButtons() {
+    var _sw52480000_ = 0;
+    var js1 = document.getElementById("module_props_js1")
+    var js2 = document.getElementById("module_props_js2")
+    var human = document.getElementById("module_props_human")
+    if (js1) {
+        _sw52480000_ = get("language_list").value;
+        if (_sw52480000_ === "LANG_JS") {
+            showDiv(js1, "")
+            hideDiv(js2)
+            hideDiv(human)
+        } else {
+            if (_sw52480000_ === "LANG_JS2") {
+                hideDiv(js1)
+                showDiv(js2, "")
+                hideDiv(human)
+            } else {
+                if (_sw52480000_ === "LANG_HUMAN") {
+                    
+                } else {
+                    throw "Unexpected switch value: " + _sw52480000_;
+                }
+                hideDiv(js1)
+                hideDiv(js2)
+                showDiv(human, "")
+            }
+        }
     }
 }
 
