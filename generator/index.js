@@ -5,7 +5,7 @@ var bodyParser = require('body-parser')
 const _ = require("lodash")
 const genserver = require("./genserver")
 const winston = require("winston")
-
+const config = require("./config")
 
 var app = express();
 
@@ -17,14 +17,14 @@ const globals = {
 }
 
 
-
-const config = {
-    port: 7650,
-    dtPort: 8090,
-    user: "internal_generator",
-    password: "123456",
-    genPath: "/dkt/gen"
-}
+// // Config example
+// const config = {
+//     port: 7650,
+//     dtPort: 8090,
+//     user: "internal_generator",
+//     password: "123456",
+//     genPath: "/dkt/gen"
+// }
 
 var logOptions = {
     file: {
