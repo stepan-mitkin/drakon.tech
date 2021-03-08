@@ -447,6 +447,7 @@
 	"LANG_JS2": "Experimental",
 	"MES_NORMAL": "Normal",
 	"MES_NODE_PROGRAM": "Node JS program",
+	"MES_BROWSER_PROGRAM": "Browser program",
 	"MES_DEPENDENCIES": "Dependencies",	
 	"MES_VARIABLES": "Variables",		
 	"MES_PROPERTIES": "Properties",

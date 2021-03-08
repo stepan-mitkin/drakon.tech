@@ -6163,9 +6163,11 @@ function updateFormatList() {
     } else {
         if (_sw51980000_ === "LANG_JS2") {
             addOption(select, "MES_NORMAL", translate("MES_NORMAL"))
+            addOption(select, "MES_BROWSER_PROGRAM", translate("MES_BROWSER_PROGRAM"))
             addOption(select, "MES_NODE_PROGRAM", translate("MES_NODE_PROGRAM"))
             allowed = [
             	"MES_NORMAL",
+            	"MES_BROWSER_PROGRAM",
             	"MES_NODE_PROGRAM"
             ]
         } else {

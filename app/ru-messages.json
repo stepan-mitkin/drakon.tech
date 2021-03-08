@@ -451,6 +451,7 @@
 	"LANG_JS2": "Экспериментальный",
 	"MES_NORMAL": "Обычный",
 	"MES_NODE_PROGRAM": "Программа Node JS",	
+	"MES_BROWSER_PROGRAM": "Программа для браузера",
 	"MES_DEPENDENCIES": "Зависимости",	
 	"MES_VARIABLES": "Переменные",	
 	"MES_PROPERTIES": "Свойства",
