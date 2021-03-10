@@ -1,3 +1,5 @@
+const util = require('util')
+const { exec } = require("child_process");
 const fse = require('fs-extra')
 const axios = require("axios");
 var express = require('express');
@@ -11,6 +13,7 @@ var app = express();
 
 app.use(bodyParser.json())
 
+var allowedChars;
 
 const globals = {
     builds: {}
@@ -86,6 +89,29 @@ wlogger.stream = {
         wlogger.info(message);
     }
 };
+
+function buildAllowedChars() {
+    var ok = "abcdefghijklmnopqrstuvwxyz_-.0123456789"
+    var result = {}
+    for (let i = 0; i < ok.length; i++) {
+        var c = ok[i]
+        result[c] = true
+    }
+    return result
+}
+
+function isStringSafe(text) {
+    text = text.toLowerCase()
+    for (let i = 0; i < text.length; i++) {
+        var c = text[i]
+        if (!allowedChars[c]) {
+            return false;
+        }
+    }
+    return true
+}
+
+allowedChars = buildAllowedChars()
 
 app.post('/private/:space/:folder', async function (req, res) {
     try {
@@ -237,8 +263,7 @@ async function buildV2(record) {
 
 async function expandDepependencyTree(record) {
     record.modules = {}
-    record.allDeps = {}
-    record.npms = {}
+    record.allDeps = {}    
     var root = {
         name: record.name,
         props: record.props,
@@ -278,8 +303,8 @@ async function expandDepependencyNode(record, module, isRoot) {
             await expandModule(record, dep, depModule, isRoot)
         } else if (dep.type === "anon") {
             getCreateSimpleDep(record, dep)
-        } else if (dep.type === "npm") {
-            addToRequiresList(record, dep)
+        } else if (dep.type === "npm" || dep.type === "node") {
+            getCreateModuleDep(record, dep, dep, isRoot)            
         }
     }
 }
@@ -367,17 +392,16 @@ function getCreateSimpleDep(record, dep) {
     return depRecord
 }
 
-function addToRequiresList(record, dep) {
-    record.npms[dep.name] = dep
-}
-
 function getDepNames(record) {
-    var result = []
-    for (var modName in record.modules) {
-        if (modName != record.name) {
-            result.push(modName)
+    var names = {}
+    for (var depName in record.allDeps) {
+        var dep = record.allDeps[depName]
+        var target = dep.modules[0]
+        if (target.type == "module" && target.name != record.name) {
+            names[target.name] = true
         }
     }
+    var result = Object.keys(names)
     result.sort()
     return result
 }
@@ -437,12 +461,67 @@ async function generateProgram(record) {
     await writeAllText(browserPath, browserLines.join("\n"))
     await writeAllText(nodePath, nodeLines.join("\n"))
     await writeAllText(record.htmlPath, record.props.html)
+
+    await writePackageJson(record, outputDir)
     return true
 }
 
-function appendRequires(record, lines) {    
-    for (var depName in record.npms) {
-        var dep = record.npms[depName]
+async function writePackageJson(record, outputDir) {
+    var names = {}
+    for (var depName in record.allDeps) {
+        var dep = record.allDeps[depName]
+        var target = dep.modules[0]
+        if (target.type === "npm") {
+            names[target.package] = true
+        }
+    }  
+
+    var packages = Object.keys(names)
+    packages.sort()
+    
+    for (var package of packages) {
+        names[package] = await getNpmVersion(package)
+    }
+
+    var packageJson = {
+        name: record.name,
+        version: "1.0.0",
+        dependencies: {}
+    }
+
+    for (var package of packages) {
+        packageJson.dependencies[package] = "^" + names[package]
+    }
+
+    var content = JSON.stringify(packageJson, null, 4)
+
+    await writeAllText(outputDir + "package.json", content)
+}
+
+async function getNpmVersion(package) {
+    if (!isStringSafe(package)) {
+        throw new Error("Package name contains unsafe characters: " + package)
+    }
+    var command = "npm show " + package + " version"
+    var execp = util.promisify(exec)
+    var response = await execp(command);
+    return response.stdout.trim()
+}
+
+function appendRequires(record, lines) {   
+    var requires = {}
+    for (var depName in record.allDeps) {
+        var dep = record.allDeps[depName]
+        var target = dep.modules[0]
+        if (target.type != "module") {
+            requires[depName] = target
+        }
+    }    
+    var names = Object.keys(requires)
+    names.sort()
+
+    for (var depName of names) {
+        var dep = requires[depName]
         if (dep.obj) {
             lines.push("const " + depName + " = require(\"" + dep.package + "\")." + dep.obj + ";")
         } else {
@@ -547,19 +626,20 @@ function parseDependencies(module) {
                     type: "module"
                 })
             } else {
-                if (p2[0] === "npm") {
+                var p20 = p2[0]
+                if (p20 === "npm" || p20 === "node") {
                     if (p2.length === 3) {
                         module.deps.push({
                             name: name,
                             package: p2[1],
-                            type: "npm",
+                            type: p20,
                             obj: p2[2]
                         })                  
                     } else {    
                         module.deps.push({
                             name: name,
                             package: p2[1],
-                            type: "npm"
+                            type: p20
                         })
                     }
                 } else {
