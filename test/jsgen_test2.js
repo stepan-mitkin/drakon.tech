@@ -58,44 +58,46 @@ function testScenario(assert, expected, machine) {
 
 QUnit.module( "JavaScript - Scenario" );
 
+var Test02 = Test02_module()
+
 QUnit.test("nonCanonicalSc", function(assert) {
-    testScenario(assert, 1500, nonCanonicalSc(undefined, 20, 10))
-    testScenario(assert, 300, nonCanonicalSc(undefined, 20, 50))
-    testScenario(assert, 500, nonCanonicalSc(undefined, 5, 20))
+    testScenario(assert, 1500, Test02.nonCanonicalSc(undefined, 20, 10))
+    testScenario(assert, 300, Test02.nonCanonicalSc(undefined, 20, 50))
+    testScenario(assert, 500, Test02.nonCanonicalSc(undefined, 5, 20))
 })
 
 QUnit.test("simpleUpSc", function(assert) {
-    testScenario(assert, 100, simpleUpSc(undefined))
+    testScenario(assert, 100, Test02.simpleUpSc(undefined))
 })
 
 
 QUnit.test("foreachArraySc", function(assert) {
-    testScenario(assert, 60, foreachArraySc())
+    testScenario(assert, 60, Test02.foreachArraySc())
 });
 
 QUnit.test("foreachMapSc", function(assert) {
-    testScenario(assert, 100, foreachMapSc())
+    testScenario(assert, 100, Test02.foreachMapSc())
 });
 
 QUnit.test("inputTest", function(assert) {
     var parent = makeFakeParent(assert, 158)
-    var machine = inputTest(parent)
+    var machine = Test02.inputTest(parent)
     machine.run()
     machine.onHop(50)
     machine.onHop2(100)
 });
 
 QUnit.test("insertionTest", function(assert) {
-    testScenario(assert, 35, insertionTest(undefined))
+    testScenario(assert, 35, Test02.insertionTest(undefined))
 })
 
 QUnit.test("pauseTest", function(assert) {
-    testScenario(assert, 222, pauseSc(undefined))
+    testScenario(assert, 222, Test02.pauseSc(undefined))
 })
 
 QUnit.test("Receive", function(assert) {    
     var parent = makeFakeParent(assert, 25217)
-    var machine = Receive(parent)    
+    var machine = Test02.Receive(parent)    
     machine.run()
     machine.funOne()
     machine.funTwo(4000)
@@ -104,9 +106,9 @@ QUnit.test("Receive", function(assert) {
 })
 
 QUnit.test("lambda", function(assert) {
-    testScenario(assert, 58, lambda(undefined, 8))
+    testScenario(assert, 58, Test02.lambda(undefined, 8))
 });
 
 QUnit.test("forLoopSc", function(assert) {
-    testScenario(assert, "Oslo Gjøvik Hamar ", forLoopSc(undefined))
+    testScenario(assert, "Oslo Gjøvik Hamar ", Test02.forLoopSc(undefined))
 });

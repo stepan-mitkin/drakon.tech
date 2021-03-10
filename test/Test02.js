@@ -1,4 +1,11 @@
-// Created with Drakon Tech https://drakon.tech/
+
+function Test02_module() {
+var unit = {};
+
+var x1;
+var x2;
+var v1 = 1
+var v2 = 2
 
 function Receive_funOne(self, data) {
     switch (self.state) {
@@ -547,4 +554,33 @@ function simpleUpSc(parent) {
     sm.addMethod(self, "run", simpleUpSc_run);
     self.state = "3";
     return self;
+}
+
+Object.defineProperty(unit, "x1", {
+    get: function() { return x1; },
+    set: function(newValue) { x1 = newValue; },
+    enumerable: true,
+    configurable: true
+});
+Object.defineProperty(unit, "x2", {
+    get: function() { return x2; },
+    set: function(newValue) { x2 = newValue; },
+    enumerable: true,
+    configurable: true
+});
+console.log("init!")
+
+unit.Receive = Receive;
+unit.blueScenario = blueScenario;
+unit.emptySc = emptySc;
+unit.forLoopSc = forLoopSc;
+unit.foreachArraySc = foreachArraySc;
+unit.foreachMapSc = foreachMapSc;
+unit.inputTest = inputTest;
+unit.insertionTest = insertionTest;
+unit.lambda = lambda;
+unit.nonCanonicalSc = nonCanonicalSc;
+unit.pauseSc = pauseSc;
+unit.simpleUpSc = simpleUpSc;
+return unit;
 }
