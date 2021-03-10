@@ -1248,9 +1248,8 @@ function completeCommon(build) {
     	build.lines.push(
     		"module.exports." +
     		diagram.name + " = " + 
-    		diagram.name + ";\n")
+    		diagram.name + ";")
     }
-    build.lines.push("module.exports = {};\n")
     exported.forEach(addToModule)
 }
 
@@ -1260,11 +1259,26 @@ function completeFactory(build) {
     addToModule = function(diagram) {
     	build.lines.push("module." + 
     		diagram.name + " = " + 
-    		diagram.name + ";\n")
+    		diagram.name + ";")
     }
     exported.forEach(addToModule)
-    build.lines.push("return module;\n")
-    build.lines.push("}\n")
+    build.lines.push("return module;")
+    build.lines.push("}")
+    build.lines.push("")
+}
+
+function completeFactory2(build) {
+    var addToModule, exported
+    exported = getExported(build)
+    addToModule = function(diagram) {
+    	build.lines.push("unit." + 
+    		diagram.name + " = " + 
+    		diagram.name + ";")
+    }
+    exported.forEach(addToModule)
+    build.lines.push("return unit;")
+    build.lines.push("}")
+    build.lines.push("")
 }
 
 function completeLoop(item, context) {
@@ -3631,3 +3645,6 @@ init()
 module.exports.beginBuild = beginBuild
 module.exports.processDiagram = processDiagram
 module.exports.completeBuild = completeBuild
+module.exports.completeFactory = completeFactory
+module.exports.completeFactory2 = completeFactory2
+module.exports.completeCommon = completeCommon

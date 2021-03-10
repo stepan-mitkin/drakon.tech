@@ -166,9 +166,9 @@ async function createBuild(req) {
         }
     }
 
-    if (props.language == "LANG_JS" || props.language == "LANG_JS2") {
+    if (props.language == "LANG_JS" || props.language == "LANG_JS2") {        
         var userLanguage = req.body.language || "en"
-        var buildId = createBuildRecord(spaceId, folderId, props, userLanguage)
+        var buildId = createBuildRecord(spaceId, folderId, props, userLanguage, req.body.userId)
         var buildFun = () => {
             jsBuild(buildId)
         }
@@ -201,43 +201,19 @@ function shouldStop(record) {
 async function jsBuild(buildId) {
     var fid
     try {
-        var record = globals.builds[buildId]
+        var record = globals.builds[buildId]        
         fid = record.fid
-        var folder = await getModule(record.spaceId, record.folderId)   
-        record.name = folder.name.trim()
-        record.diagrams = folder.diagrams
-        record.gentoken = await getGenToken(record.spaceId)
-        record.filename = record.name + ".js"
-        record.htmlName = record.name + ".html"
-        record.jsUrl = "/gen/" + record.gentoken + "/" + record.filename
-        record.resultUrl = "/gen/" + record.gentoken + "/" + record.htmlName
-        record.path = config.genPath + "/" + record.gentoken + "/" + record.filename
-        record.htmlPath = config.genPath + "/" + record.gentoken + "/" + record.htmlName
-        record.lines = []
 
-        console.log("Language", record.props.language)
-        genserver.beginBuild(record)
-
-        if (shouldStop(record)) {
-            return
-        }
-
-        record.diagrams = _.sortBy(record.diagrams, "name")
-
-        for (var i = 0; i < record.diagrams.length; i++) {
-            var diagram = record.diagrams[i]
-            diagram.input = await getFolder(diagram.space_id, diagram.id)
-            genserver.processDiagram(record, diagram)
-
-            if (shouldStop(record)) {
+        if (record.props.language === "LANG_JS") {
+            await buildV1(record)
+        } else {
+            var success = await buildV2(record)
+            if (!success) {
+                record.state = "error"
+                console.log(record.errors)
                 return
-            }     
+            }
         }
-
-        genserver.completeBuild(record)
-
-        await writeAllText(record.path, record.lines.join("\n"))
-        await writeAllText(record.htmlPath, record.props.html) 
 
         record.state = "success"
     } catch (e) {
@@ -247,6 +223,373 @@ async function jsBuild(buildId) {
         var message = e.message || e
         pushGenericError(record, message)
     }
+}
+
+async function buildV2(record) {
+    var folder = await getModule(record.spaceId, record.folderId)   
+    await initStartRecord(record, folder)
+    
+    if (record.props.mformat === "MES_PROGRAM") {
+        return await generateProgram(record)    
+    } else {
+        return await generateNormal(record)
+    }
+}
+
+async function expandDepependencyTree(record) {
+    record.modules = {}
+    record.allDeps = {}
+    record.npms = {}
+    var root = {
+        name: record.name,
+        props: record.props,
+        deps: []
+    }
+    
+    await expandDepependencyNode(record, root)
+}
+
+async function expandDepependencyNode(record, module, isRoot) {
+    if (module.name in record.modules) {
+        return
+    }
+
+    record.modules[module.name] = module
+    if (!parseDependencies(module)) {
+        record.state = "error"
+        return
+    }
+    
+    for (var dep of module.deps) {
+        if (dep.type === "project-module") {
+            var depModule = await findModule(record, dep.project, dep.module)
+            await expandModule(record, dep, depModule, isRoot)
+        } else if (dep.type === "module") {
+            var depModule = await findModule(record, record.spaceId, dep.module)
+            await expandModule(record, dep, depModule, isRoot)
+        } else if (dep.type === "anon") {
+            getCreateSimpleDep(record, dep)
+        } else if (dep.type === "npm") {
+            addToRequiresList(record, dep)
+        }
+    }
+}
+
+async function findModule(record, spaceId, moduleName) {
+    var payload = {
+        user_id: record.userId,
+        space_id: spaceId,
+        module_name: moduleName
+    }
+    
+    var url = `http://localhost:${config.dtPort}/api/find_module`
+    try {
+        var response = await postToDt(url, payload)
+        response.fid = spaceId + " " + response.id
+        console.log(response)
+        return response
+    } catch (e) {
+        logger.error(e)
+        if (e.response.state == 404) {
+            throw new Error("Module not found. Project: " + spaceId + ", module: " + moduleName)
+        } else if (e.response.state == 403) {
+            throw new Error("Access denied to module. Project: " + spaceId + ", module: " + moduleName)        
+        } else {            
+            throw new Error(e.message)
+        }
+    }
+}
+
+async function expandModule(record, dep, module, isRoot) {
+    var format = module.props.mformat || "MES_MODULE"
+    if (format != "MES_MODULE") {
+        var error = {
+            type: "folder",
+            target: module.fid,
+            name: module.name,
+            message: "Programs cannot be included in dependencies"
+        }        
+        record.errors.push(error)        
+        throw new Error("Dependency error")
+    }
+
+    await expandDepependencyNode(record, module, false)    
+    getCreateModuleDep(record, dep, module, isRoot)
+}
+
+function getCreateModuleDep(record, dep, module, isRoot) {
+    var depRecord = getCreateSimpleDep(record, dep)
+    if (depRecord.modules.length === 0) {
+        depRecord.modules.push(module)
+    } else {
+        if (isRoot) {
+            depRecord.modules = [module]
+        } else {
+            depRecord.modules.push(module)
+        }
+    }
+}
+
+function getCreateSimpleDep(record, dep) {
+    var depRecord = record.allDeps[dep.name]
+    if (!depRecord) {
+        depRecord = {
+            name: dep.name,
+            modules: []
+        }
+        record.allDeps[dep.name] = depRecord
+    }
+    return depRecord
+}
+
+function addToRequiresList(record, dep) {
+    record.npms[dep.package] = true
+}
+
+async function generateProgram(record) {    
+    var module = makeModuleRecord(record.name, record.props, record.diagrams, record)
+    console.log(record)
+    await expandDepependencyTree(record)
+    console.log(record)
+    if (shouldStop(record)) {
+        return false
+    }
+
+    addVariables(module)
+    await generateFunctions(module)
+    
+    if (record.state != "working" || module.state != "working") {        
+        return false
+    }
+    addInit(module)
+    genserver.completeCommon(module)
+    
+    await writeAllText(record.path, record.lines.join("\n"))
+    await writeAllText(record.htmlPath, record.props.html)       
+    return true
+}
+
+
+async function generateNormal(record) {    
+    var module = makeModuleRecord(record.name, record.props, record.diagrams, record)
+    if (!parseDependencies(module)) {
+        record.state = "error"
+        return false
+    }
+    console.log(module)
+    
+    addFunctionHeader(module)
+    addDependencyVars(module)
+    addVariables(module)
+    await generateFunctions(module)
+    
+    if (record.state != "working" || module.state != "working") {        
+        return false
+    }
+    addExported(module)
+    addDependencySetters(module)
+    addInit(module)
+    genserver.completeFactory2(module)
+        
+    await writeAllText(record.path, record.lines.join("\n"))
+    await writeAllText(record.htmlPath, record.props.html)       
+    return true
+}
+
+function split(text, delimiter) {
+    if (!text) {
+        return []
+    }
+
+    var parts = text.split(delimiter)
+    var result = []
+    for (let part of parts) {
+        var trimmed = part.trim()
+        if (trimmed) {
+            result.push(trimmed)
+        }
+    }
+    return result
+}
+
+function parseDependencies(module) {
+    var lines = split(module.props.dependencies, "\n")
+    module.deps = []
+    for (let line of lines) {
+        var parts = split(line, " ")
+        var name = parts[0]
+        if (parts.length === 1) {
+            module.deps.push({
+                name: name,
+                type: "anon"
+            })
+        } else if (parts.length === 2) {
+            var p2 = split(parts[1], "/")
+            if (p2.length === 1) {
+                module.deps.push({
+                    name: name,
+                    module: parts[1],
+                    type: "module"
+                })
+            } else if (p2.length === 2) {
+                if (p2[0] === "npm") {
+                    module.deps.push({
+                        name: name,
+                        package: p2[1],
+                        type: "npm"
+                    })
+                } else {
+                    module.deps.push({
+                        name: name,
+                        project: p2[0],
+                        module: p2[1],                        
+                        type: "project-module"
+                    })
+                }
+            }
+        }
+    }
+    var visited = {}
+    for (let dep of module.deps) {        
+        if (dep.name in visited) {            
+            addModuleError(module, "Dependency is not unique: " + dep.name)
+            return false
+        }        
+        visited[dep.name] = true
+    }
+    return true
+}
+
+function addModuleError(module, message) {
+    var error = {
+        type: "folder",
+        target: module.fid,
+        name: module.name,
+        message: message
+    }
+    
+    module.errors.push(error)
+}
+
+function addFunctionHeader(module) {
+    module.lines.push("")
+    module.lines.push("function " + module.name + "_module() {")
+    module.lines.push("var unit = {};")
+    module.lines.push("")
+}
+
+function addVariables(module) {
+    addTextChunk(module, module.props.vars)
+}
+
+function addTextChunk(module, text) {
+    if (text) {
+        var lines = split(text, "\n")
+        lines.push("")
+        for (var line of lines) {
+            module.lines.push(line)
+        }        
+    }
+}
+
+function addDependencyVars(module) {
+    for (var dep of module.deps) {
+        module.lines.push("var " + dep.name + ";")
+    }
+}
+
+async function generateFunctions(module) {
+    for (var i = 0; i < module.diagrams.length; i++) {
+        var diagram = module.diagrams[i]
+        diagram.input = await getFolder(diagram.space_id, diagram.id)
+        genserver.processDiagram(module, diagram)
+
+        if (shouldStop(module)) {
+            return
+        }     
+    }
+}
+
+function addExported(module) {
+    
+}
+
+function addDependencySetters(module) {
+    for (var dep of module.deps) {
+        
+        module.lines.push()
+
+        module.lines.push("Object.defineProperty(module, \"" + dep.name + "\", {")
+        module.lines.push("    get: function() { return " + dep.name + "; },")
+        module.lines.push("    set: function(newValue) { " + dep.name + " = newValue; },")
+        module.lines.push("    enumerable: true,")
+        module.lines.push("    configurable: true")
+        module.lines.push("});")        
+    }
+}
+
+
+
+function addInit(module) {
+    addTextChunk(module, module.props.init)
+}
+
+
+function makeModuleRecord(name, props, diagrams, record) {
+    var module = {
+        name: name,
+        props: props,
+        state: "working",
+        errors: record.errors,
+        lines: record.lines,
+        diagrams: _.sortBy(diagrams, "name"),
+        mformat: props.mformat,
+        deps: []
+    }
+
+    return module
+}
+
+async function initStartRecord(record, folder) {
+    record.name = folder.name.trim()
+    record.diagrams = folder.diagrams
+    record.gentoken = await getGenToken(record.spaceId)
+    record.filename = record.name + ".js"
+    record.htmlName = record.name + ".html"
+    record.jsUrl = "/gen/" + record.gentoken + "/" + record.filename
+    record.resultUrl = "/gen/" + record.gentoken + "/" + record.htmlName
+    record.path = config.genPath + "/" + record.gentoken + "/" + record.filename
+    record.htmlPath = config.genPath + "/" + record.gentoken + "/" + record.htmlName
+    record.lines = []
+}
+
+async function buildV1(record) {
+    var folder = await getModule(record.spaceId, record.folderId)   
+    await initStartRecord(record, folder)
+
+    console.log("Language", record.props.language)
+    genserver.beginBuild(record)
+
+    if (shouldStop(record)) {
+        return
+    }
+
+    record.diagrams = _.sortBy(record.diagrams, "name")
+
+    for (var i = 0; i < record.diagrams.length; i++) {
+        var diagram = record.diagrams[i]
+        diagram.input = await getFolder(diagram.space_id, diagram.id)
+        genserver.processDiagram(record, diagram)
+
+        if (shouldStop(record)) {
+            return
+        }     
+    }
+
+    genserver.completeBuild(record)
+
+    await writeAllText(record.path, record.lines.join("\n"))
+    await writeAllText(record.htmlPath, record.props.html)     
 }
 
 async function writeAllText(path, text) {
@@ -262,7 +605,7 @@ function randomString() {
     return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 }
 
-function createBuildRecord(spaceId, folderId, props, userLanguage) {
+function createBuildRecord(spaceId, folderId, props, userLanguage, userId) {
     while (true) {
         var id = randomString()
         if (!(id in globals.builds)) {
@@ -274,6 +617,7 @@ function createBuildRecord(spaceId, folderId, props, userLanguage) {
                 props,
                 state: "working",
                 userLanguage,
+                userId,
                 errors: []
             }
             globals.builds[id] = item
@@ -301,6 +645,20 @@ async function getFolder(spaceId, folderId) {
 async function getModule(spaceId, folderId) {
     var url = `http://localhost:${config.dtPort}/api/module/${spaceId}/${folderId}`
     return await getFromDt(url, 1)
+}
+
+async function postToDt(url, payload) {    
+    var options = {
+        url,
+        method: 'post',
+        headers: {
+            authorization: await getAuthorization()
+        },
+        data: payload
+    }    
+
+    var resp = await axios(options)
+    return resp.data
 }
 
 async function getFromDt(url, retries) {

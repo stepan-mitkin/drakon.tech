@@ -7902,7 +7902,8 @@ function startBuild(self, spaceId, folderId) {
     	spaceId +
     	"/" + folderId
     data = {
-        language : gLanguage
+        language : gLanguage,
+        userId : gUserId
     }
     browser.sendPost(
         url,

@@ -421,6 +421,7 @@
 	"MES_CREATE_OBJECT": "Create a new diagram or another object",
 	"MES_CLASS": "Class",
 	"MES_MODULE": "Module",
+	"MES_PROGRAM": "Program",
 	"MES_MODULES": "Modules",
 	"MES_PROPS_FOR": "Properties of module",
 	"MES_FOLDER": "Folder",

@@ -425,6 +425,7 @@
 	"MES_CREATE_OBJECT": "Создать диаграмму или другой объект",
 	"MES_CLASS": "Класс",
 	"MES_MODULE": "Модуль",
+	"MES_PROGRAM": "Программа",
 	"MES_MODULES": "Модули",
 	"MES_PROPS_FOR": "Свойства модуля",
 	"MES_FOLDER": "Папка",

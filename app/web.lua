@@ -757,6 +757,39 @@ function api_feedback(req, session, headers)
     return make_empty_response(headers)
 end
 
+function api_find_module(req, session, headers)
+    local body = req:json()
+    local roles = vud.get_user_roles(body.user_id)
+    local ok, result = space.get_prog_modules(
+    	body.space_id,
+    	body.user_id,
+    	roles
+    )
+    if ok then
+        for _, module in ipairs(result.modules) do
+            if module.name == body.module_name then
+                local ok, module_info = space.get_module(
+                	module.space_id,
+                	module.folder_id,
+                	body.user_id,
+                	roles
+                )
+                local ok, props = space.get_folder_props(
+                	module.space_id,
+                	module.folder_id,
+                	body.user_id,
+                	roles
+                )
+                module_info.props = props
+                return make_json_success(headers, module_info)
+            end
+        end
+        return result_from_message(headers, "ERR_NOT_FOUND")
+    else
+        return result_from_message(headers, result)
+    end
+end
+
 function api_find_users(req, session, headers)
     local data = req:json()
     if data then
@@ -4547,6 +4580,7 @@ function start()
     api("gentoken", "GET", false, false, api_get_gentoken)
     api("prog_modules", "GET", false, false, api_get_prog_modules)
     api("module", "GET", false, false, api_get_module)
+    api("find_module", "POST", false, false, api_find_module)
     api("build", "POST", false, false, api_build)
     api("build", "GET", false, false, api_get_build_status)
     api("folder_props", "GET", false, false, api_get_folder_props)
