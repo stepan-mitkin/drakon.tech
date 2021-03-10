@@ -41,12 +41,14 @@ local default_html = "<!DOCTYPE html>\n" ..
 "<head>\n" ..
 "  <meta charset=\"utf-8\"/>\n" ..
 "  <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"/>\n" ..
+"<link rel=\"shortcut icon\" href=\"https://app.drakon.tech/static/favicon.ico\" />\n" ..
+"<link rel=\"icon\" type=\"image/png\" href=\"https://app.drakon.tech/static/favicon.png\" />\n" ..
+"  <link rel=\"stylesheet\" href=\"https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css\" integrity=\"sha512-NmLkDIU1C/C88wi324HBc+S2kLhi08PN5GDeUVVVC/BVt/9Izdsc9SVeVfA1UZbY3sHUlDSyRXhCzHfr6hmPPw==\" crossorigin=\"anonymous\" />\n" ..
 "  <title>@name@</title>\n" ..
 "</head>\n" ..
 "<body>\n" ..
-"  <h1>@name@</h1>\n" ..
 "  <div id=\"main\"></div>\n" ..
-"  <script src=\"/gen/@gentoken@/@name@.js\">\n" ..
+"  <script src=\"@name@.js\">\n" ..
 "   </script>\n" ..
 "  <script>\n" ..
 "  </script>\n" ..
@@ -1560,8 +1562,7 @@ end
 function get_children(space_id, folder_id)
     local children = {}
     local language = nil
-    local path, language
-    local module, module_name
+    local path_info
     local kids = get_child_folders(
     	space_id,
     	folder_id
@@ -1581,11 +1582,11 @@ function get_children(space_id, folder_id)
             	keywords = cdata.keywords
             }
             if cdata.type == "module" then
-                path, language, module, module_name =
-                	get_path(space_id, child_id)
-                item.language = language
-                item.module = module
-                item.module_name = module_name
+                path_info = get_path(space_id, child_id)
+                item.language = path_info.language
+                item.module = path_info.module
+                item.module_name = path_info.module_name
+                item.mformat = path_info.mformat
             end
             table.insert(children, item)
         end
@@ -1681,6 +1682,7 @@ function get_first_admin(space_id)
 end
 
 function get_folder(space_id, folder_id, visit, user_id, roles)
+    local path_info
     local space_error, access, is_public = check_read_access(
     	space_id,
     	user_id,
@@ -1700,18 +1702,18 @@ function get_folder(space_id, folder_id, visit, user_id, roles)
                 	user_id
                 )
             end
-            local path, language, module, module_name =
-            	get_path(space_id, folder_id)
+            path_info = get_path(space_id, folder_id)
             local items = get_items(space_id, folder_id)
             local children = get_children(space_id, folder_id)
             local parent = db.folder_tree_get(
             	space_id,
             	folder_id
             )
-            if module then
+            if path_info.module then
                 for _, child in ipairs(children) do
-                    child.module = module
-                    child.module_name = module_name
+                    child.module = path_info.module
+                    child.module_name = path_info.module_name
+                    child.mformat = path_info.mformat
                 end
             end
             local result = {
@@ -1727,12 +1729,13 @@ function get_folder(space_id, folder_id, visit, user_id, roles)
             	access = access,
             	children = children,
             	items = items,
-            	path = path,
+            	path = path_info.path,
             	is_public = is_public,
             	version = fdata.version or 0,
-            	language = language,
-            	module = module,
-            	module_name = module_name
+            	language = path_info.language,
+            	module = path_info.module,
+            	module_name = path_info.module_name,
+            	mformat = path_info.mformat
             }
             return true, result
         else
@@ -1886,6 +1889,7 @@ function get_path(space_id, folder_id)
     local language = nil
     local module = nil
     local module_name = nil
+    local mformat = nil
     local fdata
     while true do
         fdata = db.folder_get(
@@ -1897,6 +1901,11 @@ function get_path(space_id, folder_id)
             	space_id,
             	folder_id,
             	"language"
+            )
+            mformat = db.folder_props_get(
+            	space_id,
+            	folder_id,
+            	"mformat"
             )
             module = folder_id
             module_name = fdata.name
@@ -1919,7 +1928,13 @@ function get_path(space_id, folder_id)
             break
         end
     end
-    return utils.reverse(path), language, module, module_name
+    return {
+    	path = utils.reverse(path),
+    	language = language,
+    	module = module,
+    	module_name = module_name,
+    	mformat = mformat
+    }
 end
 
 function get_prog_modules(space_id, user_id, roles)
@@ -1981,13 +1996,17 @@ function get_recent(user_id)
             	record.space_id,
             	record.folder_id
             )
-            record.name = folder.name
-            record.type = folder.type
-            record.path, record.language, 
-            record.module, record.module_name = get_path(
+            local path_info = get_path(
             	record.space_id,
             	record.folder_id
             )
+            record.name = folder.name
+            record.type = folder.type
+            record.path = path_info.path
+            record.language = path_info.language
+            record.module = path_info.module
+            record.module_name = path_info.module_name
+            record.mformat = path_info.mformat
             table.insert(result, record)
         end
         local compare_name = function(left, right)

@@ -1231,7 +1231,7 @@ function completeBuild(build) {
             completeFactory(build)
         } else {
             if (_sw21960000_ === "MES_COMMONJS") {
-                completeCommon(build)
+                completeCommon(build, build.lines)
             }
         }
     }
@@ -1241,11 +1241,11 @@ function completeBuild(build) {
     )
 }
 
-function completeCommon(build) {
+function completeCommon(build, lines) {
     var addToModule, exported
     exported = getExported(build)
     addToModule = function(diagram) {
-    	build.lines.push(
+    	lines.push(
     		"module.exports." +
     		diagram.name + " = " + 
     		diagram.name + ";")

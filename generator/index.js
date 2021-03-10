@@ -71,18 +71,18 @@ function buildLogPayload(obj, src) {
 }
 
 var logger = {
-    error: function(obj, src) {
+    error: function (obj, src) {
         var payload = buildLogPayload(obj, src)
         wlogger.error(payload)
     },
-    info: function(obj) {
+    info: function (obj) {
         var payload = buildLogPayload(obj)
-        wlogger.info(payload)  
+        wlogger.info(payload)
     }
 }
 
 wlogger.stream = {
-    write: function(message, encoding){
+    write: function (message, encoding) {
         wlogger.info(message);
     }
 };
@@ -92,15 +92,15 @@ app.post('/private/:space/:folder', async function (req, res) {
         var result = await createBuild(req)
         if (result.ok) {
             var url = "/api/build/" + result.id
-            res.json({url})
+            res.json({ url })
         } else {
             res.status(400)
-            res.json({message: result.message})
+            res.json({ message: result.message })
         }
     } catch (e) {
         logger.error(e)
         res.status(500)
-        res.json({error:"ERR_SERVER"})
+        res.json({ error: "ERR_SERVER" })
     }
 })
 
@@ -110,7 +110,7 @@ app.get('/build/:id', function (req, res) {
         if (!record || record.state == "stopped") {
             return res.json({
                 state: "error",
-                errors: [{message: "ERR_BUILD_NOT_FOUND"}]
+                errors: [{ message: "ERR_BUILD_NOT_FOUND" }]
             })
         }
         var result = {
@@ -128,7 +128,7 @@ app.get('/build/:id', function (req, res) {
         logger.error(e)
         res.status(500)
         res.send("ERR_SERVER")
-    }    
+    }
 })
 
 app.delete('/build/:id', function (req, res) {
@@ -136,13 +136,13 @@ app.delete('/build/:id', function (req, res) {
         var record = globals.builds[req.params.id]
         if (record) {
             record.state = "stopped"
-        }   
+        }
         res.send()
     } catch (e) {
         logger.error(e)
         res.status(500)
         res.send("ERR_SERVER")
-    }    
+    }
 })
 
 
@@ -154,7 +154,7 @@ var server = app.listen(config.port, function () {
 })
 
 async function createBuild(req) {
-    var spaceId = req.params.space 
+    var spaceId = req.params.space
     var folderId = req.params.folder
     var props
     try {
@@ -166,7 +166,7 @@ async function createBuild(req) {
         }
     }
 
-    if (props.language == "LANG_JS" || props.language == "LANG_JS2") {        
+    if (props.language == "LANG_JS" || props.language == "LANG_JS2") {
         var userLanguage = req.body.language || "en"
         var buildId = createBuildRecord(spaceId, folderId, props, userLanguage, req.body.userId)
         var buildFun = () => {
@@ -183,7 +183,7 @@ async function createBuild(req) {
         return {
             ok: false,
             message
-        }        
+        }
     } else {
         var message = `Language not supported for module ${spaceId}-${folderId}: ${props.language}`
         logger.error(message)
@@ -201,7 +201,7 @@ function shouldStop(record) {
 async function jsBuild(buildId) {
     var fid
     try {
-        var record = globals.builds[buildId]        
+        var record = globals.builds[buildId]
         fid = record.fid
 
         if (record.props.language === "LANG_JS") {
@@ -210,14 +210,13 @@ async function jsBuild(buildId) {
             var success = await buildV2(record)
             if (!success) {
                 record.state = "error"
-                console.log(record.errors)
                 return
             }
         }
 
         record.state = "success"
     } catch (e) {
-        var payload = {error:e.toString() + " " + e.stack, fid:fid, src:"jsBuild"}
+        var payload = { error: e.toString() + " " + e.stack, fid: fid, src: "jsBuild" }
         logger.error(payload)
         record.state = "error"
         var message = e.message || e
@@ -226,11 +225,11 @@ async function jsBuild(buildId) {
 }
 
 async function buildV2(record) {
-    var folder = await getModule(record.spaceId, record.folderId)   
+    var folder = await getModule(record.spaceId, record.folderId)
     await initStartRecord(record, folder)
-    
+
     if (record.props.mformat === "MES_PROGRAM") {
-        return await generateProgram(record)    
+        return await generateProgram(record)
     } else {
         return await generateNormal(record)
     }
@@ -245,8 +244,18 @@ async function expandDepependencyTree(record) {
         props: record.props,
         deps: []
     }
-    
+
     await expandDepependencyNode(record, root)
+    for (var dname in record.allDeps) {
+        var dep = record.allDeps[dname]
+        if (dep.modules.length === 0) {
+            throw new Error("No details specified for dependency: " + dname)
+        }
+
+        if (dep.modules.length > 1) {
+            throw new Error("Dependency " + dname + " has more than one target. You can override dependencies in the program module")
+        }
+    }
 }
 
 async function expandDepependencyNode(record, module, isRoot) {
@@ -259,7 +268,7 @@ async function expandDepependencyNode(record, module, isRoot) {
         record.state = "error"
         return
     }
-    
+
     for (var dep of module.deps) {
         if (dep.type === "project-module") {
             var depModule = await findModule(record, dep.project, dep.module)
@@ -275,26 +284,35 @@ async function expandDepependencyNode(record, module, isRoot) {
     }
 }
 
+function getStatus(exception) {
+    if (exception.response) {
+        return exception.response.status
+    }
+
+    return undefined
+}
+
 async function findModule(record, spaceId, moduleName) {
     var payload = {
         user_id: record.userId,
         space_id: spaceId,
         module_name: moduleName
     }
-    
+
     var url = `http://localhost:${config.dtPort}/api/find_module`
     try {
         var response = await postToDt(url, payload)
         response.fid = spaceId + " " + response.id
-        console.log(response)
+        response.lines = record.lines
+        response.errors = record.errors
         return response
     } catch (e) {
-        logger.error(e)
-        if (e.response.state == 404) {
+
+        if (getStatus(e) == 404) {
             throw new Error("Module not found. Project: " + spaceId + ", module: " + moduleName)
-        } else if (e.response.state == 403) {
-            throw new Error("Access denied to module. Project: " + spaceId + ", module: " + moduleName)        
-        } else {            
+        } else if (getStatus(e) == 403) {
+            throw new Error("Access denied to module. Project: " + spaceId + ", module: " + moduleName)
+        } else {
             throw new Error(e.message)
         }
     }
@@ -308,26 +326,33 @@ async function expandModule(record, dep, module, isRoot) {
             target: module.fid,
             name: module.name,
             message: "Programs cannot be included in dependencies"
-        }        
-        record.errors.push(error)        
+        }
+        record.errors.push(error)
         throw new Error("Dependency error")
     }
 
-    await expandDepependencyNode(record, module, false)    
+    await expandDepependencyNode(record, module, false)
     getCreateModuleDep(record, dep, module, isRoot)
 }
 
 function getCreateModuleDep(record, dep, module, isRoot) {
     var depRecord = getCreateSimpleDep(record, dep)
-    if (depRecord.modules.length === 0) {
-        depRecord.modules.push(module)
+
+    if (isRoot) {
+        depRecord.modules = [module]
     } else {
-        if (isRoot) {
-            depRecord.modules = [module]
-        } else {
-            depRecord.modules.push(module)
+        mergeDependency(depRecord.modules, module)
+    }
+}
+
+function mergeDependency(modules, module) {
+    for (var existing of modules) {
+        if (existing.fid === module.fid) {
+            return
         }
     }
+
+    modules.push(module)
 }
 
 function getCreateSimpleDep(record, dep) {
@@ -343,56 +368,146 @@ function getCreateSimpleDep(record, dep) {
 }
 
 function addToRequiresList(record, dep) {
-    record.npms[dep.package] = true
+    record.npms[dep.name] = dep
 }
 
-async function generateProgram(record) {    
+function getDepNames(record) {
+    var result = []
+    for (var modName in record.modules) {
+        if (modName != record.name) {
+            result.push(modName)
+        }
+    }
+    result.sort()
+    return result
+}
+
+async function generateProgram(record) {
     var module = makeModuleRecord(record.name, record.props, record.diagrams, record)
-    console.log(record)
+    
     await expandDepependencyTree(record)
-    console.log(record)
+    
     if (shouldStop(record)) {
         return false
     }
 
+    var depNames = getDepNames(record)
+
+    for (var modName of depNames) {        
+        var bodyOk = await generateNormalBody(record.modules[modName])
+        if (!bodyOk) {
+            return false
+        }        
+    }
+
     addVariables(module)
+
     await generateFunctions(module)
-    
-    if (record.state != "working" || module.state != "working") {        
+
+    if (record.errors.length > 0) {
         return false
     }
+
+    injectDependencies(record, depNames)
+
     addInit(module)
-    genserver.completeCommon(module)
-    
-    await writeAllText(record.path, record.lines.join("\n"))
-    await writeAllText(record.htmlPath, record.props.html)       
+    var commonPart = record.lines.join("\n")
+
+    var browserLines = []    
+    appendTradeMark(browserLines)
+    appendIffeStart(browserLines)
+    browserLines.push(commonPart)
+    appendIffeEnd(browserLines)
+
+    var nodeLines = []
+    appendTradeMark(nodeLines)
+    appendRequires(record, nodeLines)
+
+    nodeLines.push(commonPart)
+    genserver.completeCommon(module, nodeLines)
+
+    var outputDir = config.genPath + "/" + record.gentoken + "/" + record.name + "/"
+    var nodePath = outputDir + "index.js"
+    var browserPath = outputDir + record.filename
+    record.htmlPath = outputDir + "/index.html"
+    record.resultUrl = "/gen/" + record.gentoken + "/" + record.name + "/"
+
+    await fse.mkdir(outputDir, { recursive: true })
+
+    await writeAllText(browserPath, browserLines.join("\n"))
+    await writeAllText(nodePath, nodeLines.join("\n"))
+    await writeAllText(record.htmlPath, record.props.html)
     return true
 }
 
+function appendRequires(record, lines) {    
+    for (var depName in record.npms) {
+        var dep = record.npms[depName]
+        if (dep.obj) {
+            lines.push("const " + depName + " = require(\"" + dep.package + "\")." + dep.obj + ";")
+        } else {
+            lines.push("const " + depName + " = require(\"" + dep.package + "\");")
+        }
+    }
+}
 
-async function generateNormal(record) {    
+function appendTradeMark(lines) {
+    lines.push("// Generated with Drakon.Tech https://drakon.tech/")
+}
+
+function appendIffeStart(lines) {
+    lines.push("")
+    lines.push("(function() {")
+}
+function appendIffeEnd(lines) {
+    lines.push("})();")
+    lines.push("")
+}
+
+function injectDependencies(record, depNames) {
+    for (var depName of depNames) {
+        record.lines.push("var " + depName + " = " + depName + "_module();")        
+    }
+
+    for (var depName of depNames) {
+        var module = record.modules[depName]
+        for (var dep of module.deps) {
+            record.lines.push(depName + "." + dep.name +" = " + dep.name + ";")
+        }
+    }
+}
+
+
+async function generateNormal(record) {
     var module = makeModuleRecord(record.name, record.props, record.diagrams, record)
     if (!parseDependencies(module)) {
-        record.state = "error"
         return false
     }
-    console.log(module)
-    
+
+    var bodyOk = await generateNormalBody(module)
+    if (!bodyOk) {
+        return false
+    }
+
+    await writeAllText(record.path, record.lines.join("\n"))
+    await writeAllText(record.htmlPath, record.props.html)
+    return true
+}
+
+async function generateNormalBody(module) {
     addFunctionHeader(module)
     addDependencyVars(module)
     addVariables(module)
     await generateFunctions(module)
-    
-    if (record.state != "working" || module.state != "working") {        
+
+    if (module.errors.length > 0) {
         return false
     }
     addExported(module)
     addDependencySetters(module)
     addInit(module)
     genserver.completeFactory2(module)
-        
-    await writeAllText(record.path, record.lines.join("\n"))
-    await writeAllText(record.htmlPath, record.props.html)       
+
     return true
 }
 
@@ -431,30 +546,40 @@ function parseDependencies(module) {
                     module: parts[1],
                     type: "module"
                 })
-            } else if (p2.length === 2) {
+            } else {
                 if (p2[0] === "npm") {
-                    module.deps.push({
-                        name: name,
-                        package: p2[1],
-                        type: "npm"
-                    })
+                    if (p2.length === 3) {
+                        module.deps.push({
+                            name: name,
+                            package: p2[1],
+                            type: "npm",
+                            obj: p2[2]
+                        })                  
+                    } else {    
+                        module.deps.push({
+                            name: name,
+                            package: p2[1],
+                            type: "npm"
+                        })
+                    }
                 } else {
                     module.deps.push({
                         name: name,
                         project: p2[0],
-                        module: p2[1],                        
+                        module: p2[1],
                         type: "project-module"
                     })
                 }
+
             }
         }
     }
     var visited = {}
-    for (let dep of module.deps) {        
-        if (dep.name in visited) {            
+    for (let dep of module.deps) {
+        if (dep.name in visited) {
             addModuleError(module, "Dependency is not unique: " + dep.name)
             return false
-        }        
+        }
         visited[dep.name] = true
     }
     return true
@@ -467,7 +592,7 @@ function addModuleError(module, message) {
         name: module.name,
         message: message
     }
-    
+
     module.errors.push(error)
 }
 
@@ -488,7 +613,7 @@ function addTextChunk(module, text) {
         lines.push("")
         for (var line of lines) {
             module.lines.push(line)
-        }        
+        }
     }
 }
 
@@ -506,25 +631,25 @@ async function generateFunctions(module) {
 
         if (shouldStop(module)) {
             return
-        }     
+        }
     }
 }
 
 function addExported(module) {
-    
+
 }
 
 function addDependencySetters(module) {
     for (var dep of module.deps) {
-        
+
         module.lines.push()
 
-        module.lines.push("Object.defineProperty(module, \"" + dep.name + "\", {")
+        module.lines.push("Object.defineProperty(unit, \"" + dep.name + "\", {")
         module.lines.push("    get: function() { return " + dep.name + "; },")
         module.lines.push("    set: function(newValue) { " + dep.name + " = newValue; },")
         module.lines.push("    enumerable: true,")
         module.lines.push("    configurable: true")
-        module.lines.push("});")        
+        module.lines.push("});")
     }
 }
 
@@ -564,10 +689,9 @@ async function initStartRecord(record, folder) {
 }
 
 async function buildV1(record) {
-    var folder = await getModule(record.spaceId, record.folderId)   
+    var folder = await getModule(record.spaceId, record.folderId)
     await initStartRecord(record, folder)
-
-    console.log("Language", record.props.language)
+    
     genserver.beginBuild(record)
 
     if (shouldStop(record)) {
@@ -583,13 +707,13 @@ async function buildV1(record) {
 
         if (shouldStop(record)) {
             return
-        }     
+        }
     }
 
     genserver.completeBuild(record)
 
     await writeAllText(record.path, record.lines.join("\n"))
-    await writeAllText(record.htmlPath, record.props.html)     
+    await writeAllText(record.htmlPath, record.props.html)
 }
 
 async function writeAllText(path, text) {
@@ -597,7 +721,7 @@ async function writeAllText(path, text) {
 }
 
 function pushGenericError(record, message) {
-    record.errors.push({message})
+    record.errors.push({ message })
 }
 
 function randomString() {
@@ -647,7 +771,7 @@ async function getModule(spaceId, folderId) {
     return await getFromDt(url, 1)
 }
 
-async function postToDt(url, payload) {    
+async function postToDt(url, payload) {
     var options = {
         url,
         method: 'post',
@@ -655,7 +779,7 @@ async function postToDt(url, payload) {
             authorization: await getAuthorization()
         },
         data: payload
-    }    
+    }
 
     var resp = await axios(options)
     return resp.data
@@ -673,7 +797,7 @@ async function getFromDt(url, retries) {
         headers: {
             authorization: await getAuthorization()
         }
-    }    
+    }
 
     try {
         var resp = await axios(options)

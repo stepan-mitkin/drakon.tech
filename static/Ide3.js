@@ -4673,7 +4673,7 @@ function showBuild(options) {
         success.innerHTML = "&#10004; " +
         	translate("MES_SUCCESS")
         if (options.url) {
-            var url = "https://" + location.hostname +
+            var url = window.location.origin +
             	options.url
             var linkContainer = make(client, "div")
             linkContainer.style.margin = "15px 5px"
@@ -5944,9 +5944,11 @@ function showSignup(machine) {
     enableSignupOk()
 }
 
-function showUrlScreen(module, url, machine) {
-    url = "https://" + window.location.hostname + 
-     url
+function showUrlScreen(module, urls, machine) {
+    var origin = window.location.origin
+    var url = urls.map(function(item) {
+    	return origin + item
+    }).join("\n")
     var moduleLabel = {
     	type: "wlabel",
     	text: module,

@@ -1244,7 +1244,8 @@ function GenUrlShower_GetUrl_onData(self, msg) {
     parsed = parseId(msg)
     url = "/api/gentoken/" + parsed.spaceId
     self.spaceId = parsed.spaceId
-    self.name = getFromCache(msg).name
+    self.folder = getFromCache(msg)
+    self.name = self.folder.name
     browser.sendGet(
         url,
         self
@@ -1258,9 +1259,18 @@ function GenUrlShower_GetUrl_onError(self, msg) {
 }
 
 function GenUrlShower_ShowUrl_onData(self, msg) {
-    var url
-    url = "/gen/" + msg.gentoken +
-      "/" + self.name + ".js"
+    var url, url1, url2
+    console.log("showUrl", self.folder)
+    if (self.folder.mformat === "MES_PROGRAM") {
+        url1 = "/gen/" + msg.gentoken +
+          "/" + self.name + "/index.js"
+        url2 = "/gen/" + msg.gentoken +
+          "/" + self.name + "/package.json"
+        url = [url1, url2]
+    } else {
+        url = ["/gen/" + msg.gentoken +
+          "/" + self.name + ".js"]
+    }
     browser.showUrlScreen(
         self.name,
         url,
