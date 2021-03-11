@@ -271,8 +271,10 @@ async function expandDepependencyTree(record) {
     }
 
     await expandDepependencyNode(record, root)
+    
     for (var dname in record.allDeps) {
         var dep = record.allDeps[dname]
+        console.log(dname, dep.modules[0])
         if (dep.modules.length === 0) {
             throw new Error("No details specified for dependency: " + dname)
         }
@@ -392,18 +394,55 @@ function getCreateSimpleDep(record, dep) {
     return depRecord
 }
 
-function getDepNames(record) {
+function getModuleNames(record, depNames) {
     var names = {}
-    for (var depName in record.allDeps) {
+    for (var depName of depNames) {
         var dep = record.allDeps[depName]
         var target = dep.modules[0]
-        if (target.type == "module" && target.name != record.name) {
-            names[target.name] = true
+        if (target.type == "module") {
+            names[depName] = true
         }
     }
     var result = Object.keys(names)
     result.sort()
     return result
+}
+
+function findProgramModule(record) {
+    for (var moduleName in record.modules) {
+        if (moduleName == record.name) {
+            return record.modules[moduleName]
+        }
+    }
+}
+
+function getDepNames(record) {
+    var programModule = findProgramModule(record)
+    var names = {}
+    getDepNamesCore(record, programModule, names)    
+    var result = Object.keys(names)
+    result.sort()
+    return result
+}
+
+function getDepNamesCore(record, module, names) {
+    for (var mdep of module.deps) {
+        if (mdep.name in names) {
+            continue
+        }
+        names[mdep.name] = true
+        var dep = record.allDeps[mdep.name]
+        var target = dep.modules[0]
+        if (target.type === "module") {
+            getDepNamesCore(record, target, names)
+        }
+    }    
+}
+
+function getModuleByDepName(record, depName) {
+    var dep = record.allDeps[depName]
+    var target = dep.modules[0]
+    return record.modules[target.name]
 }
 
 async function generateProgram(record) {
@@ -416,9 +455,11 @@ async function generateProgram(record) {
     }
 
     var depNames = getDepNames(record)
+    var modNames = getModuleNames(record, depNames)
 
-    for (var modName of depNames) {        
-        var bodyOk = await generateNormalBody(record.modules[modName])
+    for (var depName of modNames) {
+        var mod = getModuleByDepName(record, depName)
+        var bodyOk = await generateNormalBody(mod)
         if (!bodyOk) {
             return false
         }        
@@ -432,7 +473,7 @@ async function generateProgram(record) {
         return false
     }
 
-    injectDependencies(record, depNames)
+    injectDependencies(record, modNames)
 
     addInit(module)
     var commonPart = record.lines.join("\n")
@@ -543,13 +584,15 @@ function appendIffeEnd(lines) {
     lines.push("")
 }
 
-function injectDependencies(record, depNames) {
-    for (var depName of depNames) {
-        record.lines.push("var " + depName + " = " + depName + "_module();")        
+function injectDependencies(record, modNames) {
+
+    for (var depName of modNames) {
+        var module = getModuleByDepName(record, depName)
+        record.lines.push("var " + depName + " = " + module.name + "_module();")
     }
 
-    for (var depName of depNames) {
-        var module = record.modules[depName]
+    for (var depName of modNames) {
+        var module = getModuleByDepName(record, depName)
         for (var dep of module.deps) {
             record.lines.push(depName + "." + dep.name +" = " + dep.name + ";")
         }
