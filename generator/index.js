@@ -15,6 +15,8 @@ app.use(bodyParser.json())
 
 var allowedChars;
 
+var gVersions = {}
+
 const globals = {
     builds: {}
 }
@@ -274,7 +276,7 @@ async function expandDepependencyTree(record) {
     
     for (var dname in record.allDeps) {
         var dep = record.allDeps[dname]
-        console.log(dname, dep.modules[0])
+        
         if (dep.modules.length === 0) {
             throw new Error("No details specified for dependency: " + dname)
         }
@@ -540,13 +542,18 @@ async function writePackageJson(record, outputDir) {
 }
 
 async function getNpmVersion(package) {
-    if (!isStringSafe(package)) {
-        throw new Error("Package name contains unsafe characters: " + package)
+    var version = gVersions[package]
+    if (!version) {
+        if (!isStringSafe(package)) {
+            throw new Error("Package name contains unsafe characters: " + package)
+        }
+        var command = "npm show " + package + " version"
+        var execp = util.promisify(exec)
+        var response = await execp(command);
+        version = response.stdout.trim()
+        gVersions[package] = version
     }
-    var command = "npm show " + package + " version"
-    var execp = util.promisify(exec)
-    var response = await execp(command);
-    return response.stdout.trim()
+    return version
 }
 
 function appendRequires(record, lines) {   
