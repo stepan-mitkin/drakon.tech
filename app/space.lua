@@ -41,15 +41,21 @@ local default_html = "<!DOCTYPE html>\n" ..
 "<head>\n" ..
 "  <meta charset=\"utf-8\"/>\n" ..
 "  <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"/>\n" ..
-"<link rel=\"shortcut icon\" href=\"https://app.drakon.tech/static/favicon.ico\" />\n" ..
-"<link rel=\"icon\" type=\"image/png\" href=\"https://app.drakon.tech/static/favicon.png\" />\n" ..
+"  <link rel=\"shortcut icon\" href=\"https://app.drakon.tech/static/favicon.ico\" />\n" ..
+"  <link rel=\"icon\" type=\"image/png\" href=\"https://app.drakon.tech/static/favicon.png\" />\n" ..
 "  <link rel=\"stylesheet\" href=\"https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css\" integrity=\"sha512-NmLkDIU1C/C88wi324HBc+S2kLhi08PN5GDeUVVVC/BVt/9Izdsc9SVeVfA1UZbY3sHUlDSyRXhCzHfr6hmPPw==\" crossorigin=\"anonymous\" />\n" ..
+"  <style>\n" ..
+"  *, *:before, *:after {\n" ..
+"    -webkit-box-sizing: border-box;\n" ..
+"    -moz-box-sizing: border-box;\n" ..
+"    box-sizing: border-box;\n" ..
+"  }\n" ..
+"  </style>\n" ..
 "  <title>@name@</title>\n" ..
 "</head>\n" ..
 "<body>\n" ..
 "  <div id=\"main\"></div>\n" ..
-"  <script src=\"@name@.js\">\n" ..
-"   </script>\n" ..
+"  <script src=\"@name@.js\"></script>\n" ..
 "  <script>\n" ..
 "  </script>\n" ..
 "</body>\n" ..
