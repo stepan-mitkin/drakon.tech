@@ -4681,7 +4681,7 @@ function showBuild(options) {
             var link = make(linkContainer, "a")
             link.href = url
             link.target = "_blank"
-            HtmlUtils.setDivText(link, url)
+            HtmlUtils.setDivText(link, translate("MES_RUN_IN_BROWSER"))
         }
         var close = make(client, "div")
         close.className = "panic_button"
