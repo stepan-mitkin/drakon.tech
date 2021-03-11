@@ -653,7 +653,7 @@ function parseDependencies(module) {
     var lines = split(module.props.dependencies, "\n")
     module.deps = []
     for (let line of lines) {
-        var parts = split(line, " ")
+        var parts = split(line, /\s/)
         var name = parts[0]
         if (parts.length === 1) {
             module.deps.push({

@@ -365,7 +365,7 @@ function backup_folder(row, tmp)
             local prop_value = prop[4]
             folder.props[prop_name] = prop_value
         end
-        local content = pretty.stringify(folder, nil, 4)
+        local content = json.encode(folder)
         local path = tmp .. "/" .. folder_id .. ".json"
         utils.write_all_bytes(path, content)
     end
