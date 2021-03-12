@@ -750,10 +750,12 @@ function api_feedback(req, session, headers)
     if session.user_id == "" then
         
     else
+        local user = vud.get_user(session.user_id)
+        data.email = user.email
         add_diagram(data)
     end
     data.user_agent = req:header("user-agent")
-    save_report(path, data, session.email)
+    save_report(path, data, data.email)
     return make_empty_response(headers)
 end
 
