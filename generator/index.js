@@ -1,4 +1,5 @@
 const util = require('util')
+var esprima = require('esprima')
 const { exec } = require("child_process");
 const fse = require('fs-extra')
 const axios = require("axios");
@@ -467,8 +468,7 @@ async function generateProgram(record) {
         }        
     }
 
-    addVariables(module)
-
+    
     await generateFunctions(module)
 
     if (record.errors.length > 0) {
@@ -477,7 +477,9 @@ async function generateProgram(record) {
 
     injectDependencies(record, modNames)
 
-    addInit(module)
+    if (!addInit(module)) {
+        return false
+    }
     var commonPart = record.lines.join("\n")
 
     var browserLines = []    
@@ -625,8 +627,7 @@ async function generateNormal(record) {
 
 async function generateNormalBody(module) {
     addFunctionHeader(module)
-    addDependencyVars(module)
-    addVariables(module)
+    addDependencyVars(module)    
     await generateFunctions(module)
 
     if (module.errors.length > 0) {
@@ -634,7 +635,10 @@ async function generateNormalBody(module) {
     }
     addExported(module)
     addDependencySetters(module)
-    addInit(module)
+    if (!addInit(module)) {
+        return false
+    }
+
     genserver.completeFactory2(module)
 
     return true
@@ -733,10 +737,6 @@ function addFunctionHeader(module) {
     module.lines.push("")
 }
 
-function addVariables(module) {
-    addTextChunk(module, module.props.vars)
-}
-
 function addTextChunk(module, text) {
     if (text) {
         var lines = split(text, "\n")
@@ -786,7 +786,23 @@ function addDependencySetters(module) {
 
 
 function addInit(module) {
-    addTextChunk(module, module.props.init)
+    var code = module.props.init || ""
+    code = code.trim()
+    if (!code) {
+        return true
+    }
+
+    try {
+        esprima.parseScript(
+    		code
+    	)        
+    } catch (e) {
+        addModuleError(module, "Error in raw code. " + e.message)
+        return false
+    }
+
+    addTextChunk(module, code)
+    return true
 }
 
 

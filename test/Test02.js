@@ -4,9 +4,6 @@ var unit = {};
 
 var x1;
 var x2;
-var v1 = 1
-var v2 = 2
-
 function Receive_funOne(self, data) {
     switch (self.state) {
         case "7_wait":

@@ -442,6 +442,7 @@
 	"MES_ROOF": "Roof",
 	"MES_BASEMENT": "Basement",	
 	"MES_EDIT_HTML": "Edit HTML",		
+	"MES_RAW_CODE": "Raw code",
 	"MES_RUN_IN_BROWSER": "Run in the browser",		
 	"MES_MODULE_FORMAT": "Module format",
 	"LANG_JS": "JavaScript",

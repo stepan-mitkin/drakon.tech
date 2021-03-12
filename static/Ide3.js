@@ -1504,7 +1504,7 @@ function editHtml() {
 }
 
 function editInit() {
-    editTextProp("init", "Init")
+    editTextProp("init", translate("MES_RAW_CODE"))
 }
 
 function editRoof() {
@@ -2549,8 +2549,7 @@ function makePropButtons(div, node, widget) {
     var html1 = addWButton(js1, "MES_EDIT_HTML", editHtml)
     html1.style.background = "#B3D7F8"
     addWButton(js2, "MES_DEPENDENCIES", editDependencies)
-    addWButton(js2, "MES_VARIABLES", editVariables)
-    addWButton(js2, "Init", editInit)
+    addWButton(js2, translate("MES_RAW_CODE"), editInit)
     var html2 = addWButton(js2, "MES_EDIT_HTML", editHtml)
     html2.style.background = "#B3D7F8"
 }
