@@ -3579,7 +3579,7 @@ function traverseAst(property, node, visitor, lambda) {
             }
         } else {
             if (node.type) {
-                if (node.type === "FunctionExpression") {
+                if ((node.type === "FunctionExpression") || (node.type === "ArrowFunctionExpression")) {
                     lambda = true
                 }
                 visitor(property, node, lambda)
