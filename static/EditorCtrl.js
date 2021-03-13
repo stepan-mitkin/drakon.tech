@@ -2592,7 +2592,6 @@ function init(cfg) {
     addToIconGroup("basic", [insertion, foreach])
     addToIconGroup("basic", [branch, silhouette])
     addToIconGroup("basic", [sinput, pause])
-    addToIconGroup("basic", [comment])
     createIconGroup("free-basic")
     createIconGroup("free-ui")
     createIconGroup("free-ar")
