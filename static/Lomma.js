@@ -1458,6 +1458,41 @@ function Question_flow(render, item) {
     item.w += Config.SNAP * 1
 }
 
+function SInput_draw(render, item) {
+    var format, points, pos, texId
+    format = getFormatForIcon(
+        item.type
+    )
+    texId = makeCustomTexture(
+        render,
+        item.x,
+        item.y,
+        item.w,
+        item.h
+    )
+    points = makeInputPoints(item.w, item.h)
+    render.drawShape(
+        texId,
+        "poly",
+        item.x,
+        item.y,
+        points,
+        format
+    )
+    pos = {
+        x : item.x + INSERTION * 2,
+        y : item.y,
+        w : item.w,
+        h : item.h
+    }
+    drawLeftTextInRect(
+        render,
+        texId,
+        item.tb,
+        pos
+    )
+}
+
 function Select_draw(render, item) {
     var ADD, format, points, pos, texId
     ADD = Config.SNAP / 2
@@ -8430,6 +8465,11 @@ function iconsInit() {
         Input_flow
     )
     defineIcon(
+        "sinput",
+        SInput_draw,
+        Insertion_flow
+    )
+    defineIcon(
         "pause",
         Pause_draw,
         Pause_flow
@@ -8507,6 +8547,9 @@ function initSockets() {
     }
     module.insertActions.input = function(socket) {
         return simpleInsert(socket, "input")
+    }
+    module.insertActions.sinput = function(socket) {
+        return simpleInsert(socket, "sinput")
     }
     module.insertActions.pause = function(socket) {
         return simpleInsert(socket, "pause")
@@ -9530,6 +9573,22 @@ function makeDownEdgeCore(visuals, head, tail, finalTarget) {
     head.targets.push(edge)
     tail.sources.push(edge)
     return edge
+}
+
+function makeInputPoints(w, h) {
+    var x2 = w;
+    var x0 = -w;
+    var x1 = x0 + Config.INPUT_LEFT * 1.4;
+    var y2 = h;
+    var y0 = -h;
+    var y1 = 0;
+    return [
+      x0, y0,
+      x2, y0,
+      x2, y2,
+      x0, y2,
+      x1, y1
+    ]
 }
 
 function makeLeftEdge(visuals, left, right, finalTarget) {
