@@ -356,6 +356,85 @@ function inputTest(parent) {
     return self;
 }
 
+function inputTest2_onHop(self, data) {
+    switch (self.state) {
+        case "7_wait":
+            self._value = data;
+            self.state = "8";
+            break;
+        default:
+            return;
+    }
+    inputTest2_run(self);
+}
+
+function inputTest2_onHop2(self, data) {
+    switch (self.state) {
+        case "8_wait":
+            self._value2 = data;
+            self.state = "10";
+            break;
+        default:
+            return;
+    }
+    inputTest2_run(self);
+}
+
+function inputTest2_onHop3(self, data) {
+    switch (self.state) {
+        case "10_wait":
+            self.state = "11";
+            break;
+        default:
+            return;
+    }
+    inputTest2_run(self);
+}
+
+function inputTest2_run(self) {
+    var work = true;
+    while (work) {
+        switch (self.state) {
+            case "3":
+                self._foo = 8;
+                
+                self.state = "7_wait";
+                work = false;
+                break;
+            case "8":
+                self.state = "8_wait";
+                work = false;
+                break;
+            case "10":
+                self.state = "10_wait";
+                work = false;
+                break;
+            case "11":
+                self._value++;
+                
+                self.foo = self._value2;
+                
+                self.state = undefined;
+                sm.sendMessage(self.parent, "onChildCompleted", self._value + self._foo + self.foo);
+                work = false;
+                break;
+            default:
+                return;
+        }
+    }
+}
+
+function inputTest2(parent) {
+    var self = sm.createMachine("inputTest2");
+    sm.addMethod(self, "onHop", inputTest2_onHop);
+    sm.addMethod(self, "onHop2", inputTest2_onHop2);
+    sm.addMethod(self, "onHop3", inputTest2_onHop3);
+    sm.addChild(parent, self);
+    sm.addMethod(self, "run", inputTest2_run);
+    self.state = "3";
+    return self;
+}
+
 function insertionTest_onChildCompleted(self, data) {
     switch (self.state) {
         case "4_wait":
@@ -574,6 +653,7 @@ unit.forLoopSc = forLoopSc;
 unit.foreachArraySc = foreachArraySc;
 unit.foreachMapSc = foreachMapSc;
 unit.inputTest = inputTest;
+unit.inputTest2 = inputTest2;
 unit.insertionTest = insertionTest;
 unit.lambda = lambda;
 unit.nonCanonicalSc = nonCanonicalSc;

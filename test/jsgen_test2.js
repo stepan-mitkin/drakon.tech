@@ -87,6 +87,15 @@ QUnit.test("inputTest", function(assert) {
     machine.onHop2(100)
 });
 
+QUnit.test("inputTest2", function(assert) {
+    var parent = makeFakeParent(assert, 159)
+    var machine = Test02.inputTest2(parent)
+    machine.run()
+    machine.onHop(50)
+    machine.onHop2(100)
+    machine.onHop3()
+});
+
 QUnit.test("insertionTest", function(assert) {
     testScenario(assert, 35, Test02.insertionTest(undefined))
 })

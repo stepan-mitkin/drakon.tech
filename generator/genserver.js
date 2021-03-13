@@ -222,32 +222,18 @@ function addReceiveAwait(machine, node) {
     while (true) {
         if (current.text) {
             names = parseReceiveCase(current.text)
-            if (names) {
-                if (names.argName) {
-                    if (machine.v2) {
-                        machine.diagram.work.assigned[names.argName] = true
-                        variable = "self._" + names.argName
-                    } else {
-                        variable = "self." + names.argName
-                    }
-                } else {
-                    variable = undefined
-                }
-                addAwait(
-                    machine,
-                    names.functionName,
-                    node.id,
-                    variable,
-                    current.one.id
-                )
-            } else {
-                addItemError(
-                	machine.build,
-                	machine.diagram,
-                	current.id,
-                	"BUILD_BAD_RECEIVE_CASE"
-                )
-            }
+            variable = getVariableFromCase(
+                machine,
+                names,
+                current.id
+            )
+            addAwait(
+                machine,
+                names.functionName,
+                node.id,
+                variable,
+                current.one.id
+            )
         } else {
             addItemError(
             	machine.build,
@@ -263,6 +249,23 @@ function addReceiveAwait(machine, node) {
             break;
         }
     }
+}
+
+function addSInputAwait(machine, node) {
+    var names, variable
+    names = parseReceiveCase(node.text)
+    variable = getVariableFromCase(
+        machine,
+        names,
+        node.id
+    )
+    addAwait(
+        machine,
+        names.functionName,
+        node.id,
+        variable,
+        node.one.id
+    )
 }
 
 function addScenarioStep(machine, node) {
@@ -570,7 +573,7 @@ function appendStepCore(machine, seq, node) {
             node.one
         )
     } else {
-        if (_sw25970000_ === "input") {
+        if ((_sw25970000_ === "input") || (_sw25970000_ === "sinput")) {
             appendInput(
                 machine,
                 seq,
@@ -1861,6 +1864,31 @@ function getTwoBroken(item, broken) {
     }
 }
 
+function getVariableFromCase(machine, names, id) {
+    var variable
+    if (names) {
+        if (names.argName) {
+            if (machine.v2) {
+                machine.diagram.work.assigned[names.argName] = true
+                variable = "self._" + names.argName
+            } else {
+                variable = "self." + names.argName
+            }
+        } else {
+            variable = undefined
+        }
+        return variable
+    } else {
+        addItemError(
+        	machine.build,
+        	machine.diagram,
+        	id,
+        	"BUILD_BAD_RECEIVE_CASE"
+        )
+        return undefined
+    }
+}
+
 function hasReturn(seq) {
     var body, item, last
     if (seq.items.length === 0) {
@@ -1911,11 +1939,18 @@ function inputsReceives(machine) {
                 item
             )
         } else {
-            if (_sw32970000_ === "select") {
-                addReceiveAwait(
+            if (_sw32970000_ === "sinput") {
+                addSInputAwait(
                     machine,
                     item
                 )
+            } else {
+                if (_sw32970000_ === "select") {
+                    addReceiveAwait(
+                        machine,
+                        item
+                    )
+                }
             }
         }
         _ind3295++;
