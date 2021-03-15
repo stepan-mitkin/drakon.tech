@@ -2484,10 +2484,10 @@ function makeImagePath(image) {
 function makeLanguageList(div, node, widget) {
     var select = make(div, "select")
     select.id = "language_list"
+    addOption(select, "LANG_JS2", translate("LANG_JS2"))
     addOption(select, "LANG_JS", translate("LANG_JS"))
     addOption(select, "LANG_HUMAN", translate("LANG_HUMAN"))
-    addOption(select, "LANG_JS2", translate("LANG_JS2"))
-    select.value = globs.props.language || "LANG_JS"
+    select.value = globs.props.language || "LANG_JS2"
     select.addEventListener("change", onLanguageChange)
 }
 
