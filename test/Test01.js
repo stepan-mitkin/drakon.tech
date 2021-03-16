@@ -654,6 +654,16 @@ function intersection(left, right) {
     return result
 }
 
+function lambdaTest() {
+    var lam, x;
+    x = 10
+    lam = function () {
+        var y = x + 5
+        return y
+    }
+    return lam()
+}
+
 function nestedInQuestion() {
     var bar, foo, mmm;
     foo = 0

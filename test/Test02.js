@@ -488,8 +488,8 @@ function lambda_run(self) {
                 self._y = 20;
                 
                 self._m = function () {
-                    var u = 30;
-                    return u + self._y + self._x;
+                    self._u = 30;
+                    return self._u + self._y + self._x;
                 };
                 
                 self.state = undefined;
@@ -509,6 +509,16 @@ function lambda(parent, x) {
     sm.addMethod(self, "run", lambda_run);
     self.state = "3";
     return self;
+}
+
+function lambdaTest() {
+    var lam, x, y;
+    x = 10
+    lam = function () {
+        y = x + 5
+        return y
+    }
+    return lam()
 }
 
 function nonCanonicalSc_run(self) {
@@ -644,7 +654,9 @@ Object.defineProperty(unit, "x2", {
     enumerable: true,
     configurable: true
 });
-console.log("init!")
+var foo;
+foo = 10;
+console.log('init!');
 
 unit.Receive = Receive;
 unit.blueScenario = blueScenario;
@@ -656,6 +668,7 @@ unit.inputTest = inputTest;
 unit.inputTest2 = inputTest2;
 unit.insertionTest = insertionTest;
 unit.lambda = lambda;
+unit.lambdaTest = lambdaTest;
 unit.nonCanonicalSc = nonCanonicalSc;
 unit.pauseSc = pauseSc;
 unit.simpleUpSc = simpleUpSc;

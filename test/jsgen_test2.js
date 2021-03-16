@@ -121,3 +121,10 @@ QUnit.test("lambda", function(assert) {
 QUnit.test("forLoopSc", function(assert) {
     testScenario(assert, "Oslo Gjøvik Hamar ", Test02.forLoopSc(undefined))
 });
+
+
+QUnit.module( "JavaScript - Lambas" );
+
+QUnit.test("lambdaTest", function(assert) {
+    assert.equal(Test02.lambdaTest(), 15)
+});

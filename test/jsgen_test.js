@@ -295,3 +295,9 @@ QUnit.test("Receive", function(assert) {
     machine.funOne()
     machine.funThree(7)
 })
+
+QUnit.module( "JavaScript - Lambas" );
+
+QUnit.test("lambdaTest", function(assert) {
+    assert.equal(lambdaTest(), 15)
+});

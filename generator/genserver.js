@@ -1620,7 +1620,7 @@ function extractAssignedFromNode(property, node, lambda, context) {
 }
 
 function extractAssignedVariables(script, build, diagram, item) {
-    var context, onError, visitor
+    var context, context2, onError, visitor
     onError = function(message) {
         addItemError(build, diagram, item.id, message)
     }
@@ -1631,7 +1631,11 @@ function extractAssignedVariables(script, build, diagram, item) {
     visitor = function(prop, node, lambda) {
         extractAssignedFromNode(prop, node, lambda, context)
     }
-    traverseAst("", script, visitor, false)
+    context2 = {
+        v2 : isV2(build),
+        lambda : false
+    }
+    traverseAst("", script, visitor, context2)
 }
 
 function filterLoopLoops(map) {
@@ -2332,7 +2336,7 @@ function parseForeachLoop(build, diagram, item, it, collection) {
 }
 
 function parseInit(build) {
-    var context, formatted, onError, raw, script, vars, visitor
+    var context, context2, formatted, onError, raw, script, vars, visitor
     script = undefined
     raw = build.props.init || ""
     raw = raw.trim()
@@ -2359,7 +2363,11 @@ function parseInit(build) {
             visitor = function(prop, node, lambda) {
                 extractAssignedFromNode(prop, node, lambda, context)
             }
-            traverseAst("", script, visitor, false)
+            context2 = {
+                v2 : isV2(build),
+                lambda : false
+            }
+            traverseAst("", script, visitor, context2)
             vars = Object.keys(context.assigned).
             	map(item => { return "var " + item + ";"}).
             	join("\n")
@@ -3436,11 +3444,15 @@ function rewriteNodeVars(prop, node, allVars) {
 }
 
 function rewriteVars(expression, allVars) {
-    var visitor
+    var context2, visitor
     visitor = function(prop, node) {
         rewriteNodeVars(prop, node, allVars)
     }
-    traverseAst("", expression, visitor, false)
+    context2 = {
+        v2 : false,
+        lambda : false
+    }
+    traverseAst("", expression, visitor, context2)
 }
 
 function runName(diagram) {
@@ -3652,7 +3664,7 @@ function translate(build, textId) {
     }
 }
 
-function traverseAst(property, node, visitor, lambda) {
+function traverseAst(property, node, visitor, context) {
     var propName
     if ((node) && (typeof node === "object")) {
         if (Array.isArray(node)) {
@@ -3666,15 +3678,15 @@ function traverseAst(property, node, visitor, lambda) {
                     break;
                 }
                 var item = _col3103[_ind3103];
-                traverseAst(property, item, visitor, lambda)
+                traverseAst(property, item, visitor, context)
                 _ind3103++;
             }
         } else {
             if (node.type) {
-                if ((node.type === "FunctionExpression") || (node.type === "ArrowFunctionExpression")) {
-                    lambda = true
+                if (((node.type === "FunctionExpression") || (node.type === "ArrowFunctionExpression")) && (!(context.v2))) {
+                    context.lambda = true
                 }
-                visitor(property, node, lambda)
+                visitor(property, node, context.lambda)
                 var _ind3107 = 0;
                 var _col3107 = node;
                 var _keys3107 = Object.keys(_col3107); 
@@ -3691,7 +3703,7 @@ function traverseAst(property, node, visitor, lambda) {
                     } else {
                         propName = name
                     }
-                    traverseAst(propName, prop, visitor, lambda)
+                    traverseAst(propName, prop, visitor, context)
                     _ind3107++;
                 }
             }
