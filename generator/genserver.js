@@ -203,6 +203,21 @@ function addLine(seq, text) {
     seq.items.push(step)
 }
 
+function addModuleError(module, message) {
+    var error, startup, translated
+    startup = translate(module, "Startup")
+    translated = startup + ": " + 
+    	translate(module, message)
+    error = {
+        type : "folder",
+        target : module.fid,
+        name : module.name,
+        message : translated
+    }
+    module.state = "error"
+    module.errors.push(error)
+}
+
 function addNext(seq, id) {
     addLine(
       seq,
@@ -2316,6 +2331,48 @@ function parseForeachLoop(build, diagram, item, it, collection) {
     }
 }
 
+function parseInit(build) {
+    var context, formatted, onError, raw, script, vars, visitor
+    script = undefined
+    raw = build.props.init || ""
+    raw = raw.trim()
+    if (raw) {
+        if (isV2(build)) {
+            try {
+            	script = esprima.parseScript(
+            		raw
+            	)
+            } catch (e) {
+            	addModuleError(
+            		build,
+            		e.description
+            	)
+            	return ""
+            }
+            onError = function(message) {
+                addModuleError(build, message)
+            }
+            context = {
+                assigned : {},
+                onError : onError
+            }
+            visitor = function(prop, node, lambda) {
+                extractAssignedFromNode(prop, node, lambda, context)
+            }
+            traverseAst("", script, visitor, false)
+            vars = Object.keys(context.assigned).
+            	map(item => { return "var " + item + ";"}).
+            	join("\n")
+            formatted = escodegen.generate(script)
+            return vars + "\n" + formatted
+        } else {
+            return raw
+        }
+    } else {
+        return ""
+    }
+}
+
 function parseItems(build, diagram) {
     var work
     var _sw4710000_ = 0;
@@ -3683,3 +3740,4 @@ module.exports.completeBuild = completeBuild
 module.exports.completeFactory = completeFactory
 module.exports.completeFactory2 = completeFactory2
 module.exports.completeCommon = completeCommon
+module.exports.parseInit = parseInit

@@ -786,22 +786,14 @@ function addDependencySetters(module) {
 
 
 function addInit(module) {
-    var code = module.props.init || ""
-    code = code.trim()
-    if (!code) {
-        return true
-    }
-
-    try {
-        esprima.parseScript(
-    		code
-    	)        
-    } catch (e) {
-        addModuleError(module, "Error in raw code. " + e.message)
+    var code = genserver.parseInit(module)
+    if (module.errors.length != 0) {
         return false
     }
 
-    addTextChunk(module, code)
+    if (code) {
+        addTextChunk(module, code)
+    }
     return true
 }
 
