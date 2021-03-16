@@ -5249,7 +5249,7 @@ function logonFirst() {
 function makeChoiceDiagram() {
     return {
         type : "drakon",
-        text : "DRAKON diagram"
+        text : "MES_FUNCTION"
     }
 }
 
@@ -7221,7 +7221,7 @@ function setItemsInFolderGrid(rows) {
             buttons.push({
             	main: true,
             	action: createDiagram,
-            	text: "MES_CREATE_DIAGRAM"
+            	text: "MES_CREATE_FUNCTION"
             })
         } else {
             buttons.push({
@@ -7412,7 +7412,7 @@ function showCreateDialog(type, target, language) {
                 title = "MES_NEW_OBJECT"
             } else {
                 validate = softCheck
-                title = "MES_CREATE_DIAGRAM"
+                title = "MES_CREATE_FUNCTION"
             }
         }
     }

@@ -2709,7 +2709,7 @@ function makeTopWidgetsDesc() {
     	hPadding:8, vPadding:8,
     	type: "text_button",
     	text:"new_diagram",
-    	tooltip: "MES_CREATE_DIAGRAM",
+    	tooltip: "MES_CREATE_FUNCTION",
     	style: {
     		color: "white",
     		background: SpecialBack,
@@ -5160,8 +5160,8 @@ function showChooseTypeDialog(centralMachine) {
     	signalId: "createDrakon",
     	type: "custom",
     	builder: makeBigPictureButton,
-    	text: "DRAKON diagram",
-    	desc: "DRAKON diagram desc",
+    	text: "MES_FUNCTION",
+    	desc: "MES_FUNCTION_DESC",
     	image: "logo-drakon.png",
     	width: 90,
     	height: 100
