@@ -1944,7 +1944,7 @@ function get_path(space_id, folder_id)
 end
 
 function get_prog_modules(space_id, user_id, roles)
-    local message = check_write_access(
+    local message = check_read_access(
     	space_id,
     	user_id,
     	roles
