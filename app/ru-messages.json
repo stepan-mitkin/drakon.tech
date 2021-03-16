@@ -446,7 +446,7 @@
 	"MES_ROOF": "Чердак",
 	"MES_BASEMENT": "Подвал",		
 	"MES_EDIT_HTML": "Редактировать HTML",		
-	"MES_RAW_CODE": "Произвольный код",
+	"MES_RAW_CODE": "Запуск",
 	"MES_RUN_IN_BROWSER": "Запустить в браузере",
 	"MES_MODULE_FORMAT": "Формат модуля",
 	"LANG_JS": "JavaScript (старый)",
