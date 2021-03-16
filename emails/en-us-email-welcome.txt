@@ -5,7 +5,7 @@ You have created an account with Drakon Tech.
 Your user name is VALUE_USER
 Your password is VALUE_PASSWORD
 
-Customer support: support@drakonhub.com
+Customer support: drakon.editor@gmail.com
 
 We hope that you will enjoy drawing diagrams in our application.
 If you have a suggestion on how to improve Drakon Tech, let us know!

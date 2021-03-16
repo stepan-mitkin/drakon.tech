@@ -1,6 +1,6 @@
 Спасибо! Ваш платёж был успешно обработан
 
-Мы только что получили от Вас очередной платёж за подписку на ДРАКОН Тех.
+Мы только что получили от Вас очередной платёж за подписку на Дракон.Тех.
 
 MES_ORDER_ID: VALUE_ORDER_ID
 MES_PRODUCT_NAME: VALUE_PRODUCT_NAME
@@ -9,11 +9,11 @@ MES_NUM_USERS: VALUE_NUM_USERS
 MES_MVA: VALUE_MVA
 MES_TOTAL: VALUE_TOTAL
 
-Служба поддержки: support@drakonhub.com
+Служба поддержки: drakon.editor@gmail.com
 
 С уважением,
 
-Команда ДРАКОН Тех
+Команда Дракон.Тех
 https://drakon.tech/
 
 DRAKON Labs Stepan Mitkin

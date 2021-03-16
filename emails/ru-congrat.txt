@@ -2,7 +2,7 @@
 
 Поздравляем!
 Ваша покупка успешно завершена.
-Спасибо, что выбрали ДРАКОН Тех.
+Спасибо, что выбрали Дракон.Тех.
 
 MES_ORDER_ID: VALUE_ORDER_ID
 MES_ORDER_DATE: VALUE_DATE
@@ -15,11 +15,11 @@ MES_NUM_USERS: VALUE_NUM_USERS
 MES_MVA: VALUE_MVA
 MES_TOTAL: VALUE_TOTAL
 
-Служба поддержки: support@drakonhub.com
+Служба поддержки: drakon.editor@gmail.com
 
 С уважением,
 
-Команда ДРАКОН Тех
+Команда Дракон.Тех
 https://drakon.tech/
 
 DRAKON Labs Stepan Mitkin

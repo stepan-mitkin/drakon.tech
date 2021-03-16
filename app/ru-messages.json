@@ -451,7 +451,7 @@
 	"MES_MODULE_FORMAT": "Формат модуля",
 	"LANG_JS": "JavaScript (старый)",
 	"LANG_HUMAN": "Человеческий",
-	"LANG_JS2": "JavaScript (новый)",
+	"LANG_JS2": "JavaScript",
 	"MES_NORMAL": "Обычный",
 	"MES_NODE_PROGRAM": "Программа Node JS",	
 	"MES_BROWSER_PROGRAM": "Программа для браузера",

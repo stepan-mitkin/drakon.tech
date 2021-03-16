@@ -9,7 +9,7 @@ MES_NUM_USERS: VALUE_NUM_USERS
 MES_MVA: VALUE_MVA
 MES_TOTAL: VALUE_TOTAL
 
-Customer support: support@drakonhub.com
+Customer support: drakon.editor@gmail.com
 
 Regards
 

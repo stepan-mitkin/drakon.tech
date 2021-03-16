@@ -7,7 +7,7 @@ Expiry date: EXPIRY_DATE
 Сontinue your subscription here:
 RENEW_LINK
 
-Customer support: support@drakonhub.com
+Customer support: drakon.editor@gmail.com
 
 Regards
 
