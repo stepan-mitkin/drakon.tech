@@ -2362,8 +2362,8 @@ function parseInit(build) {
     script = undefined
     raw = build.props.init || ""
     raw = raw.trim()
-    if (raw) {
-        if (isV2(build)) {
+    if (isV2(build)) {
+        if (raw) {
             try {
             	script = esprima.parseScript(
             		raw
@@ -2394,13 +2394,14 @@ function parseInit(build) {
             	map(item => { return "var " + item + ";"}).
             	join("\n")
             formatted = escodegen.generate(script)
-            main = addMain(build)
-            return vars + "\n" + formatted + "\n" + main
         } else {
-            return raw
+            vars = ""
+            formatted = ""
         }
+        main = addMain(build)
+        return vars + "\n" + formatted + "\n" + main
     } else {
-        return ""
+        return raw
     }
 }
 
