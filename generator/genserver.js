@@ -203,6 +203,28 @@ function addLine(seq, text) {
     seq.items.push(step)
 }
 
+function addMain(build) {
+    if (isV2(build)) {
+        var _ind3497 = 0;
+        var _col3497 = build.diagrams;
+        var _len3497 = _col3497.length;
+        while (true) {
+            if (_ind3497 < _len3497) {
+                
+            } else {
+                return ""
+            }
+            var diagram = _col3497[_ind3497];
+            if (diagram.name === "main") {
+                return "main();"
+            }
+            _ind3497++;
+        }
+    } else {
+        return ""
+    }
+}
+
 function addModuleError(module, message) {
     var error, startup, translated
     startup = translate(module, "Startup")
@@ -2336,7 +2358,7 @@ function parseForeachLoop(build, diagram, item, it, collection) {
 }
 
 function parseInit(build) {
-    var context, context2, formatted, onError, raw, script, vars, visitor
+    var context, context2, formatted, main, onError, raw, script, vars, visitor
     script = undefined
     raw = build.props.init || ""
     raw = raw.trim()
@@ -2372,7 +2394,8 @@ function parseInit(build) {
             	map(item => { return "var " + item + ";"}).
             	join("\n")
             formatted = escodegen.generate(script)
-            return vars + "\n" + formatted
+            main = addMain(build)
+            return vars + "\n" + formatted + "\n" + main
         } else {
             return raw
         }

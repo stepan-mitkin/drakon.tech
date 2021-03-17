@@ -521,6 +521,10 @@ function lambdaTest() {
     return lam()
 }
 
+function main() {
+    console.log("main")
+}
+
 function nonCanonicalSc_run(self) {
     var work = true;
     while (work) {
@@ -657,6 +661,7 @@ Object.defineProperty(unit, "x2", {
 var foo;
 foo = 10;
 console.log('init!');
+main();
 
 unit.Receive = Receive;
 unit.blueScenario = blueScenario;
