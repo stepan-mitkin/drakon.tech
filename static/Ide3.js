@@ -2428,11 +2428,16 @@ function makeFunTypeList(div, node, widget) {
     var select = make(div, "select")
     select.id = "fun_type_list"
     addOption(select, "MES_FUNCTION", translate("MES_FUNCTION"))
+    addOption(select, "MES_ASYNC_FUNCTION", translate("MES_ASYNC_FUNCTION"))
     addOption(select, "MES_SCENARIO", translate("MES_SCENARIO"))
     if (node.scenario) {
         select.value = "MES_SCENARIO"
     } else {
-        select.value = "MES_FUNCTION"
+        if (node["async"]) {
+            select.value = "MES_ASYNC_FUNCTION"
+        } else {
+            select.value = "MES_FUNCTION"
+        }
     }
 }
 
@@ -2708,7 +2713,7 @@ function makeTopWidgetsDesc() {
     	signalId : "create_diagram",
     	hPadding:8, vPadding:8,
     	type: "text_button",
-    	text:"new_diagram",
+    	text:"new_function",
     	tooltip: "MES_CREATE_FUNCTION",
     	style: {
     		color: "white",
@@ -4061,20 +4066,27 @@ function saveAsSvg() {
 
 function saveDiaProps() {
     var keywords = {}
-    keywords["async"] = get("async_check").checked
     keywords["export"] = get("export_check").checked
     var type = get("fun_type_list").value
     if (type === "MES_FUNCTION") {
         keywords["function"] = true
         keywords["scenario"] = false
+        keywords["async"] = false
     } else {
-        if (type === "MES_SCENARIO") {
-            
+        if (type === "MES_ASYNC_FUNCTION") {
+            keywords["function"] = true
+            keywords["scenario"] = false
+            keywords["async"] = true
         } else {
-            throw "Unexpected switch value: " + type;
+            if (type === "MES_SCENARIO") {
+                
+            } else {
+                throw "Unexpected switch value: " + type;
+            }
+            keywords["function"] = false
+            keywords["scenario"] = true
+            keywords["async"] = false
         }
-        keywords["function"] = false
-        keywords["scenario"] = true
     }
     var params = get("params_textarea").value.trim()
     var change = {
@@ -4803,10 +4815,18 @@ function showChangeDiaProps(machine, name, folder, ro) {
     	value:  !!globs.keywords["async"],
     	onchange: onAsyncChange
     }
+    var typeLabel = {
+    	type: "wlabel",
+    	text: "MES_FUNCTION_TYPE",
+    	textAlign: "left",
+    	style: {
+    	}
+    }
     var funType = {
     	type: "custom",
     	builder: makeFunTypeList,
-    	scenario: !!globs.keywords["scenario"]
+    	scenario: !!globs.keywords["scenario"],
+    	"async": 	!!globs.keywords["async"]
     }
     var params = {
     	type: "custom",
@@ -4853,8 +4873,7 @@ function showChangeDiaProps(machine, name, folder, ro) {
     	space,
     	exportCheck,
     	space,
-    	asyncCheck,
-    	space,
+    	typeLabel,
     	funType,
     	paramsLabel,
     	params,
