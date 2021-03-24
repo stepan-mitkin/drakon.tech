@@ -6162,10 +6162,10 @@ function trialAllowed() {
 
 function updateFormatList() {
     var _sw51980000_ = 0;
-    var allowed
+    var allowed, def
     var select = get("format_list")
     select.innerHTML = ""
-    var value = globs.props.mformat || "MES_NONE"
+    var value = globs.props.mformat || ""
     _sw51980000_ = get("language_list").value;
     if (_sw51980000_ === "LANG_JS") {
         addOption(select, "MES_NONE", translate("MES_NONE"))
@@ -6180,6 +6180,7 @@ function updateFormatList() {
         	"MES_COMMONJS",
         	"MES_ES6"
         ]
+        def = allowed[0]
     } else {
         if (_sw51980000_ === "LANG_JS2") {
             addOption(select, "MES_MODULE", translate("MES_MODULE"))
@@ -6188,6 +6189,7 @@ function updateFormatList() {
             	"MES_MODULE",
             	"MES_PROGRAM"
             ]
+            def = "MES_PROGRAM"
         } else {
             if (_sw51980000_ === "LANG_HUMAN") {
                 
@@ -6198,10 +6200,11 @@ function updateFormatList() {
             allowed = [
             	"MES_NONE"
             ]
+            def = allowed[0]
         }
     }
     if (allowed.indexOf(value) === -1) {
-        value = allowed[0]
+        value = def
     }
     select.value = value
 }
