@@ -2705,7 +2705,7 @@ function makeTopWidgetsDesc() {
     	signalId: "showMainMenu",
     	type: "image_button",
     	image:"drakosha-menu-104.png",
-    	width:80,
+    	width:52,
     	height:52,
     	tooltip: "MES_MENU"
     }
