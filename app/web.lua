@@ -2800,7 +2800,6 @@ function create_user_core(req, session, headers, data, password)
         	password
         )
         db.commit()
-        copy_examples(user_id)
         local result = {
         	id = user_id,
         	name = data.name,
