@@ -638,7 +638,7 @@ function api_delete_space(req, session, headers)
                 db.rollback()
                 return result_from_message(headers, message)
             else
-                delete_rdoc(root_id)
+                delete_rdoc(space_id)
                 db.commit()
                 ej.info(
                 	"delete_space",
@@ -2866,15 +2866,13 @@ function delete_download(download_id)
     take_download(download_id)
 end
 
-function delete_rdoc(root_id)
-    if utils.is_empty(root_id) then
-        
-    else
-        rules.db_delete_doc(doc_id)
-    end
+function delete_rdoc(space_id)
+    log.info("Delete rdoc " .. space_id)
+    rules.db_delete_space(space_id)
 end
 
 function delete_user(user_id)
+    local message, root_id
     db.begin()
     local user = vud.get_user(user_id)
     if user then
@@ -2888,11 +2886,16 @@ function delete_user(user_id)
             	"admin"
             )
             if count_admins(space_id) == 0 then
-                space.delete_space(
+                message, root_id = space.delete_space(
                 	space_id,
                 	user_id,
                 	{admin=true}
                 )
+                if message then
+                    
+                else
+                    delete_rdoc(space_id)
+                end
             else
                 space.update_space_limits(space_id)
             end
