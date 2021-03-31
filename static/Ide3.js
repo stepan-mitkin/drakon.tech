@@ -651,7 +651,7 @@ function buildDashboardWidget(div, node, widget) {
     createLink(
     	myPane,
     	"MES_TUTORIALS",
-    	"https://drakon.tech/js/tutorials"
+    	"https://drakon.tech/read/tutorials"
     )
     var host = "https://drakonhub.com"
     docs.style.borderTop = bStyle

@@ -3335,6 +3335,14 @@ function buildMainMenu() {
     	text: "MES_HOMEPAGE",
     	action: goHome
     })
+    rwGotoItems.push({
+    	text: "MES_TUTORIALS",
+    	action: makeGo("https://drakon.tech/read/tutorials")
+    })
+    rwGotoItems.push({
+    	text: "MES_EXAMPLES",
+    	action: makeGo("https://drakon.tech/read/examples")
+    })
     if (gUserId) {
         rwGotoItems.push({
         	text: "MES_DASHBOARD",
@@ -5310,6 +5318,12 @@ function makeFolderUrl(spaceId, folderId) {
     url = "/" + IDE + "/doc/" +
       spaceId + "/" + folderId
     return url
+}
+
+function makeGo(url) {
+    return function() {
+    	browser.goToUrl(url)
+    }
 }
 
 function makeId(spaceId, folderId) {
