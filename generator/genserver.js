@@ -4591,7 +4591,7 @@ function rewriteLocals(diagram) {
 
 function rewriteNodeVars(prop, node, allVars) {
     // item 3243
-    if (((node.type === "Identifier") && (!(prop === "property"))) && (!(allVars.indexOf(node.name) === -1))) {
+    if ((((node.type === "Identifier") && (!(prop === "key"))) && (!(prop === "property"))) && (!(allVars.indexOf(node.name) === -1))) {
         // item 3246
         node.name = "self._" + node.name
     }
