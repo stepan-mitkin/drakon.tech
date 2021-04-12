@@ -122,6 +122,15 @@ QUnit.test("forLoopSc", function(assert) {
     testScenario(assert, "Oslo Gjøvik Hamar ", Test02.forLoopSc(undefined))
 });
 
+QUnit.test("shortCircuitScenario", function(assert) {
+    testScenario(assert, "no", Test02.shortCircuitScenario(undefined, 20, 5))
+});
+
+QUnit.test("literalRewrite", function(assert) {
+    testScenario(assert, 10, Test02.literalRewrite())
+});
+
+
 
 QUnit.module( "JavaScript - Lambas" );
 

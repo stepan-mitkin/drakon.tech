@@ -521,6 +521,37 @@ function lambdaTest() {
     return lam()
 }
 
+function literalRewrite_run(self) {
+    var work = true;
+    while (work) {
+        switch (self.state) {
+            case "3":
+                self._x = 10;
+                self._y = 20;
+                
+                self._foo = {
+                    x: self._x,
+                    y: self._y
+                };
+                
+                self.state = undefined;
+                sm.sendMessage(self.parent, "onChildCompleted", self._foo.x);
+                work = false;
+                break;
+            default:
+                return;
+        }
+    }
+}
+
+function literalRewrite(parent) {
+    var self = sm.createMachine("literalRewrite");
+    sm.addChild(parent, self);
+    sm.addMethod(self, "run", literalRewrite_run);
+    self.state = "3";
+    return self;
+}
+
 function main() {
     console.log("main")
 }
@@ -609,6 +640,37 @@ function pauseSc(parent) {
     return self;
 }
 
+function shortCircuitScenario_run(self) {
+    var work = true;
+    while (work) {
+        switch (self.state) {
+            case "4":
+                if (self._a > 10 && self._b > 10) {
+                    self.state = undefined;
+                    sm.sendMessage(self.parent, "onChildCompleted", 'yes');
+                    work = false;
+                } else {
+                    self.state = undefined;
+                    sm.sendMessage(self.parent, "onChildCompleted", 'no');
+                    work = false;
+                }
+                break;
+            default:
+                return;
+        }
+    }
+}
+
+function shortCircuitScenario(parent, a, b) {
+    var self = sm.createMachine("shortCircuitScenario");
+    self._a = a;
+    self._b = b;
+    sm.addChild(parent, self);
+    sm.addMethod(self, "run", shortCircuitScenario_run);
+    self.state = "4";
+    return self;
+}
+
 function simpleUpSc_run(self) {
     var work = true;
     while (work) {
@@ -674,8 +736,10 @@ unit.inputTest2 = inputTest2;
 unit.insertionTest = insertionTest;
 unit.lambda = lambda;
 unit.lambdaTest = lambdaTest;
+unit.literalRewrite = literalRewrite;
 unit.nonCanonicalSc = nonCanonicalSc;
 unit.pauseSc = pauseSc;
+unit.shortCircuitScenario = shortCircuitScenario;
 unit.simpleUpSc = simpleUpSc;
 return unit;
 }
