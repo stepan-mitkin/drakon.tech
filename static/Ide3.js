@@ -2430,13 +2430,18 @@ function makeFunTypeList(div, node, widget) {
     addOption(select, "MES_FUNCTION", translate("MES_FUNCTION"))
     addOption(select, "MES_ASYNC_FUNCTION", translate("MES_ASYNC_FUNCTION"))
     addOption(select, "MES_SCENARIO", translate("MES_SCENARIO"))
-    if (node.scenario) {
-        select.value = "MES_SCENARIO"
+    addOption(select, "MES_ALGOPROP", translate("MES_ALGOPROP"))
+    if (node.algoprop) {
+        select.value = "MES_ALGOPROP"
     } else {
-        if (node["async"]) {
-            select.value = "MES_ASYNC_FUNCTION"
+        if (node.scenario) {
+            select.value = "MES_SCENARIO"
         } else {
-            select.value = "MES_FUNCTION"
+            if (node["async"]) {
+                select.value = "MES_ASYNC_FUNCTION"
+            } else {
+                select.value = "MES_FUNCTION"
+            }
         }
     }
 }
@@ -2491,6 +2496,7 @@ function makeLanguageList(div, node, widget) {
     select.id = "language_list"
     addOption(select, "LANG_JS2", translate("LANG_JS2"))
     addOption(select, "LANG_JS", translate("LANG_JS"))
+    addOption(select, "LANG_S4", translate("LANG_S4"))
     addOption(select, "LANG_HUMAN", translate("LANG_HUMAN"))
     select.value = globs.props.language || "LANG_JS2"
     select.addEventListener("change", onLanguageChange)
@@ -4072,20 +4078,30 @@ function saveDiaProps() {
         keywords["function"] = true
         keywords["scenario"] = false
         keywords["async"] = false
+        keywords["algoprop"] = false
     } else {
         if (type === "MES_ASYNC_FUNCTION") {
             keywords["function"] = true
             keywords["scenario"] = false
             keywords["async"] = true
+            keywords["algoprop"] = false
         } else {
             if (type === "MES_SCENARIO") {
-                
+                keywords["function"] = false
+                keywords["scenario"] = true
+                keywords["async"] = false
+                keywords["algoprop"] = false
             } else {
-                throw "Unexpected switch value: " + type;
+                if (type === "MES_ALGOPROP") {
+                    
+                } else {
+                    throw "Unexpected switch value: " + type;
+                }
+                keywords["function"] = false
+                keywords["scenario"] = false
+                keywords["async"] = false
+                keywords["algoprop"] = true
             }
-            keywords["function"] = false
-            keywords["scenario"] = true
-            keywords["async"] = false
         }
     }
     var params = get("params_textarea").value.trim()
@@ -4826,6 +4842,7 @@ function showChangeDiaProps(machine, name, folder, ro) {
     	type: "custom",
     	builder: makeFunTypeList,
     	scenario: !!globs.keywords["scenario"],
+    	algoprop: !!globs.keywords["algoprop"],
     	"async": 	!!globs.keywords["async"]
     }
     var params = {
@@ -6182,7 +6199,7 @@ function updateFormatList() {
         ]
         def = allowed[0]
     } else {
-        if (_sw51980000_ === "LANG_JS2") {
+        if ((_sw51980000_ === "LANG_JS2") || (_sw51980000_ === "LANG_S4")) {
             addOption(select, "MES_MODULE", translate("MES_MODULE"))
             addOption(select, "MES_PROGRAM", translate("MES_PROGRAM"))
             allowed = [
@@ -6221,7 +6238,7 @@ function updatePropButtons() {
             hideDiv(js2)
             hideDiv(human)
         } else {
-            if (_sw52480000_ === "LANG_JS2") {
+            if ((_sw52480000_ === "LANG_JS2") || (_sw52480000_ === "LANG_S4")) {
                 hideDiv(js1)
                 showDiv(js2, "")
                 hideDiv(human)

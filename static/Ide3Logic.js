@@ -4583,15 +4583,19 @@ function getImage(type) {
                             if (type === "drakon_exp") {
                                 image = "list-drakon2-exp.png"
                             } else {
-                                if (type === "mind") {
-                                    image = "list-mind.png"
+                                if (type === "drakon_algoprop") {
+                                    image = "list-algoprop.png"
                                 } else {
-                                    if (type === "free") {
-                                        
+                                    if (type === "mind") {
+                                        image = "list-mind.png"
                                     } else {
-                                        throw "Unexpected switch value: " + type;
+                                        if (type === "free") {
+                                            
+                                        } else {
+                                            throw "Unexpected switch value: " + type;
+                                        }
+                                        image = "list-free.png"
                                     }
-                                    image = "list-free.png"
                                 }
                             }
                         }
@@ -4729,7 +4733,11 @@ function getSubtype(folder) {
             if (folder.keywords["export"]) {
                 return "drakon_exp"
             } else {
-                return folder.type
+                if (folder.keywords["algoprop"]) {
+                    return "drakon_algoprop"
+                } else {
+                    return folder.type
+                }
             }
         }
     } else {
