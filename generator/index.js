@@ -195,7 +195,7 @@ async function createBuild(req) {
         }
     }
 
-    if (props.language == "LANG_JS" || props.language == "LANG_JS2") {
+    if (props.language == "LANG_JS" || props.language == "LANG_JS2" || props.language == "LANG_S4") {
         var userLanguage = req.body.language || "en"
         var buildId = createBuildRecord(spaceId, folderId, props, userLanguage, req.body.userId)
         var buildFun = () => {
@@ -207,14 +207,14 @@ async function createBuild(req) {
             id: buildId
         }
     } else if (!props.language) {
-        var message = `Language not set for module ${spaceId}-${folderId}`
+        var message = `Language not set for module ${spaceId}/${folderId}`
         logger.error(message)
         return {
             ok: false,
             message
         }
     } else {
-        var message = `Language not supported for module ${spaceId}-${folderId}: ${props.language}`
+        var message = `Language not supported for module ${spaceId}/${folderId}: ${props.language}`
         logger.error(message)
         return {
             ok: false,
