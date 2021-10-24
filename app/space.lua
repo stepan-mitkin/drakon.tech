@@ -2256,7 +2256,7 @@ function is_folder(obj)
 end
 
 function is_js(props)
-    if (props.language == "LANG_JS") or (props.language == "LANG_JS2") then
+    if ((props.language == "LANG_JS") or (props.language == "LANG_JS2")) or (props.language == "LANG_S4") then
         return true
     else
         return false
