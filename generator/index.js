@@ -754,6 +754,22 @@ function addDependencyVars(module) {
 }
 
 async function generateFunctions(module) {
+
+    module.algoprops = {}
+    var diagrams = []
+    for (var i = 0; i < module.diagrams.length; i++) {
+        var diagram = module.diagrams[i]
+        if (diagram.keywords.algoprop) {
+            if (module.props.language != "LANG_S4") {
+                addModuleError(module, "Algo properties are not supported for this language: " + diagram.name)
+                return
+            }
+            module.algoprops[diagram.name] = diagram
+        } else {
+            diagrams.push(diagram)
+        }
+    }
+    module.diagrams = diagrams
     for (var i = 0; i < module.diagrams.length; i++) {
         var diagram = module.diagrams[i]
         diagram.input = await getFolder(diagram.space_id, diagram.id)
