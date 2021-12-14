@@ -420,19 +420,36 @@ function Header_draw(render, item) {
         item.tb,
         box
     )
-    if ((isScenario()) && (item.header)) {
-        render.setDefaultFont(SmallFont)
-        scenario = translate("MES_SCENARIO")
-        sw = render.measureTextWidth(scenario)
-        labelColor = getYesColor()
-        render.drawText(
-        	texId,
-        	scenario,
-        	item.x - Math.floor(sw / 2),
-        	item.y - item.h - 3,
-        	labelColor,
-        	SmallFont
-        )
+    if (item.header) {
+        if (isScenario()) {
+            scenario = translate("MES_SCENARIO")
+            render.setDefaultFont(SmallFont)
+            sw = render.measureTextWidth(scenario)
+            labelColor = getYesColor()
+            render.drawText(
+            	texId,
+            	scenario,
+            	item.x - Math.floor(sw / 2),
+            	item.y - item.h - 3,
+            	labelColor,
+            	SmallFont
+            )
+        } else {
+            if (isAlgoprop()) {
+                scenario = translate("MES_ALGOPROP")
+                render.setDefaultFont(SmallFont)
+                sw = render.measureTextWidth(scenario)
+                labelColor = getYesColor()
+                render.drawText(
+                	texId,
+                	scenario,
+                	item.x - Math.floor(sw / 2),
+                	item.y - item.h - 3,
+                	labelColor,
+                	SmallFont
+                )
+            }
+        }
     }
 }
 
@@ -8582,6 +8599,10 @@ function isAddressJun(node) {
     } else {
         return false
     }
+}
+
+function isAlgoprop() {
+    return !!module.storage.keywords.algoprop
 }
 
 function isArrowLoop(node) {

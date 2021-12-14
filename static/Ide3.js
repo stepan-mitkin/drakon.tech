@@ -2427,13 +2427,18 @@ function makeFormatList(div, node, widget) {
 function makeFunTypeList(div, node, widget) {
     var select = make(div, "select")
     select.id = "fun_type_list"
-    addOption(select, "MES_FUNCTION", translate("MES_FUNCTION"))
-    addOption(select, "MES_ASYNC_FUNCTION", translate("MES_ASYNC_FUNCTION"))
-    addOption(select, "MES_SCENARIO", translate("MES_SCENARIO"))
-    addOption(select, "MES_ALGOPROP", translate("MES_ALGOPROP"))
-    if (node.algoprop) {
-        select.value = "MES_ALGOPROP"
+    if (node.language==="LANG_S4") {
+        addOption(select, "MES_FUNCTION", translate("MES_FUNCTION"))
+        addOption(select, "MES_ALGOPROP", translate("MES_ALGOPROP"))
+        if (node.algoprop) {
+            select.value = "MES_ALGOPROP"
+        } else {
+            select.value = "MES_FUNCTION"
+        }
     } else {
+        addOption(select, "MES_FUNCTION", translate("MES_FUNCTION"))
+        addOption(select, "MES_ASYNC_FUNCTION", translate("MES_ASYNC_FUNCTION"))
+        addOption(select, "MES_SCENARIO", translate("MES_SCENARIO"))
         if (node.scenario) {
             select.value = "MES_SCENARIO"
         } else {
@@ -2546,9 +2551,11 @@ function makePropButtons(div, node, widget) {
     many.id = "module_props_many"
     var js1 = make(many, "div")
     var js2 = make(many, "div")
+    var js3 = make(many, "div")
     var human = make(many, "div")
     js1.id = "module_props_js1"
     js2.id = "module_props_js2"
+    js3.id = "module_props_js3"
     human.id = "module_props_human"
     js1.style.display = "none"
     js2.style.display = "none"
@@ -2560,8 +2567,8 @@ function makePropButtons(div, node, widget) {
     var html1 = addWButton(js1, "MES_EDIT_HTML", editHtml)
     html1.style.background = "#B3D7F8"
     addWButton(js2, "MES_DEPENDENCIES", editDependencies)
-    addWButton(js2, translate("MES_RAW_CODE"), editInit)
-    var html2 = addWButton(js2, "MES_EDIT_HTML", editHtml)
+    addWButton(js3, translate("MES_RAW_CODE"), editInit)
+    var html2 = addWButton(js3, "MES_EDIT_HTML", editHtml)
     html2.style.background = "#B3D7F8"
 }
 
@@ -4841,6 +4848,7 @@ function showChangeDiaProps(machine, name, folder, ro) {
     var funType = {
     	type: "custom",
     	builder: makeFunTypeList,
+    	language: folder.language,
     	scenario: !!globs.keywords["scenario"],
     	algoprop: !!globs.keywords["algoprop"],
     	"async": 	!!globs.keywords["async"]
@@ -6199,7 +6207,7 @@ function updateFormatList() {
         ]
         def = allowed[0]
     } else {
-        if ((_sw51980000_ === "LANG_JS2") || (_sw51980000_ === "LANG_S4")) {
+        if (_sw51980000_ === "LANG_JS2") {
             addOption(select, "MES_MODULE", translate("MES_MODULE"))
             addOption(select, "MES_PROGRAM", translate("MES_PROGRAM"))
             allowed = [
@@ -6208,7 +6216,7 @@ function updateFormatList() {
             ]
             def = "MES_PROGRAM"
         } else {
-            if (_sw51980000_ === "LANG_HUMAN") {
+            if ((_sw51980000_ === "LANG_S4") || (_sw51980000_ === "LANG_HUMAN")) {
                 
             } else {
                 throw "Unexpected switch value: " + _sw51980000_;
@@ -6230,27 +6238,38 @@ function updatePropButtons() {
     var _sw52480000_ = 0;
     var js1 = document.getElementById("module_props_js1")
     var js2 = document.getElementById("module_props_js2")
+    var js3 = document.getElementById("module_props_js3")
     var human = document.getElementById("module_props_human")
     if (js1) {
         _sw52480000_ = get("language_list").value;
         if (_sw52480000_ === "LANG_JS") {
             showDiv(js1, "")
             hideDiv(js2)
+            hideDiv(js3)
             hideDiv(human)
         } else {
-            if ((_sw52480000_ === "LANG_JS2") || (_sw52480000_ === "LANG_S4")) {
+            if (_sw52480000_ === "LANG_JS2") {
                 hideDiv(js1)
                 showDiv(js2, "")
+                showDiv(js3, "")
                 hideDiv(human)
             } else {
-                if (_sw52480000_ === "LANG_HUMAN") {
-                    
+                if (_sw52480000_ === "LANG_S4") {
+                    hideDiv(js1)
+                    showDiv(js2, "")
+                    hideDiv(js3)
+                    hideDiv(human)
                 } else {
-                    throw "Unexpected switch value: " + _sw52480000_;
+                    if (_sw52480000_ === "LANG_HUMAN") {
+                        
+                    } else {
+                        throw "Unexpected switch value: " + _sw52480000_;
+                    }
+                    hideDiv(js1)
+                    hideDiv(js2)
+                    hideDiv(js3)
+                    showDiv(human, "")
                 }
-                hideDiv(js1)
-                hideDiv(js2)
-                showDiv(human, "")
             }
         }
     }
