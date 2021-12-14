@@ -1,5 +1,4 @@
 const util = require('util')
-var esprima = require('esprima')
 const { exec } = require("child_process");
 const fse = require('fs-extra')
 const axios = require("axios");
@@ -9,6 +8,7 @@ const _ = require("lodash")
 const genserver = require("./genserver")
 const winston = require("winston")
 const config = require("./config")
+const holo = require("./holo")
 
 var app = express();
 
@@ -236,7 +236,12 @@ async function jsBuild(buildId) {
         if (record.props.language === "LANG_JS") {
             await buildV1(record)
         } else {
-            var success = await buildV2(record)
+            var success
+            if (record.props.language === "LANG_S4") {
+                success = await buildHolo(record)
+            } else {
+                success = await buildV2(record)
+            }
             if (!success) {
                 record.state = "error"
                 return
@@ -253,6 +258,13 @@ async function jsBuild(buildId) {
     }
 }
 
+async function buildHolo(record) {
+    var folder = await getModule(record.spaceId, record.folderId)
+    await initStartRecord(record, folder)    
+    record.resultUrl = record.jsUrl
+    return await holo.buildHolo(record, getGeneric)
+}
+
 async function buildV2(record) {
     var folder = await getModule(record.spaceId, record.folderId)
     await initStartRecord(record, folder)
@@ -266,7 +278,7 @@ async function buildV2(record) {
 
 async function expandDepependencyTree(record) {
     record.modules = {}
-    record.allDeps = {}    
+    record.allDeps = {}
     var root = {
         name: record.name,
         props: record.props,
@@ -274,10 +286,10 @@ async function expandDepependencyTree(record) {
     }
 
     await expandDepependencyNode(record, root)
-    
+
     for (var dname in record.allDeps) {
         var dep = record.allDeps[dname]
-        
+
         if (dep.modules.length === 0) {
             throw new Error("No details specified for dependency: " + dname)
         }
@@ -309,7 +321,7 @@ async function expandDepependencyNode(record, module, isRoot) {
         } else if (dep.type === "anon") {
             getCreateSimpleDep(record, dep)
         } else if (dep.type === "npm" || dep.type === "node") {
-            getCreateModuleDep(record, dep, dep, isRoot)            
+            getCreateModuleDep(record, dep, dep, isRoot)
         }
     }
 }
@@ -422,7 +434,7 @@ function findProgramModule(record) {
 function getDepNames(record) {
     var programModule = findProgramModule(record)
     var names = {}
-    getDepNamesCore(record, programModule, names)    
+    getDepNamesCore(record, programModule, names)
     var result = Object.keys(names)
     result.sort()
     return result
@@ -439,7 +451,7 @@ function getDepNamesCore(record, module, names) {
         if (target.type === "module") {
             getDepNamesCore(record, target, names)
         }
-    }    
+    }
 }
 
 function getModuleByDepName(record, depName) {
@@ -450,9 +462,9 @@ function getModuleByDepName(record, depName) {
 
 async function generateProgram(record) {
     var module = makeModuleRecord(record.name, record.props, record.diagrams, record)
-    
+
     await expandDepependencyTree(record)
-    
+
     if (shouldStop(record)) {
         return false
     }
@@ -465,10 +477,10 @@ async function generateProgram(record) {
         var bodyOk = await generateNormalBody(mod)
         if (!bodyOk) {
             return false
-        }        
+        }
     }
 
-    
+
     await generateFunctions(module)
 
     if (record.errors.length > 0) {
@@ -482,7 +494,7 @@ async function generateProgram(record) {
     }
     var commonPart = record.lines.join("\n")
 
-    var browserLines = []    
+    var browserLines = []
     appendTradeMark(browserLines)
     appendIffeStart(browserLines)
     browserLines.push(commonPart)
@@ -519,11 +531,11 @@ async function writePackageJson(record, outputDir) {
         if (target.type === "npm") {
             names[target.package] = true
         }
-    }  
+    }
 
     var packages = Object.keys(names)
     packages.sort()
-    
+
     for (var package of packages) {
         names[package] = await getNpmVersion(package)
     }
@@ -558,7 +570,7 @@ async function getNpmVersion(package) {
     return version
 }
 
-function appendRequires(record, lines) {   
+function appendRequires(record, lines) {
     var requires = {}
     for (var depName in record.allDeps) {
         var dep = record.allDeps[depName]
@@ -566,7 +578,7 @@ function appendRequires(record, lines) {
         if (target.type != "module") {
             requires[depName] = target
         }
-    }    
+    }
     var names = Object.keys(requires)
     names.sort()
 
@@ -603,7 +615,7 @@ function injectDependencies(record, modNames) {
     for (var depName of modNames) {
         var module = getModuleByDepName(record, depName)
         for (var dep of module.deps) {
-            record.lines.push(depName + "." + dep.name +" = " + dep.name + ";")
+            record.lines.push(depName + "." + dep.name + " = " + dep.name + ";")
         }
     }
 }
@@ -627,7 +639,7 @@ async function generateNormal(record) {
 
 async function generateNormalBody(module) {
     addFunctionHeader(module)
-    addDependencyVars(module)    
+    addDependencyVars(module)
     await generateFunctions(module)
 
     if (module.errors.length > 0) {
@@ -688,8 +700,8 @@ function parseDependencies(module) {
                             package: p2[1],
                             type: p20,
                             obj: p2[2]
-                        })                  
-                    } else {    
+                        })
+                    } else {
                         module.deps.push({
                             name: name,
                             package: p2[1],
@@ -759,15 +771,7 @@ async function generateFunctions(module) {
     var diagrams = []
     for (var i = 0; i < module.diagrams.length; i++) {
         var diagram = module.diagrams[i]
-        if (diagram.keywords.algoprop) {
-            if (module.props.language != "LANG_S4") {
-                addModuleError(module, "Algo properties are not supported for this language: " + diagram.name)
-                return
-            }
-            module.algoprops[diagram.name] = diagram
-        } else {
-            diagrams.push(diagram)
-        }
+        diagrams.push(diagram)
     }
     module.diagrams = diagrams
     for (var i = 0; i < module.diagrams.length; i++) {
@@ -845,7 +849,7 @@ async function initStartRecord(record, folder) {
 async function buildV1(record) {
     var folder = await getModule(record.spaceId, record.folderId)
     await initStartRecord(record, folder)
-    
+
     genserver.beginBuild(record)
 
     if (shouldStop(record)) {
@@ -913,6 +917,11 @@ async function getGenToken(spaceId) {
 async function getProperties(spaceId, folderId) {
     var url = `http://localhost:${config.dtPort}/api/folder_props/${spaceId}/${folderId}`
     return await getFromDt(url, 1)
+}
+
+async function getGeneric(url) {
+    var fullUrl = `http://localhost:${config.dtPort}${url}`
+    return await getFromDt(fullUrl, 1)
 }
 
 async function getFolder(spaceId, folderId) {
