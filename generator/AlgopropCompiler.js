@@ -2,6 +2,7 @@ const esprima = require("esprima")
 const escodegen = require("escodegen")
 
 
+
 function AlgopropCompiler_module() {
     var unit = {};
     
@@ -2834,73 +2835,82 @@ function AlgopropCompiler_module() {
     
     function expandPause(project, diagram, item) {
         var body, expr, fun, main, oldBody;
-        oldBody = item.body.body[0]
-        if ((oldBody) && (oldBody.type === "ExpressionStatement")) {
-            expr = oldBody.expression
-            if ((expr.type === "Identifier") || (expr.type === "Literal")) {
-                item.body = {
-                    "type": "BlockStatement",
-                    "body": []
-                }
-                body = item.body.body
-                addLiteralAssignment(
-                    body,
-                    getSwitchVar(diagram),
-                    item.next[0]
-                )
-                fun = {
-                    "type": "ExpressionStatement",
-                    "expression": {
-                        "type": "CallExpression",
-                        "callee": {
-                            "type": "Identifier",
-                            "name": "setTimeout"
-                        },
-                        "arguments": [
-                            {
-                                "type": "FunctionExpression",
-                                "id": null,
-                                "params": [],
-                                "body": {
-                                    "type": "BlockStatement",
-                                    "body": []
-                                },
-                                "generator": false,
-                                "expression": false,
-                                "async": false
-                            },
-                            expr
-                        ]
+        if (item.body) {
+            oldBody = item.body.body[0]
+            if ((oldBody) && (oldBody.type === "ExpressionStatement")) {
+                expr = oldBody.expression
+                if ((expr.type === "Identifier") || (expr.type === "Literal")) {
+                    item.body = {
+                        "type": "BlockStatement",
+                        "body": []
                     }
-                }
-                main = procMain(diagram)
-                fun.expression.arguments [0].body.body.push(
-                    {
+                    body = item.body.body
+                    addLiteralAssignment(
+                        body,
+                        getSwitchVar(diagram),
+                        item.next[0]
+                    )
+                    fun = {
                         "type": "ExpressionStatement",
                         "expression": {
                             "type": "CallExpression",
                             "callee": {
                                 "type": "Identifier",
-                                "name": main
+                                "name": "setTimeout"
                             },
                             "arguments": [
                                 {
-                                    "type": "Identifier",
-                                    "name": "__resolve"
-                                }
+                                    "type": "FunctionExpression",
+                                    "id": null,
+                                    "params": [],
+                                    "body": {
+                                        "type": "BlockStatement",
+                                        "body": []
+                                    },
+                                    "generator": false,
+                                    "expression": false,
+                                    "async": false
+                                },
+                                expr
                             ]
                         }
                     }
-                )
-                body.push(fun)
-                body.push(
-                    {
-                        mustBreak: true,
-                        "type": "ReturnStatement",
-                        "argument": null
-                    }
-                )
-                item.type = "action"
+                    main = procMain(diagram)
+                    fun.expression.arguments [0].body.body.push(
+                        {
+                            "type": "ExpressionStatement",
+                            "expression": {
+                                "type": "CallExpression",
+                                "callee": {
+                                    "type": "Identifier",
+                                    "name": main
+                                },
+                                "arguments": [
+                                    {
+                                        "type": "Identifier",
+                                        "name": "__resolve"
+                                    }
+                                ]
+                            }
+                        }
+                    )
+                    body.push(fun)
+                    body.push(
+                        {
+                            mustBreak: true,
+                            "type": "ReturnStatement",
+                            "argument": null
+                        }
+                    )
+                    item.type = "action"
+                } else {
+                    addError(
+                        project,
+                        diagram,
+                        "ERR_VALUE_EXPECTED",
+                        item
+                    )
+                }
             } else {
                 addError(
                     project,
@@ -3730,24 +3740,16 @@ function AlgopropCompiler_module() {
                         if (project.errors.length === 0) {
                             return branch2();
                         } else {
-                            return {
-                                errors: project.errors
-                            }
+                            return branch4();
                         }
                     } else {
-                        return {
-                            errors: project.errors
-                        }
+                        return branch4();
                     }
                 } else {
-                    return {
-                        errors: project.errors
-                    }
+                    return branch4();
                 }
             } else {
-                return {
-                    errors: project.errors
-                }
+                return branch4();
             }
         }
     
@@ -3769,48 +3771,44 @@ function AlgopropCompiler_module() {
                                     if (project.errors.length === 0) {
                                         return branch3();
                                     } else {
-                                        return {
-                                            errors: project.errors
-                                        }
+                                        return branch4();
                                     }
                                 } else {
-                                    return {
-                                        errors: project.errors
-                                    }
+                                    return branch4();
                                 }
                             } else {
-                                return {
-                                    errors: project.errors
-                                }
+                                return branch4();
                             }
                         } else {
-                            return {
-                                errors: project.errors
-                            }
+                            return branch4();
                         }
                     } else {
-                        return {
-                            errors: project.errors
-                        }
+                        return branch4();
                     }
                 } else {
-                    return {
-                        errors: project.errors
-                    }
+                    return branch4();
                 }
             } else {
-                return {
-                    errors: project.errors
-                }
+                return branch4();
             }
         }
     
         function branch3() {
             forAllDiagrams(project, generateComplex)
-            return branch4();
+            if (project.errors.length === 0) {
+                return branch5();
+            } else {
+                return branch4();
+            }
         }
     
         function branch4() {
+            return {
+                errors: project.errors
+            }
+        }
+    
+        function branch5() {
             forAllDiagrams(project, generateBodies)
             moduleFun = createModuleFun(project.name)
             addDepVars(project, moduleFun.body.body)
@@ -3867,7 +3865,7 @@ function AlgopropCompiler_module() {
             }
         }
     
-        function branch5() {
+        function branch6() {
         }
     
         return branch1();
@@ -4743,31 +4741,28 @@ function AlgopropCompiler_module() {
     
     function parseItem(project, diagram, item) {
         var _sw_7, body, wrapped;
-        if (item.text) {
-            _sw_7 = item.type;
-            if (_sw_7 === "action") {
-                try {
-                    wrapped = "async function foo(){" + item
-                    .text + "}"
-                    body = esprima.parse(wrapped).body[0]
-                    .body
-                } catch (ex) {
-                    addError(
-                        project,
-                        diagram,
-                        ex.message,
-                        item
-                    )
-                    return 
-                }
-                item.body = body
-            } else {
-                if (_sw_7 === "pause") {
+        _sw_7 = item.type;
+        if (_sw_7 === "action") {
+            try {
+                wrapped = "async function foo(){" + item
+                .text + "}"
+                body = esprima.parse(wrapped).body[0]
+                .body
+            } catch (ex) {
+                addError(
+                    project,
+                    diagram,
+                    ex.message,
+                    item
+                )
+                return 
+            }
+            item.body = body
+        } else {
+            if (_sw_7 === "question") {
+                if (item.text) {
                     try {
-                        wrapped = "async function foo(){" + item
-                        .text + "}"
-                        body = esprima.parse(wrapped).body[0]
-                        .body
+                        body = esprima.parse(item.text)
                     } catch (ex) {
                         addError(
                             project,
@@ -4779,12 +4774,18 @@ function AlgopropCompiler_module() {
                     }
                     item.body = body
                 } else {
-                    if (_sw_7 === "insertion") {
+                    addError(
+                        project,
+                        diagram,
+                        "ERR_EXPRESSION_EXPECTED",
+                        item
+                    )
+                }
+            } else {
+                if (_sw_7 === "insertion") {
+                    if (item.text) {
                         try {
-                            wrapped = "async function foo(){" + item
-                            .text + "}"
-                            body = esprima.parse(wrapped).body[0]
-                            .body
+                            body = esprima.parse(item.text)
                         } catch (ex) {
                             addError(
                                 project,
@@ -4796,7 +4797,16 @@ function AlgopropCompiler_module() {
                         }
                         item.body = body
                     } else {
-                        if (_sw_7 === "question") {
+                        addError(
+                            project,
+                            diagram,
+                            "ERR_EXPRESSION_EXPECTED",
+                            item
+                        )
+                    }
+                } else {
+                    if (_sw_7 === "pause") {
+                        if (item.text) {
                             try {
                                 body = esprima.parse(item.text)
                             } catch (ex) {
@@ -4810,7 +4820,14 @@ function AlgopropCompiler_module() {
                             }
                             item.body = body
                         } else {
+                            addError(
+                                project,
+                                diagram,
+                                "ERR_EXPRESSION_EXPECTED",
+                                item
+                            )
                         }
+                    } else {
                     }
                 }
             }
@@ -5570,7 +5587,7 @@ function AlgopropCompiler_module() {
                 project,
                 diagram,
                 "ERR_EXPRESSION_EXPECTED",
-                caseItem
+                item
             )
         }
     }
