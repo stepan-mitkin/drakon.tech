@@ -9,6 +9,26 @@ function AlgopropCompiler_module() {
     var sm;
     var common;
     var http;
+    function addActionContent(project, diagram, item) {
+        var body, wrapped;
+        try {
+            wrapped = "async function foo(){" + item
+            .text + "}"
+            body = esprima.parse(wrapped).body[0]
+            .body
+        } catch (ex) {
+            addError(
+                project,
+                diagram,
+                ex.message,
+                item
+            )
+            return undefined
+        }
+        item.body = body
+        return true
+    }
+    
     function addApVar(diagram, name) {
         diagram.vars[name] = {type: "ap"}
     }
@@ -56,9 +76,6 @@ function AlgopropCompiler_module() {
             }
         }
         body.push(newStatement)
-    }
-    
-    function addAssignment() {
     }
     
     function addBreak(chunk, body) {
@@ -286,13 +303,16 @@ function AlgopropCompiler_module() {
                 }
             }
         )
-        outputBody.push(
-            {
-                "type": "VariableDeclaration",
-                "declarations": declarations,
-                "kind": "var"
-            }
-        )
+        if (declarations.length === 0) {
+        } else {
+            outputBody.push(
+                {
+                    "type": "VariableDeclaration",
+                    "declarations": declarations,
+                    "kind": "var"
+                }
+            )
+        }
     }
     
     function addEarlyExit(name, body) {
@@ -2649,20 +2669,21 @@ function AlgopropCompiler_module() {
     }
     
     function expandCalls(project, diagram) {
-        var _5_col, _5_it, _5_keys, _5_length, context, item, itemId;
+        var _5_col, _5_it, _5_length, context, ids, item, itemId, newItem;
+        ids = Object.keys(diagram.items)
         _5_it = 0;
-        _5_col = diagram.items;
-        _5_keys = Object.keys(_5_col);
-        _5_length = _5_keys.length;
+        _5_col = ids;
+        _5_length = _5_col.length;
         while (true) {
             if (_5_it < _5_length) {
-                itemId = _5_keys[_5_it];
-                item = _5_col[itemId];
+                itemId = _5_col[_5_it];
+                item = diagram.items[itemId]
                 if (item.body) {
                     context = {
                         project: project,
                         diagram: diagram,
                         item: item,
+                        before: [],
                         rewrite: expandCallsIdle
                     }
                     item.body = traverseAstCore2(
@@ -2671,6 +2692,19 @@ function AlgopropCompiler_module() {
                         undefined,
                         item.body
                     )
+                    if (context.before.length === 0) {
+                    } else {
+                        newItem = insertItemBefore(
+                            diagram,
+                            item,
+                            "action",
+                            undefined
+                        )
+                        newItem.body = {
+                            "type": "BlockStatement",
+                            "body": context.before
+                        }
+                    }
                 }
                 _5_it++;
             } else {
@@ -2685,6 +2719,7 @@ function AlgopropCompiler_module() {
             project: context.project,
             diagram: context.diagram,
             item: context.item,
+            before: context.before,
             body: [],
             rewrite: expandCallsIdle
         }
@@ -2755,57 +2790,46 @@ function AlgopropCompiler_module() {
     
     function expandInsertion(project, diagram, item) {
         var _sw_15, expr, inputBody, line;
-        if (item.body) {
-            inputBody = item.body.body
-            if (inputBody.length === 1) {
-                line = inputBody[0]
-                if (line.type === "ExpressionStatement") {
-                    item.body = {
-                        "type": "BlockStatement",
-                        "body": []
-                    }
-                    expr = line.expression
-                    _sw_15 = expr.type;
-                    if (_sw_15 === "CallExpression") {
+        inputBody = item.body.body
+        item.body = {
+            "type": "BlockStatement",
+            "body": []
+        }
+        line = inputBody[0]
+        if (line.type === "ExpressionStatement") {
+            expr = line.expression
+            _sw_15 = expr.type;
+            if (_sw_15 === "CallExpression") {
+                item.type = "action"
+                expandAwait(
+                    project,
+                    diagram,
+                    item,
+                    inputBody,
+                    inputBody.length,
+                    expr,
+                    addVoidCallThen
+                )
+            } else {
+                if (_sw_15 === "AssignmentExpression") {
+                    if (expr.right.type === "CallExpression") {
+                        item.type = "action"
                         expandAwait(
                             project,
                             diagram,
                             item,
                             inputBody,
-                            1,
+                            inputBody.length,
                             expr,
-                            addVoidCallThen
+                            addValueCallThen
                         )
-                        item.type = "action"
                     } else {
-                        if (_sw_15 === "AssignmentExpression") {
-                            if (expr.right.type === "CallExpression") {
-                                expandAwait(
-                                    project,
-                                    diagram,
-                                    item,
-                                    inputBody,
-                                    1,
-                                    expr,
-                                    addValueCallThen
-                                )
-                                item.type = "action"
-                            } else {
-                                addError(
-                                    project,
-                                    diagram,
-                                    "ERR_ONE_FUNCTION_CALL_EXPECTED",
-                                    item
-                                )
-                            }
-                        } else {
-                            addError(
-                                project,
-                                diagram,
-                                "ERR_ONE_FUNCTION_CALL_EXPECTED",
-                                item
-                            )
-                        }
+                        addError(
+                            project,
+                            diagram,
+                            "ERR_ONE_FUNCTION_CALL_EXPECTED",
+                            item
+                        )
                     }
                 } else {
                     addError(
@@ -2815,19 +2839,12 @@ function AlgopropCompiler_module() {
                         item
                     )
                 }
-            } else {
-                addError(
-                    project,
-                    diagram,
-                    "ERR_ONE_FUNCTION_CALL_EXPECTED",
-                    item
-                )
             }
         } else {
             addError(
                 project,
                 diagram,
-                "ERR_EXPRESSION_EXPECTED",
+                "ERR_ONE_FUNCTION_CALL_EXPECTED",
                 item
             )
         }
@@ -2965,7 +2982,7 @@ function AlgopropCompiler_module() {
             addApVar(context.diagram, variable)
             algoPropFun = "_calc_" + prop
             addAssignFromCall(
-                context.body,
+                context.before,
                 variable,
                 algoPropFun,
                 [newNode]
@@ -2996,7 +3013,7 @@ function AlgopropCompiler_module() {
                 node
             )
             addAssignToVar(
-                context.body,
+                context.before,
                 variable,
                 newNode
             )
@@ -3021,7 +3038,7 @@ function AlgopropCompiler_module() {
                 node
             )
             addAssignToVar(
-                context.body,
+                context.before,
                 variable,
                 newNode
             )
@@ -3115,6 +3132,49 @@ function AlgopropCompiler_module() {
         }
     
         return branch1();
+    }
+    
+    function extractReturnFromIns(project, diagram, item) {
+        var arg, line, newItem, variable;
+        line = item.body.body[0]
+        if (line.type === "ReturnStatement") {
+            arg = line.argument
+            newItem = insertItemAfter(
+                diagram,
+                item,
+                "action",
+                undefined
+            )
+            newItem.body = {
+                type: "BlockStatement",
+                body: []
+            }
+            variable = generateVariableName(diagram)
+            addNormalVar(diagram, variable)
+            item.body.body = [
+                {
+                    "type": "ExpressionStatement",
+                    "expression": {
+                        "type": "AssignmentExpression",
+                        "operator": "=",
+                        "left": {
+                            "type": "Identifier",
+                            "name": variable
+                        },
+                        "right": arg
+                    }
+                }
+            ]
+            newItem.body.body.push(
+                {
+                    type: "ReturnStatement",
+                    argument: {
+                        type: "Identifier",
+                        name: variable
+                    }
+                }
+            )
+        }
     }
     
     function extractVariables(project, diagram) {
@@ -3760,9 +3820,9 @@ function AlgopropCompiler_module() {
                 if (project.errors.length === 0) {
                     forAllDiagrams(project, prepareAlgoprops)
                     if (project.errors.length === 0) {
-                        forAllDiagrams(project, expandCalls)
+                        forAllDiagrams(project, findApCalls)
                         if (project.errors.length === 0) {
-                            forAllDiagrams(project, findApCalls)
+                            forAllDiagrams(project, expandCalls)
                             if (project.errors.length === 0) {
                                 forAllDiagrams(project, rewireApReturn)
                                 if (project.errors.length === 0) {
@@ -4217,6 +4277,37 @@ function AlgopropCompiler_module() {
         }
     }
     
+    function insertItemAfter(diagram, item, type, text) {
+        var _8_col, _8_it, _8_length, newItem, next, nextId;
+        next = item.next
+        newItem = {
+            type: type,
+            text: text,
+            id: generateItemId(diagram),
+            next: next,
+            refs: [item.id]
+        }
+        diagram.items[newItem.id] = newItem
+        item.next = [newItem.id]
+        _8_it = 0;
+        _8_col = next;
+        _8_length = _8_col.length;
+        while (true) {
+            if (_8_it < _8_length) {
+                nextId = _8_col[_8_it];
+                relinkRefs(
+                    diagram.items[nextId],
+                    item.id,
+                    newItem.id
+                )
+                _8_it++;
+            } else {
+                break;
+            }
+        }
+        return newItem
+    }
+    
     function insertItemBefore(diagram, item, type, text) {
         var _8_col, _8_it, _8_length, newItem, refId, refs;
         refs = item.refs
@@ -4305,7 +4396,7 @@ function AlgopropCompiler_module() {
             while (true) {
                 if (_7_it < _7_length) {
                     item = _7_col[_7_it];
-                    if (item.type === "action") {
+                    if (((((item.type === "action") || (item.type === "insertion")) || (item.type === "sinput")) || (item.type === "pause")) || (item.type === "case")) {
                         t2 = item.text || ""
                         if (t2.trim() === "") {
                             _7_it++;
@@ -4740,24 +4831,10 @@ function AlgopropCompiler_module() {
     }
     
     function parseItem(project, diagram, item) {
-        var _sw_7, body, wrapped;
+        var _sw_7, body;
         _sw_7 = item.type;
         if (_sw_7 === "action") {
-            try {
-                wrapped = "async function foo(){" + item
-                .text + "}"
-                body = esprima.parse(wrapped).body[0]
-                .body
-            } catch (ex) {
-                addError(
-                    project,
-                    diagram,
-                    ex.message,
-                    item
-                )
-                return 
-            }
-            item.body = body
+            addActionContent(project, diagram, item)
         } else {
             if (_sw_7 === "question") {
                 if (item.text) {
@@ -4782,7 +4859,7 @@ function AlgopropCompiler_module() {
                     )
                 }
             } else {
-                if (_sw_7 === "insertion") {
+                if (_sw_7 === "pause") {
                     if (item.text) {
                         try {
                             body = esprima.parse(item.text)
@@ -4805,20 +4882,25 @@ function AlgopropCompiler_module() {
                         )
                     }
                 } else {
-                    if (_sw_7 === "pause") {
+                    if (_sw_7 === "insertion") {
                         if (item.text) {
-                            try {
-                                body = esprima.parse(item.text)
-                            } catch (ex) {
-                                addError(
-                                    project,
-                                    diagram,
-                                    ex.message,
-                                    item
-                                )
-                                return 
+                            addActionContent(project, diagram, item)
+                            if (item.body) {
+                                if (item.body.body.length === 1) {
+                                    extractReturnFromIns(
+                                        project,
+                                        diagram,
+                                        item
+                                    )
+                                } else {
+                                    addError(
+                                        project,
+                                        diagram,
+                                        "ERR_ONE_FUNCTION_CALL_EXPECTED",
+                                        item
+                                    )
+                                }
                             }
-                            item.body = body
                         } else {
                             addError(
                                 project,
@@ -4885,7 +4967,7 @@ function AlgopropCompiler_module() {
         }
     
         function branch2() {
-            if (isInput(folder)) {
+            if ((diagram.algoprop) && (isInput(folder))) {
                 apType = "input"
                 return branch4();
             } else {
@@ -4919,7 +5001,10 @@ function AlgopropCompiler_module() {
                     return item.id
                 }
             )
-            diagram.start = branches[0].id
+            if (diagram.branches.length === 0) {
+            } else {
+                diagram.start = branches[0].id
+            }
             return branch4();
         }
     
