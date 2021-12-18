@@ -4197,7 +4197,8 @@ function changeDiagramProperties() {
         name = storage.name
         props = {
             keywords : storage.keywords,
-            params : storage.params
+            params : storage.params,
+            language : module.language
         }
         show(
             machine,

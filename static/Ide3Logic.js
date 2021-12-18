@@ -570,6 +570,7 @@ function DiagramCreator_ChooseDiagramType_onData(self, data) {
     folder = getFromCache(
         data.parentId
     )
+    self.language = folder.language
     browser.hideCentral()
     showCreateDialog(
         self.diagramType,
@@ -602,7 +603,8 @@ function DiagramCreator_EnterName_onData(self, data) {
         self.parentFolder,
         self.diagramType,
         self.name,
-        self
+        self,
+        self.language
     )
     self.state = "SendToServer";
 }
@@ -7053,12 +7055,13 @@ function sendBuild(self) {
     )
 }
 
-function sendCreateFolder(spaceId, parentFolderId, type, name, target) {
+function sendCreateFolder(spaceId, parentFolderId, type, name, target, language) {
     var data, url
     data = {
         parent : parentFolderId,
         type : type,
-        name : name
+        name : name,
+        language : language
     }
     url = "/api/folder/" + spaceId
     browser.sendPost(
