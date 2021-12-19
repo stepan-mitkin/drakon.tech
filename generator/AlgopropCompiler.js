@@ -1,8 +1,6 @@
 const esprima = require("esprima")
 const escodegen = require("escodegen")
 
-
-
 function AlgopropCompiler_module() {
     var unit = {};
     
@@ -80,23 +78,32 @@ function AlgopropCompiler_module() {
     
     function addBreak(chunk, body) {
         var last;
-        last = chunk.body[chunk.body.length - 1]
-        if (last.type === "BreakStatement") {
+        if (chunk.body.length === 0) {
+            body.push(
+                {
+                    "type": "BreakStatement",
+                    "label": null
+                }
+            )
         } else {
-            if (last.mustBreak) {
-                body.push(
-                    {
-                        "type": "ReturnStatement",
-                        "label": null
-                    }
-                )
+            last = chunk.body[chunk.body.length - 1]
+            if (last.type === "BreakStatement") {
             } else {
-                body.push(
-                    {
-                        "type": "BreakStatement",
-                        "label": null
-                    }
-                )
+                if (last.mustBreak) {
+                    body.push(
+                        {
+                            "type": "ReturnStatement",
+                            "label": null
+                        }
+                    )
+                } else {
+                    body.push(
+                        {
+                            "type": "BreakStatement",
+                            "label": null
+                        }
+                    )
+                }
             }
         }
     }
@@ -1162,22 +1169,26 @@ function AlgopropCompiler_module() {
     
     function allPathsReturn(body) {
         var _sw_8, last;
-        last = body[body.length - 1]
-        _sw_8 = last.type;
-        if (_sw_8 === "ReturnStatement") {
-            return true
+        if (body.length === 0) {
+            return false
         } else {
-            if (_sw_8 === "ThrowStatement") {
+            last = body[body.length - 1]
+            _sw_8 = last.type;
+            if (_sw_8 === "ReturnStatement") {
                 return true
             } else {
-                if (_sw_8 === "IfStatement") {
-                    if ((allPathsReturn(last.consequent.body)) && (allPathsReturn(last.alternate.body))) {
-                        return true
+                if (_sw_8 === "ThrowStatement") {
+                    return true
+                } else {
+                    if (_sw_8 === "IfStatement") {
+                        if ((allPathsReturn(last.consequent.body)) && (allPathsReturn(last.alternate.body))) {
+                            return true
+                        } else {
+                            return false
+                        }
                     } else {
                         return false
                     }
-                } else {
-                    return false
                 }
             }
         }
@@ -5186,7 +5197,7 @@ function AlgopropCompiler_module() {
     }
     
     function resolveError(diagram, item, body, expr) {
-        var gotoId, obj, res;
+        var gotoId, obj;
         if (item.isHandler) {
             obj = {
                 "type": "ObjectExpression",
@@ -5205,8 +5216,13 @@ function AlgopropCompiler_module() {
                     }
                 ]
             }
-            res = addResolve(body, obj)
-            res.mustBreak = true
+            addResolve(body, obj)
+            body.push(
+                {
+                    "type": "ReturnStatement",
+                    "argument": null
+                }
+            )
         } else {
             gotoId = findGotoBranch(diagram, "error")
             if (gotoId) {
@@ -5253,8 +5269,13 @@ function AlgopropCompiler_module() {
                         }
                     ]
                 }
-                res = addResolve(body, obj)
-                res.mustBreak = true
+                addResolve(body, obj)
+                body.push(
+                    {
+                        "type": "ReturnStatement",
+                        "argument": null
+                    }
+                )
             }
         }
     }
