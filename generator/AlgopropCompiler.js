@@ -1,6 +1,7 @@
 const esprima = require("esprima")
 const escodegen = require("escodegen")
 
+
 function AlgopropCompiler_module() {
     var unit = {};
     
@@ -8,10 +9,11 @@ function AlgopropCompiler_module() {
     var common;
     var http;
     function addActionContent(project, diagram, item) {
-        var body, wrapped;
+        var body, text, wrapped;
+        text = item.text || ""
         try {
-            wrapped = "async function foo(){" + item
-            .text + "}"
+            wrapped = "async function foo(){" + text
+            + "}"
             body = esprima.parse(wrapped).body[0]
             .body
         } catch (ex) {
@@ -1856,6 +1858,9 @@ function AlgopropCompiler_module() {
             item.next.push(item.two)
             delete item.two
         }
+        if (item.type === "arrow-loop") {
+            item.type = "action"
+        }
     }
     
     function createChunks(project, diagram) {
@@ -3012,9 +3017,7 @@ function AlgopropCompiler_module() {
     
     function extractAwait(context, type, node) {
         var newNode, variable;
-        if ((type === "ExpressionStatement") || (type === "AssignmentExpression")) {
-            return undefined
-        } else {
+        if ((!(type === "AssignmentExpression")) && ((!(type === "ExpressionStatement")) || (context.item.type === "question"))) {
             variable = generateVariableName(
                 context.diagram
             )
@@ -3032,14 +3035,14 @@ function AlgopropCompiler_module() {
                 type: "Identifier",
                 name: variable
             }
+        } else {
+            return undefined
         }
     }
     
     function extractCall(context, type, node) {
         var newNode, variable;
-        if (((type === "ExpressionStatement") || (type === "AssignmentExpression")) || (type === "AwaitExpression")) {
-            return undefined
-        } else {
+        if ((!((type === "AssignmentExpression") || (type === "AwaitExpression"))) && ((!(type === "ExpressionStatement")) || (context.item.type === "question"))) {
             variable = generateVariableName(
                 context.diagram
             )
@@ -3057,6 +3060,8 @@ function AlgopropCompiler_module() {
                 type: "Identifier",
                 name: variable
             }
+        } else {
+            return undefined
         }
     }
     
@@ -6219,5 +6224,5 @@ function AlgopropCompiler_module() {
     unit.mainCore = mainCore;
     return unit;
 }
-
+    
 module.exports = AlgopropCompiler_module
