@@ -1,6 +1,7 @@
 const esprima = require("esprima")
 const escodegen = require("escodegen")
 
+
 function AlgopropCompiler_module() {
     var unit = {};
     
@@ -2899,6 +2900,7 @@ function AlgopropCompiler_module() {
                         project: project,
                         diagram: diagram,
                         item: item,
+                        root: true,
                         before: [],
                         rewrite: expandCallsIdle
                     }
@@ -2935,9 +2937,13 @@ function AlgopropCompiler_module() {
             project: context.project,
             diagram: context.diagram,
             item: context.item,
-            before: context.before,
             body: [],
             rewrite: expandCallsIdle
+        }
+        if (context.root) {
+            context2.before = context.before
+        } else {
+            context2.before = context2.body
         }
         _6_it = 0;
         _6_col = node.body;
