@@ -1,7 +1,6 @@
 const esprima = require("esprima")
 const escodegen = require("escodegen")
 
-
 function AlgopropCompiler_module() {
     var unit = {};
     
@@ -29,12 +28,12 @@ function AlgopropCompiler_module() {
         return true
     }
     
-    function addApVar(diagram, name) {
-        diagram.vars[name] = {type: "ap"}
+    function addApVar(project, diagram, name) {
+        addVar(project, diagram, name, "ap")
     }
     
-    function addArgVar(diagram, name) {
-        diagram.vars[name] = {type: "arg"}
+    function addArgVar(project, diagram, name) {
+        addVar(project, diagram, name, "arg")
     }
     
     function addAssignFromCall(body, variable, fun, args) {
@@ -606,7 +605,7 @@ function AlgopropCompiler_module() {
         prev.next.push(newItem.id)
     }
     
-    function addEventArgsToVars(eventInfo, diagram) {
+    function addEventArgsToVars(project, diagram, eventInfo) {
         var _5_col, _5_it, _5_length, arg;
         _5_it = 0;
         _5_col = eventInfo.args;
@@ -614,7 +613,7 @@ function AlgopropCompiler_module() {
         while (true) {
             if (_5_it < _5_length) {
                 arg = _5_col[_5_it];
-                addNormalVar(diagram, arg)
+                addNormalVar(project, diagram, arg)
                 _5_it++;
             } else {
                 break;
@@ -787,12 +786,8 @@ function AlgopropCompiler_module() {
         )
     }
     
-    function addLocalVar(diagram, name) {
-        diagram.vars[name] = {type: "local"}
-    }
-    
-    function addNormalVar(diagram, name) {
-        diagram.vars[name] = {type: "var"}
+    function addNormalVar(project, diagram, name) {
+        addVar(project, diagram, name, "var")
     }
     
     function addResolve(body, argument) {
@@ -866,6 +861,10 @@ function AlgopropCompiler_module() {
                 }
             }
         )
+    }
+    
+    function addSpecialVar(diagram, name) {
+        diagram.vars[name] = {type: "var"}
     }
     
     function addValueCallThen(project, body, diagram, item, expr, oldNext) {
@@ -1103,11 +1102,23 @@ function AlgopropCompiler_module() {
         return branch1();
     }
     
-    function addVarsToBody(diagram, body) {
+    function addVar(project, diagram, name, type) {
+        if (isForbidden(name)) {
+            addError(
+                project,
+                diagram,
+                "ERR_BAD_VARIABLE_NAME" + ": " + name
+            )
+        } else {
+            diagram.vars[name] = {type: type}
+        }
+    }
+    
+    function addVarsToBody(project, diagram, body) {
         var _6_col, _6_it, _6_keys, _6_length, info, name, vars;
         function branch1() {
             if (diagram.algoprop) {
-                addNormalVar(diagram, "__result")
+                addSpecialVar(diagram, "__result")
             }
             return branch2();
         }
@@ -1493,7 +1504,7 @@ function AlgopropCompiler_module() {
     function buildFunctionStructure(project, diagram, first, body) {
         var _65_col, _65_it, _65_keys, _65_length, callMain, callback, eventFun, eventHandler, eventInfo, eventName, main, mainFun, mainTry, returnee, run, runBody;
         function branch1() {
-            addVarsToBody(diagram, body)
+            addVarsToBody(project, diagram, body)
             if (diagram.complex) {
                 if (diagram.algoprop) {
                     addEarlyExitAsync(diagram.name, body)
@@ -3184,7 +3195,11 @@ function AlgopropCompiler_module() {
                 )
             }
             variable = start + "__" + prop
-            addApVar(context.diagram, variable)
+            addApVar(
+                context.project,
+                context.diagram,
+                variable
+            )
             algoPropFun = "_calc_" + prop
             addAssignFromCall(
                 context.before,
@@ -3210,7 +3225,11 @@ function AlgopropCompiler_module() {
             variable = generateVariableName(
                 context.diagram
             )
-            addNormalVar(context.diagram, variable)
+            addNormalVar(
+                context.project,
+                context.diagram,
+                variable
+            )
             newNode = traverseAstDefault2(
                 context,
                 node
@@ -3235,7 +3254,11 @@ function AlgopropCompiler_module() {
             variable = generateVariableName(
                 context.diagram
             )
-            addNormalVar(context.diagram, variable)
+            addNormalVar(
+                context.project,
+                context.diagram,
+                variable
+            )
             newNode = traverseAstDefault2(
                 context,
                 node
@@ -3325,7 +3348,11 @@ function AlgopropCompiler_module() {
                 if (name === "left") {
                     if (node.name in context.diagram.vars) {
                     } else {
-                        addNormalVar(context.diagram, node.name)
+                        addNormalVar(
+                            context.project,
+                            context.diagram,
+                            node.name
+                        )
                     }
                 }
             }
@@ -3355,7 +3382,7 @@ function AlgopropCompiler_module() {
                 body: []
             }
             variable = generateVariableName(diagram)
-            addNormalVar(diagram, variable)
+            addNormalVar(project, diagram, variable)
             item.body.body = [
                 {
                     "type": "ExpressionStatement",
@@ -3409,7 +3436,7 @@ function AlgopropCompiler_module() {
             while (true) {
                 if (_12_it < _12_length) {
                     arg = _12_col[_12_it];
-                    addArgVar(diagram, arg)
+                    addArgVar(project, diagram, arg)
                     _12_it++;
                 } else {
                     break;
@@ -3450,7 +3477,11 @@ function AlgopropCompiler_module() {
                 if (_24_it < _24_length) {
                     eventName = _24_keys[_24_it];
                     eventInfo = _24_col[eventName];
-                    addEventArgsToVars(eventInfo, diagram)
+                    addEventArgsToVars(
+                        project,
+                        diagram,
+                        eventInfo
+                    )
                     _24_it++;
                 } else {
                     break;
@@ -4592,6 +4623,14 @@ function AlgopropCompiler_module() {
         }
     }
     
+    function isForbidden(variable) {
+        if (((variable === "me") || (variable === "__resolve")) || (variable === "__result")) {
+            return true
+        } else {
+            return false
+        }
+    }
+    
     function isInput(folder) {
         var _7_col, _7_it, _7_length, item, t2;
         if ((folder.items) && (!(folder.items.length === 0))) {
@@ -5687,7 +5726,10 @@ function AlgopropCompiler_module() {
                             )
                             body2.push(child)
                         } else {
-                            addNormalVar(context.diagram, "__result")
+                            addSpecialVar(
+                                context.diagram,
+                                "__result"
+                            )
                             body2.push(
                                 {
                                     "type": "ExpressionStatement",
@@ -6412,6 +6454,6 @@ function AlgopropCompiler_module() {
     unit.generateCode = generateCode;
     unit.mainCore = mainCore;
     return unit;
-}    
+}
 
 module.exports = AlgopropCompiler_module
