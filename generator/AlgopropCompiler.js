@@ -382,6 +382,192 @@ function AlgopropCompiler_module() {
         )
     }
     
+    function addEarlyExitAsync(name, body) {
+        var resolveReturn, retObj, returnObj, returnPromise;
+        function branch1() {
+            body.push(
+                {
+                    "type": "ExpressionStatement",
+                    "expression": {
+                        "type": "AssignmentExpression",
+                        "operator": "=",
+                        "left": {
+                            "type": "Identifier",
+                            "name": "__result"
+                        },
+                        "right": {
+                            "type": "MemberExpression",
+                            "computed": false,
+                            "object": {
+                                "type": "Identifier",
+                                "name": "__obj"
+                            },
+                            "property": {
+                                "type": "Identifier",
+                                "name": name
+                            }
+                        }
+                    }
+                }
+            )
+            return branch2();
+        }
+    
+        function branch2() {
+            retObj = {
+                "type": "ObjectExpression",
+                "properties": [
+                    {
+                        "type": "Property",
+                        "key": {
+                            "type": "Identifier",
+                            "name": "ok"
+                        },
+                        "computed": false,
+                        "value": {
+                            "type": "Literal",
+                            "value": true,
+                            "raw": "true"
+                        },
+                        "kind": "init",
+                        "method": false,
+                        "shorthand": false
+                    },
+                    {
+                        "type": "Property",
+                        "key": {
+                            "type": "Identifier",
+                            "name": "result"
+                        },
+                        "computed": false,
+                        "value": {
+                            "type": "Identifier",
+                            "name": "__result"
+                        },
+                        "kind": "init",
+                        "method": false,
+                        "shorthand": false
+                    }
+                ]
+            }
+            return branch3();
+        }
+    
+        function branch3() {
+            resolveReturn = {
+                "type": "ExpressionStatement",
+                "expression": {
+                    "type": "CallExpression",
+                    "callee": {
+                        "type": "Identifier",
+                        "name": "__resolve"
+                    },
+                    "arguments": [retObj]
+                }
+            }
+            returnPromise = {
+                "type": "ReturnStatement",
+                "argument": {
+                    "type": "NewExpression",
+                    "callee": {
+                        "type": "Identifier",
+                        "name": "Promise"
+                    },
+                    "arguments": [
+                        {
+                            "type": "FunctionExpression",
+                            "id": null,
+                            "params": [
+                                {
+                                    "type": "Identifier",
+                                    "name": "__resolve"
+                                }
+                            ],
+                            "body": {
+                                "type": "BlockStatement",
+                                "body": [
+                                    resolveReturn
+                                ]
+                            },
+                            "generator": false,
+                            "expression": false,
+                            "async": false
+                        }
+                    ]
+                }
+            }
+            return branch4();
+        }
+    
+        function branch4() {
+            returnObj = {
+                "type": "ReturnStatement",
+                "argument": {
+                    "type": "ObjectExpression",
+                    "properties": [
+                        {
+                            "type": "Property",
+                            "key": {
+                                "type": "Identifier",
+                                "name": "run"
+                            },
+                            "computed": false,
+                            "value": {
+                                "type": "FunctionExpression",
+                                "id": null,
+                                "params": [],
+                                "body": {
+                                    "type": "BlockStatement",
+                                    "body": [
+                                        returnPromise
+                                    ]
+                                },
+                                "generator": false,
+                                "expression": false,
+                                "async": false
+                            },
+                            "kind": "init",
+                            "method": false,
+                            "shorthand": false
+                        }
+                    ]
+                }
+            }
+            return branch5();
+        }
+    
+        function branch5() {
+            body.push(
+                {
+                    "type": "IfStatement",
+                    "test": {
+                        "type": "BinaryExpression",
+                        "operator": "!=",
+                        "left": {
+                            "type": "Identifier",
+                            "name": "__result"
+                        },
+                        "right": {
+                            "type": "Identifier",
+                            "name": "undefined"
+                        }
+                    },
+                    "consequent": {
+                        "type": "BlockStatement",
+                        "body": [returnObj]
+                    },
+                    "alternate": null
+                }
+            )
+            return branch6();
+        }
+    
+        function branch6() {
+        }
+    
+        return branch1();
+    }
+    
     function addError(project, diagram, message, item) {
         var error, itemId, text;
         if (item) {
@@ -1309,6 +1495,9 @@ function AlgopropCompiler_module() {
         function branch1() {
             addVarsToBody(diagram, body)
             if (diagram.complex) {
+                if (diagram.algoprop) {
+                    addEarlyExitAsync(diagram.name, body)
+                }
                 return branch2();
             } else {
                 if (diagram.algoprop) {
@@ -6223,6 +6412,6 @@ function AlgopropCompiler_module() {
     unit.generateCode = generateCode;
     unit.mainCore = mainCore;
     return unit;
-}
-    
+}    
+
 module.exports = AlgopropCompiler_module
