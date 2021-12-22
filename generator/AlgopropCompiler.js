@@ -1,7 +1,6 @@
 const esprima = require("esprima")
 const escodegen = require("escodegen")
 
-
 function AlgopropCompiler_module() {
     var unit = {};
     
@@ -1564,6 +1563,28 @@ function AlgopropCompiler_module() {
                                         "method": false,
                                         "shorthand":
                                         false
+                                    },
+                                    {
+                                        "type": "Property",
+                                        "key": {
+                                            "type": "Identifier",
+                                            "name": "type"
+                                        },
+                                        "computed": false,
+                                        "value": {
+                                            "type": "Literal",
+                                            "value":
+                                            diagram.name,
+                                            "raw": JSON
+                                            .stringify(
+                                                diagram
+                                                .name
+                                            )
+                                        },
+                                        "kind": "init",
+                                        "method": false,
+                                        "shorthand":
+                                        false
                                     }
                                 ]
                             }
@@ -2773,23 +2794,33 @@ function AlgopropCompiler_module() {
                                 return 
                             } else {
                                 if (_sw_20 === "CallExpression") {
-                                    fun = getInternalCall(
-                                        project,
-                                        right.callee
-                                    )
-                                    if ((fun) && (fun.complex)) {
-                                        expandAwait(
+                                    if (right.callee.name === "createObject") {
+                                        expandCreateObject(
                                             project,
                                             diagram,
                                             item,
-                                            body,
-                                            i + 1,
                                             expr,
-                                            addValueCallThen
+                                            body2
                                         )
-                                        return 
                                     } else {
-                                        body2.push(node)
+                                        fun = getInternalCall(
+                                            project,
+                                            right.callee
+                                        )
+                                        if ((fun) && (fun.complex)) {
+                                            expandAwait(
+                                                project,
+                                                diagram,
+                                                item,
+                                                body,
+                                                i + 1,
+                                                expr,
+                                                addValueCallThen
+                                            )
+                                            return 
+                                        } else {
+                                            body2.push(node)
+                                        }
                                     }
                                 } else {
                                     body2.push(node)
@@ -3010,6 +3041,55 @@ function AlgopropCompiler_module() {
         }
     }
     
+    function expandCreateObject(project, diagram, item, node, outputBody) {
+        var args, args2, fun;
+        args = node.right.arguments 
+        if (args.length === 0) {
+            addError(
+                project,
+                diagram,
+                "ERR_FUNCTION_NAME_AND_ARGUMENTS_EXPECTED",
+                item
+            )
+        } else {
+            fun = args[0]
+            args2 = args.slice(1)
+            outputBody.push(
+                {
+                    "type": "ExpressionStatement",
+                    "expression": {
+                        "type": "AssignmentExpression",
+                        "operator": "=",
+                        "left": node.left,
+                        "right": {
+                            "type": "CallExpression",
+                            "callee": fun,
+                            "arguments": args2
+                        }
+                    }
+                }
+            )
+            outputBody.push(
+                {
+                    "type": "ExpressionStatement",
+                    "expression": {
+                        "type": "CallExpression",
+                        "callee": {
+                            "type": "MemberExpression",
+                            "computed": false,
+                            "object": node.left,
+                            "property": {
+                                "type": "Identifier",
+                                "name": "run"
+                            }
+                        },
+                        "arguments": []
+                    }
+                }
+            )
+        }
+    }
+    
     function expandInsertion(project, diagram, item) {
         var _sw_15, expr, inputBody, line;
         inputBody = item.body.body
@@ -3168,6 +3248,66 @@ function AlgopropCompiler_module() {
         }
     }
     
+    function expandSOutput(project, diagram, item) {
+        var expr, inputBody, line, timeoutCall;
+        inputBody = item.body.body
+        item.body = {
+            "type": "BlockStatement",
+            "body": []
+        }
+        line = inputBody[0]
+        if (line.type === "ExpressionStatement") {
+            expr = line.expression
+            if (expr.type === "CallExpression") {
+                timeoutCall = {
+                    "type": "ExpressionStatement",
+                    "expression": {
+                        "type": "CallExpression",
+                        "callee": {
+                            "type": "Identifier",
+                            "name": "setTimeout"
+                        },
+                        "arguments": [
+                            {
+                                "type": "FunctionExpression",
+                                "id": null,
+                                "params": [],
+                                "body": {
+                                    "type": "BlockStatement",
+                                    "body": [line]
+                                },
+                                "generator": false,
+                                "expression": false,
+                                "async": false
+                            },
+                            {
+                                "type": "Literal",
+                                "value": 0,
+                                "raw": "0"
+                            }
+                        ]
+                    }
+                }
+                item.body.body.push(timeoutCall)
+                item.type = "action"
+            } else {
+                addError(
+                    project,
+                    diagram,
+                    "ERR_ONE_FUNCTION_CALL_EXPECTED",
+                    item
+                )
+            }
+        } else {
+            addError(
+                project,
+                diagram,
+                "ERR_ONE_FUNCTION_CALL_EXPECTED",
+                item
+            )
+        }
+    }
+    
     function extractApCall(context, type, name, node) {
         var algoPropFun, algoprop, newNode, prop, start, variable;
         function branch1() {
@@ -3294,25 +3434,29 @@ function AlgopropCompiler_module() {
     
     function extractNodeVars(context, type, name, computed, node) {
         function branch1() {
-            if (isAssignmentToProperty(
+            if (context.diagram.algoprop) {
+                if (isAssignmentToProperty(
         context,
         type,
         name,
         node
     )) {
-                if (isAlgopropName(context, node.property)) {
-                    addError(
-                        context.project,
-                        context.diagram,
-                        "ERR_CANNOT_ASSIGN_TO_ALGOPROP",
-                        context.item
-                    )
-                    return branch5();
+                    if (isAlgopropName(context, node.property)) {
+                        addError(
+                            context.project,
+                            context.diagram,
+                            "ERR_CANNOT_ASSIGN_TO_ALGOPROP",
+                            context.item
+                        )
+                        return branch5();
+                    } else {
+                        return branch2();
+                    }
                 } else {
                     return branch2();
                 }
             } else {
-                return branch2();
+                return branch4();
             }
         }
     
@@ -3329,13 +3473,14 @@ function AlgopropCompiler_module() {
         }
     
         function branch3() {
-            if (((type === "AssignmentExpression") && (name === "left")) && (context.diagram.algoprop)) {
+            if ((type === "AssignmentExpression") && (name === "left")) {
                 addError(
                     context.project,
                     context.diagram,
                     "ERR_CANNOT_ASSIGN_TO_ALGOPROP",
                     context.item
                 )
+                return branch5();
             } else {
                 if ((name === "param") || (name === "params")) {
                     addError(
@@ -3344,9 +3489,11 @@ function AlgopropCompiler_module() {
                         "ERR_ALGOPROP_CANNOT_BE_ARGUMENT",
                         context.item
                     )
+                    return branch5();
+                } else {
+                    return branch4();
                 }
             }
-            return branch5();
         }
     
         function branch4() {
@@ -4188,23 +4335,27 @@ function AlgopropCompiler_module() {
                     if (_sw_20 === "pause") {
                         expandPause(project, diagram, item)
                     } else {
-                        if (_sw_20 === "insertion") {
-                            expandInsertion(project, diagram, item)
+                        if (_sw_20 === "soutput") {
+                            expandSOutput(project, diagram, item)
                         } else {
-                            if (item.body) {
-                                expandAsyncs(
-                                    project,
-                                    diagram,
-                                    item,
-                                    item.body.body,
-                                    0
-                                )
-                                traverseAst(
-                                    project,
-                                    diagram,
-                                    item,
-                                    replaceGetHandlerData
-                                )
+                            if (_sw_20 === "insertion") {
+                                expandInsertion(project, diagram, item)
+                            } else {
+                                if (item.body) {
+                                    expandAsyncs(
+                                        project,
+                                        diagram,
+                                        item,
+                                        item.body.body,
+                                        0
+                                    )
+                                    traverseAst(
+                                        project,
+                                        diagram,
+                                        item,
+                                        replaceGetHandlerData
+                                    )
+                                }
                             }
                         }
                     }
@@ -5150,6 +5301,13 @@ function AlgopropCompiler_module() {
                                         item
                                     )
                                 }
+                            } else {
+                                addError(
+                                    project,
+                                    diagram,
+                                    "ERR_EXPRESSION_EXPECTED",
+                                    item
+                                )
                             }
                         } else {
                             addError(
@@ -5160,6 +5318,42 @@ function AlgopropCompiler_module() {
                             )
                         }
                     } else {
+                        if (_sw_7 === "soutput") {
+                            if (item.text) {
+                                addActionContent(project, diagram, item)
+                                if (item.body) {
+                                    if (item.body.body.length === 1) {
+                                        extractReturnFromIns(
+                                            project,
+                                            diagram,
+                                            item
+                                        )
+                                    } else {
+                                        addError(
+                                            project,
+                                            diagram,
+                                            "ERR_ONE_FUNCTION_CALL_EXPECTED",
+                                            item
+                                        )
+                                    }
+                                } else {
+                                    addError(
+                                        project,
+                                        diagram,
+                                        "ERR_EXPRESSION_EXPECTED",
+                                        item
+                                    )
+                                }
+                            } else {
+                                addError(
+                                    project,
+                                    diagram,
+                                    "ERR_EXPRESSION_EXPECTED",
+                                    item
+                                )
+                            }
+                        } else {
+                        }
                     }
                 }
             }
