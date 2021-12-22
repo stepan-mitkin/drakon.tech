@@ -1,6 +1,7 @@
 const esprima = require("esprima")
 const escodegen = require("escodegen")
 
+
 function AlgopropCompiler_module() {
     var unit = {};
     
@@ -2640,6 +2641,82 @@ function AlgopropCompiler_module() {
                 "kind": "var"
             }
         )
+        moduleFun.body.body.push(
+            {
+                "type": "ExpressionStatement",
+                "expression": {
+                    "type": "AssignmentExpression",
+                    "operator": "=",
+                    "left": {
+                        "type": "MemberExpression",
+                        "computed": false,
+                        "object": {
+                            "type": "Identifier",
+                            "name": "unit"
+                        },
+                        "property": {
+                            "type": "Identifier",
+                            "name": "onError"
+                        }
+                    },
+                    "right": {
+                        "type": "FunctionExpression",
+                        "id": null,
+                        "params": [
+                            {
+                                "type": "Identifier",
+                                "name": "error"
+                            }
+                        ],
+                        "body": {
+                            "type": "BlockStatement",
+                            "body": [
+                                {
+                                    "type": "ExpressionStatement",
+                                    "expression":
+                                    {
+                                        "type": "CallExpression",
+                                        "callee":
+                                        {
+                                            "type":
+                                            "MemberExpression",
+                                            "computed":
+                                            false,
+                                            "object":
+                                            {
+                                                "type":
+                                                "Identifier",
+                                                "name":
+                                                "console"
+                                            },
+                                            "property":
+                                            {
+                                                "type":
+                                                "Identifier",
+                                                "name":
+                                                "error"
+                                            }
+                                        },
+                                        "arguments":
+                                        [
+                                            {
+                                                "type":
+                                                "Identifier",
+                                                "name":
+                                                "error"
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        },
+                        "generator": false,
+                        "expression": false,
+                        "async": false
+                    }
+                }
+            }
+        )
         return moduleFun
     }
     
@@ -2845,7 +2922,13 @@ function AlgopropCompiler_module() {
                     }
                 } else {
                     if (_sw_34 === "ThrowStatement") {
-                        resolveError(diagram, item, body2, node)
+                        resolveError(
+                            project,
+                            diagram,
+                            item,
+                            body2,
+                            node
+                        )
                     } else {
                         if (_sw_34 === "ReturnStatement") {
                             resolveReturn(body2, node)
@@ -3893,6 +3976,32 @@ function AlgopropCompiler_module() {
         var errorHandler, errorStructure, ifst, main, output, state, tryHandler;
         function branch1() {
             tryHandler = mainTry.handlers[0].body.body
+            tryHandler.push(
+                {
+                    "type": "ExpressionStatement",
+                    "expression": {
+                        "type": "CallExpression",
+                        "callee": {
+                            "type": "MemberExpression",
+                            "computed": false,
+                            "object": {
+                                "type": "Identifier",
+                                "name": "unit"
+                            },
+                            "property": {
+                                "type": "Identifier",
+                                "name": "onError"
+                            }
+                        },
+                        "arguments": [
+                            {
+                                "type": "Identifier",
+                                "name": "ex"
+                            }
+                        ]
+                    }
+                }
+            )
             errorHandler = diagram.handlers.error
             if ((errorHandler) && (errorHandler.itemId)) {
                 ifst = {
@@ -5629,8 +5738,46 @@ function AlgopropCompiler_module() {
         }
     }
     
-    function resolveError(diagram, item, body, expr) {
-        var gotoId, obj;
+    function resolveError(project, diagram, item, body, expr) {
+        var gotoId, obj, value, variable;
+        variable = generateVariableName(diagram)
+        addNormalVar(project, diagram, variable)
+        value = {
+            type: "Identifier",
+            name: variable
+        }
+        body.push(
+            {
+                "type": "ExpressionStatement",
+                "expression": {
+                    "type": "AssignmentExpression",
+                    "operator": "=",
+                    "left": value,
+                    "right": expr.argument
+                }
+            }
+        )
+        body.push(
+            {
+                "type": "ExpressionStatement",
+                "expression": {
+                    "type": "CallExpression",
+                    "callee": {
+                        "type": "MemberExpression",
+                        "computed": false,
+                        "object": {
+                            "type": "Identifier",
+                            "name": "unit"
+                        },
+                        "property": {
+                            "type": "Identifier",
+                            "name": "onError"
+                        }
+                    },
+                    "arguments": [value]
+                }
+            }
+        )
         if (item.isHandler) {
             obj = {
                 "type": "ObjectExpression",
@@ -5642,7 +5789,7 @@ function AlgopropCompiler_module() {
                             "name": "error"
                         },
                         "computed": false,
-                        "value": expr.argument,
+                        "value": value,
                         "kind": "init",
                         "method": false,
                         "shorthand": false
@@ -5669,7 +5816,7 @@ function AlgopropCompiler_module() {
                                 "type": "Identifier",
                                 "name": "__handlerData"
                             },
-                            "right": expr.argument
+                            "right": value
                         }
                     }
                 )
@@ -5695,7 +5842,7 @@ function AlgopropCompiler_module() {
                                 "name": "error"
                             },
                             "computed": false,
-                            "value": expr.argument,
+                            "value": value,
                             "kind": "init",
                             "method": false,
                             "shorthand": false
