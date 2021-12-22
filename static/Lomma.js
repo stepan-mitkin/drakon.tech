@@ -8564,7 +8564,9 @@ function init() {
         select : true,
         "case" : true,
         input : true,
-        pause : true
+        pause : true,
+        sinput : true,
+        soutput : true
     }
     module.search = {
     	input: {
