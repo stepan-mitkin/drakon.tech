@@ -1510,6 +1510,41 @@ function SInput_draw(render, item) {
     )
 }
 
+function SOutput_draw(render, item) {
+    var format, points, pos, texId
+    format = getFormatForIcon(
+        item.type
+    )
+    texId = makeCustomTexture(
+        render,
+        item.x,
+        item.y,
+        item.w,
+        item.h
+    )
+    points = makeOutputPoints(item.w, item.h)
+    render.drawShape(
+        texId,
+        "poly",
+        item.x,
+        item.y,
+        points,
+        format
+    )
+    pos = {
+        x : item.x,
+        y : item.y,
+        w : item.w,
+        h : item.h
+    }
+    drawLeftTextInRect(
+        render,
+        texId,
+        item.tb,
+        pos
+    )
+}
+
 function Select_draw(render, item) {
     var ADD, format, points, pos, texId
     ADD = Config.SNAP / 2
@@ -8488,6 +8523,11 @@ function iconsInit() {
         Insertion_flow
     )
     defineIcon(
+        "soutput",
+        SOutput_draw,
+        Action_flow
+    )
+    defineIcon(
         "pause",
         Pause_draw,
         Pause_flow
@@ -8568,6 +8608,9 @@ function initSockets() {
     }
     module.insertActions.sinput = function(socket) {
         return simpleInsert(socket, "sinput")
+    }
+    module.insertActions.soutput = function(socket) {
+        return simpleInsert(socket, "soutput")
     }
     module.insertActions.pause = function(socket) {
         return simpleInsert(socket, "pause")
@@ -9683,6 +9726,22 @@ function makeLoopEndPoints(w, h) {
      x2, bottom,
      x1, bottom,
      x0, middle
+    ]
+}
+
+function makeOutputPoints(w, h) {
+    var x2 = w;
+    var x0 = -w;
+    var x1 = x2 - Config.INPUT_LEFT;
+    var y2 = h;
+    var y0 = -h;
+    var y1 = 0;
+    return [
+      x0, y0,
+      x1, y0,
+      x2, y1,
+      x1, y2,
+      x0, y2
     ]
 }
 
