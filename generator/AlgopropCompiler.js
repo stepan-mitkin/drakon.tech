@@ -2,6 +2,7 @@ const esprima = require("esprima")
 const escodegen = require("escodegen")
 
 
+
 function AlgopropCompiler_module() {
     var unit = {};
     
@@ -2134,7 +2135,7 @@ function AlgopropCompiler_module() {
                 if (_20_it < _20_length) {
                     id = _20_keys[_20_it];
                     item = _20_col[id];
-                    if ((item.type === "select") || (item.type === "sinput")) {
+                    if (((item.type === "select") && (item.text === "receive")) || (item.type === "sinput")) {
                         _23_it = 0;
                         _23_col = item.next;
                         _23_length = _23_col.length;
