@@ -2425,27 +2425,44 @@ function makeFormatList(div, node, widget) {
 }
 
 function makeFunTypeList(div, node, widget) {
+    var _sw53310000_ = 0;
     var select = make(div, "select")
     select.id = "fun_type_list"
-    if (node.language==="LANG_S4") {
+    _sw53310000_ = node.language;
+    if (_sw53310000_ === "LANG_S42") {
         addOption(select, "MES_FUNCTION", translate("MES_FUNCTION"))
+        addOption(select, "MES_ASYNC_FUNCTION", translate("MES_ASYNC_FUNCTION"))
         addOption(select, "MES_ALGOPROP", translate("MES_ALGOPROP"))
         if (node.algoprop) {
             select.value = "MES_ALGOPROP"
-        } else {
-            select.value = "MES_FUNCTION"
-        }
-    } else {
-        addOption(select, "MES_FUNCTION", translate("MES_FUNCTION"))
-        addOption(select, "MES_ASYNC_FUNCTION", translate("MES_ASYNC_FUNCTION"))
-        addOption(select, "MES_SCENARIO", translate("MES_SCENARIO"))
-        if (node.scenario) {
-            select.value = "MES_SCENARIO"
         } else {
             if (node["async"]) {
                 select.value = "MES_ASYNC_FUNCTION"
             } else {
                 select.value = "MES_FUNCTION"
+            }
+        }
+    } else {
+        if (_sw53310000_ === "LANG_S4") {
+            addOption(select, "MES_FUNCTION", translate("MES_FUNCTION"))
+            addOption(select, "MES_ALGOPROP", translate("MES_ALGOPROP"))
+            if (node.algoprop) {
+                select.value = "MES_ALGOPROP"
+            } else {
+                select.value = "MES_FUNCTION"
+            }
+        } else {
+            addOption(select, "MES_FUNCTION", translate("MES_FUNCTION"))
+            addOption(select, "MES_ASYNC_FUNCTION", translate("MES_ASYNC_FUNCTION"))
+            addOption(select, "MES_SCENARIO", translate("MES_SCENARIO"))
+            if (node.scenario) {
+                select.value = "MES_SCENARIO"
+            } else {
+                if (node["async"]) {
+                    select.value = "MES_ASYNC_FUNCTION"
+                } else {
+                    select.value = "MES_FUNCTION"
+                }
             }
         }
     }
@@ -2502,6 +2519,7 @@ function makeLanguageList(div, node, widget) {
     addOption(select, "LANG_JS2", translate("LANG_JS2"))
     addOption(select, "LANG_JS", translate("LANG_JS"))
     addOption(select, "LANG_S4", translate("LANG_S4"))
+    addOption(select, "LANG_S42", translate("LANG_S42"))
     addOption(select, "LANG_HUMAN", translate("LANG_HUMAN"))
     select.value = globs.props.language || "LANG_JS2"
     select.addEventListener("change", onLanguageChange)
@@ -6216,7 +6234,7 @@ function updateFormatList() {
             ]
             def = "MES_PROGRAM"
         } else {
-            if ((_sw51980000_ === "LANG_S4") || (_sw51980000_ === "LANG_HUMAN")) {
+            if (((_sw51980000_ === "LANG_S4") || (_sw51980000_ === "LANG_S42")) || (_sw51980000_ === "LANG_HUMAN")) {
                 
             } else {
                 throw "Unexpected switch value: " + _sw51980000_;
@@ -6260,15 +6278,22 @@ function updatePropButtons() {
                     hideDiv(js3)
                     hideDiv(human)
                 } else {
-                    if (_sw52480000_ === "LANG_HUMAN") {
-                        
+                    if (_sw52480000_ === "LANG_S42") {
+                        hideDiv(js1)
+                        showDiv(js2, "")
+                        hideDiv(js3)
+                        hideDiv(human)
                     } else {
-                        throw "Unexpected switch value: " + _sw52480000_;
+                        if (_sw52480000_ === "LANG_HUMAN") {
+                            
+                        } else {
+                            throw "Unexpected switch value: " + _sw52480000_;
+                        }
+                        hideDiv(js1)
+                        hideDiv(js2)
+                        hideDiv(js3)
+                        showDiv(human, "")
                     }
-                    hideDiv(js1)
-                    hideDiv(js2)
-                    hideDiv(js3)
-                    showDiv(human, "")
                 }
             }
         }
