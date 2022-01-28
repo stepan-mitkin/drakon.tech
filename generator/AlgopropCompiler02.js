@@ -2,6 +2,7 @@ const esprima = require("esprima")
 const escodegen = require("escodegen")
 
 
+
 function AlgopropCompiler02_module() {
     var unit = {};
     
@@ -585,7 +586,7 @@ function AlgopropCompiler02_module() {
             spaceId: project.spaceId,
             id: diagram.id,
             name: diagram.name,
-            message: message,
+            message: tr(message),
             url: project.spaceId + "/" + diagram.id,
             itemId: itemId,
             text: text
@@ -808,7 +809,12 @@ function AlgopropCompiler02_module() {
     }
     
     function addResolve(body, argument) {
-        var res;
+        var args, res;
+        if (argument) {
+            args = [argument]
+        } else {
+            args = []
+        }
         body.push(
             {
                 "type": "ExpressionStatement",
@@ -842,7 +848,7 @@ function AlgopropCompiler02_module() {
                     "type": "Identifier",
                     "name": "__resolve"
                 },
-                "arguments": [argument]
+                "arguments": args
             }
         }
         body.push(res)
@@ -967,7 +973,8 @@ function AlgopropCompiler02_module() {
             addError(
                 project,
                 diagram,
-                "ERR_BAD_VARIABLE_NAME" + ": " + name
+                tr("ERR_BAD_VARIABLE_NAME") + ": " +
+                name
             )
         } else {
             diagram.vars[name] = {type: type}
@@ -1642,8 +1649,8 @@ function AlgopropCompiler02_module() {
                     info = _18_col[key];
                     if ((!(info.type === "goto")) || (info.itemId)) {
                     } else {
-                        message = "ERR_BRANCH_NOT_FOUND" + ": " +
-                        info.branch
+                        message = tr("ERR_BRANCH_NOT_FOUND") + ": "
+                        + info.branch
                         addError(project, diagram, message)
                     }
                     _18_it++;
@@ -1919,10 +1926,12 @@ function AlgopropCompiler02_module() {
                 if (_6_it < _6_length) {
                     child = _6_col[_6_it];
                     folder = rawProject.folders[child.id]
-                    methodName = name + "_" + folder.name
-                    classObj.methods[folder.name] = methodName
-                    folder.method = true
-                    folder.name = methodName
+                    if (folder.type === "drakon") {
+                        methodName = name + "_" + folder.name
+                        classObj.methods[folder.name] = methodName
+                        folder.method = true
+                        folder.name = methodName
+                    }
                     _6_it++;
                 } else {
                     break;
@@ -3148,38 +3157,48 @@ function AlgopropCompiler02_module() {
     
     function extractNodeVars(context, type, name, computed, node) {
         function branch1() {
-            if (node.type === "VariableDeclaration") {
+            if (node.type === "ThisExpression") {
                 addError(
                     context.project,
                     context.diagram,
-                    "ERR_VARIABLE_DECLARATIONS_ARE_NOT_ALLOWED",
+                    "ERR_THIS_KEYWORD_IS_NOT_ALLOWED",
                     context.item
                 )
                 return branch5();
             } else {
-                if (context.diagram.algoprop) {
-                    if (isAssignmentToProperty(
+                if (node.type === "VariableDeclaration") {
+                    addError(
+                        context.project,
+                        context.diagram,
+                        "ERR_VARIABLE_DECLARATIONS_ARE_NOT_ALLOWED",
+                        context.item
+                    )
+                    return branch5();
+                } else {
+                    if (context.diagram.algoprop) {
+                        if (isAssignmentToProperty(
         context,
         type,
         name,
         node
     )) {
-                        if (isAlgopropName(context, node.property)) {
-                            addError(
-                                context.project,
-                                context.diagram,
-                                "ERR_CANNOT_ASSIGN_TO_ALGOPROP",
-                                context.item
-                            )
-                            return branch5();
+                            if (isAlgopropName(context, node.property)) {
+                                addError(
+                                    context.project,
+                                    context.diagram,
+                                    "ERR_CANNOT_ASSIGN_TO_ALGOPROP",
+                                    context.item
+                                )
+                                return branch5();
+                            } else {
+                                return branch2();
+                            }
                         } else {
                             return branch2();
                         }
                     } else {
-                        return branch2();
+                        return branch4();
                     }
-                } else {
-                    return branch4();
                 }
             }
         }
@@ -3949,59 +3968,61 @@ function AlgopropCompiler02_module() {
                 }
             }
         )
-        outputBody.push(
-            {
-                "type": "ExpressionStatement",
-                "expression": {
-                    "type": "AssignmentExpression",
-                    "operator": "=",
-                    "left": {
-                        "type": "MemberExpression",
-                        "computed": false,
-                        "object": {
-                            "type": "Identifier",
-                            "name": "self"
+        if (diagram.complex) {
+            outputBody.push(
+                {
+                    "type": "ExpressionStatement",
+                    "expression": {
+                        "type": "AssignmentExpression",
+                        "operator": "=",
+                        "left": {
+                            "type": "MemberExpression",
+                            "computed": false,
+                            "object": {
+                                "type": "Identifier",
+                                "name": "self"
+                            },
+                            "property": {
+                                "type": "Identifier",
+                                "name": nameCreate(
+                                    name
+                                )
+                            }
                         },
-                        "property": {
-                            "type": "Identifier",
-                            "name": nameCreate(
-                                name
-                            )
-                        }
-                    },
-                    "right": {
-                        "type": "FunctionExpression",
-                        "id": null,
-                        "params": args,
-                        "body": {
-                            "type": "BlockStatement",
-                            "body": [
-                                {
-                                    "type": "ReturnStatement",
-                                    "argument": {
-                                        "type": "CallExpression",
-                                        "callee":
-                                        {
-                                            "type":
-                                            "Identifier",
-                                            "name":
-                                            nameCreate(
-                                                methodName
-                                            )
-                                        },
-                                        "arguments":
-                                        argsInternal
+                        "right": {
+                            "type": "FunctionExpression",
+                            "id": null,
+                            "params": args,
+                            "body": {
+                                "type": "BlockStatement",
+                                "body": [
+                                    {
+                                        "type": "ReturnStatement",
+                                        "argument": {
+                                            "type": "CallExpression",
+                                            "callee":
+                                            {
+                                                "type":
+                                                "Identifier",
+                                                "name":
+                                                nameCreate(
+                                                    methodName
+                                                )
+                                            },
+                                            "arguments":
+                                            argsInternal
+                                        }
                                     }
-                                }
-                            ]
-                        },
-                        "generator": false,
-                        "expression": false,
-                        "async": false
+                                ]
+                            },
+                            "generator": false,
+                            "expression": false,
+                            "async": false
+                        }
                     }
                 }
-            }
-        )
+            )
+        }
     }
     
     function generateCode(rawProject) {
@@ -6169,6 +6190,14 @@ function AlgopropCompiler02_module() {
                     console.log(line)
                 }
             )
+        }
+    }
+    
+    function tr(text) {
+        if (unit.translate) {
+            return unit.translate(text)
+        } else {
+            return text
         }
     }
     

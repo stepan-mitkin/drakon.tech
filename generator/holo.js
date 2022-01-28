@@ -14,7 +14,6 @@ function buildHolo02(record, getFromDt) {
 
 function buildHoloCore(record, getFromDt, apMod) {
     return new Promise(function (resolve) {
-        console.log(record)
         var ap = apMod()
         var common = commonModule()
         var sm = smModule()
@@ -29,7 +28,6 @@ function buildHoloCore(record, getFromDt, apMod) {
 
         var parent = {
             onChildCompleted: function (code) {
-                console.log(code)
                 completeGeneration(resolve, record, code)
             }
         }
