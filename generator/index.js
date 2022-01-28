@@ -195,7 +195,7 @@ async function createBuild(req) {
         }
     }
 
-    if (props.language == "LANG_JS" || props.language == "LANG_JS2" || props.language == "LANG_S4") {
+    if (props.language == "LANG_JS" || props.language == "LANG_JS2" || props.language == "LANG_S4" || props.language == "LANG_S42") {
         var userLanguage = req.body.language || "en"
         var buildId = createBuildRecord(spaceId, folderId, props, userLanguage, req.body.userId)
         var buildFun = () => {
@@ -239,6 +239,8 @@ async function jsBuild(buildId) {
             var success
             if (record.props.language === "LANG_S4") {
                 success = await buildHolo(record)
+            } else if (record.props.language === "LANG_S42") {
+                success = await buildHolo02(record)
             } else {
                 success = await buildV2(record)
             }
@@ -263,6 +265,13 @@ async function buildHolo(record) {
     await initStartRecord(record, folder)    
     record.resultUrl = record.jsUrl
     return await holo.buildHolo(record, getGeneric)
+}
+
+async function buildHolo02(record) {
+    var folder = await getModule(record.spaceId, record.folderId)
+    await initStartRecord(record, folder)    
+    record.resultUrl = record.jsUrl
+    return await holo.buildHolo02(record, getGeneric)
 }
 
 async function buildV2(record) {

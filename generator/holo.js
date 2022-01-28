@@ -1,12 +1,21 @@
 const fse = require('fs-extra')
 const apModule = require("./AlgopropCompiler")
+const apModule02 = require("./AlgopropCompiler02")
 const commonModule = require("./common_1_0")
 const smModule = require("./sm_1_0")
 
 function buildHolo(record, getFromDt) {
+    return buildHoloCore(record, getFromDt, apModule)
+}
+
+function buildHolo02(record, getFromDt) {
+    return buildHoloCore(record, getFromDt, apModule02)
+}
+
+function buildHoloCore(record, getFromDt, apMod) {
     return new Promise(function (resolve) {
         console.log(record)
-        var ap = apModule()
+        var ap = apMod()
         var common = commonModule()
         var sm = smModule()
         var http = {
@@ -27,7 +36,6 @@ function buildHolo(record, getFromDt) {
         var url = record.spaceId + "/" + record.folderId
         ap.mainCore(parent, url).run()
     })
-
 }
 
 function completeGeneration(resolve, record, code) {
@@ -80,3 +88,4 @@ function convertError(error) {
 }
 
 exports.buildHolo = buildHolo
+exports.buildHolo02 = buildHolo02
