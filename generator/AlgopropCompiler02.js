@@ -3,6 +3,7 @@ const escodegen = require("escodegen")
 
 
 
+
 function AlgopropCompiler02_module() {
     var unit = {};
     
@@ -1617,11 +1618,11 @@ function AlgopropCompiler02_module() {
                 if (i < diagram.branches.length) {
                     itemId = diagram.branches[i]
                     item = diagram.items[itemId]
-                    if (item.refs.length === 0) {
-                        handler = getHandler(diagram, item.text)
-                        if (handler) {
-                            handler.itemId = itemId
-                        } else {
+                    handler = getHandler(diagram, item.text)
+                    if (handler) {
+                        handler.itemId = itemId
+                    } else {
+                        if (item.refs.length === 0) {
                             addError(
                                 project,
                                 diagram,
@@ -4062,6 +4063,7 @@ function AlgopropCompiler02_module() {
                         if (project.errors.length === 0) {
                             forAllDiagrams(project, rewireApReturn)
                             if (project.errors.length === 0) {
+                                forAllDiagrams(project, markHandlers)
                                 return branch3();
                             } else {
                                 return branch4();
@@ -4798,7 +4800,7 @@ function AlgopropCompiler02_module() {
         }
     }
     
-    function markHandlers(diagram) {
+    function markHandlers(project, diagram) {
         var _5_col, _5_it, _5_keys, _5_length, handler, info, visited;
         visited = {}
         _5_it = 0;
@@ -5318,7 +5320,6 @@ function AlgopropCompiler02_module() {
                 project,
                 diagram
             )
-            markHandlers(diagram)
             return branch6();
         }
     
@@ -5480,7 +5481,7 @@ function AlgopropCompiler02_module() {
                     context.project,
                     context.diagram,
                     "ERR_CANNOT_USE_GETHANDLER_OUTSIDE_HANDLER",
-                    contex.item
+                    context.item
                 )
                 return undefined
             }
