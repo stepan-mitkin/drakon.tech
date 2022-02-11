@@ -1,0 +1,40 @@
+/*
+
+    Name:       Base16 Default Dark
+    Author:     Chris Kempson (http://chriskempson.com)
+
+    CodeMirror template by Jan T. Sott (https://github.com/idleberg/base16-codemirror)
+    Original Base16 color scheme by Chris Kempson (https://github.com/chriskempson/base16)
+
+*/
+
+.cm-s-night.CodeMirror { background: #000000; color: #ffffff; }
+.cm-s-night div.CodeMirror-selected { background: #303030; }
+.cm-s-night .CodeMirror-line::selection, .cm-s-night .CodeMirror-line > span::selection, .cm-s-night .CodeMirror-line > span > span::selection { background: rgba(48, 48, 48, .99); }
+.cm-s-night .CodeMirror-line::-moz-selection, .cm-s-night .CodeMirror-line > span::-moz-selection, .cm-s-night .CodeMirror-line > span > span::-moz-selection { background: rgba(48, 48, 48, .99); }
+.cm-s-night .CodeMirror-gutters { background: #151515; border-right: 0px; }
+.cm-s-night .CodeMirror-guttermarker { color: #ac4142; }
+.cm-s-night .CodeMirror-guttermarker-subtle { color: #505050; }
+.cm-s-night .CodeMirror-linenumber { color: #505050; }
+.cm-s-night .CodeMirror-cursor { border-left: 1px solid #b0b0b0; }
+.cm-s-night.cm-fat-cursor .CodeMirror-cursor { background-color: #8e8d8875 !important; }
+.cm-s-night .cm-animate-fat-cursor { background-color: #8e8d8875 !important; }
+
+.cm-s-night span.cm-comment { color: #8f5536; }
+.cm-s-night span.cm-atom { color: #aa759f; }
+.cm-s-night span.cm-number { color: #ffffff; }
+
+.cm-s-night span.cm-property, .cm-s-night span.cm-attribute { color: #BCD5FF; }
+.cm-s-night span.cm-keyword { color: #70A5FF; }
+.cm-s-night span.cm-string { color: #ffffd0; }
+
+.cm-s-night span.cm-variable { color: #BCD5FF; }
+.cm-s-night span.cm-variable-2 { color: #BCD5FF; }
+.cm-s-night span.cm-def { color: #BCD5FF; }
+.cm-s-night span.cm-bracket { color: #e0e0e0; }
+.cm-s-night span.cm-tag { color: #ac4142; }
+.cm-s-night span.cm-link { color: #aa759f; }
+.cm-s-night span.cm-error { background: #ac4142; color: #b0b0b0; }
+
+.cm-s-night .CodeMirror-activeline-background { background: #202020; }
+.cm-s-night .CodeMirror-matchingbracket { text-decoration: underline; color: white !important; }

@@ -1132,14 +1132,15 @@ function createCentralCore(node, centralMachine) {
 function createEditor() {
     var editor = new EditorCtrl(window, document, "middle_diagram", gUserId)
     var inputBox = {
-    	show: function(title, text, onSave, validate, x, y) {
+    	show: function(title, text, onSave, validate, x, y, cmo) {
     		showInputBox(
     			false,
     			title,
     			text,
     			onSave,
     			validate,
-    			false, x, y
+    			false, x, y,
+    			cmo
     		)
     	}
     }
@@ -5480,7 +5481,7 @@ function showInCenter(dialog, width, height) {
     dialog.style.height = height + "px"
 }
 
-function showInputBox(isAsync, header, old, onSave, validate, enterSave, x, y) {
+function showInputBox(isAsync, header, old, onSave, validate, enterSave, x, y, cmOptions) {
     globs.enterSave = enterSave
     InputBox.show(
     	isAsync,
@@ -5489,7 +5490,8 @@ function showInputBox(isAsync, header, old, onSave, validate, enterSave, x, y) {
     	onSave,
     	validate,
     	x,
-    	y
+    	y,
+    	cmOptions
     )
 }
 

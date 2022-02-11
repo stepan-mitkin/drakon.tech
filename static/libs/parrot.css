@@ -1,0 +1,46 @@
+/* parrot theme for codemirror */
+
+/* Color scheme */
+
+.cm-s-parrot.CodeMirror {
+    background-color:#ffffff;
+    color:magenta;
+    line-height:1.2;
+  }
+  .cm-s-parrot .cm-comment { color:#75787b; }
+  .cm-s-parrot .cm-keyword { color: #003399}
+  .cm-s-parrot .cm-property { color:black; }
+  .cm-s-parrot .cm-def { color:black; }
+  .cm-s-parrot .cm-atom,.cm-s-parrot .cm-number { color:#004d00; }
+  .cm-s-parrot .cm-node,.cm-s-parrot .cm-tag { color:#9c3328; }
+  .cm-s-parrot .cm-string { color:#800000; }
+  .cm-s-parrot .cm-variable, .cm-s-parrot .cm-qualifier { color:black; }
+  
+  
+  /* Editor styling */
+  
+  .cm-s-parrot pre {
+    padding:0;
+  }
+  
+  .cm-s-parrot .CodeMirror-gutters {
+    border:none;
+    border-right:10px solid transparent;
+    background-color:transparent;
+  }
+  
+  .cm-s-parrot .CodeMirror-linenumber {
+    padding:0;
+    color:#e0e2e5;
+  }
+  
+  .cm-s-parrot .CodeMirror-guttermarker { color: #1d75b3; }
+  .cm-s-parrot .CodeMirror-guttermarker-subtle { color: #e0e2e5; }
+  
+  .cm-s-parrot .CodeMirror-cursor {
+    border-left: 1px solid black;
+    border-right: none;
+    width: 0;
+    background: rgba(155,157,162,0.37);
+    z-index: 1;
+  }

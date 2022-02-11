@@ -13192,9 +13192,25 @@ function showFirstCaseSocket(node, op) {
 }
 
 function showInputBox(title, oldText, callback, x, y, validate) {
+    var cmOptions = undefined
     var fun = module.callbacks.showInputBox
     if (fun) {
-        fun(title, oldText, callback, x, y, validate)
+        if (isHuman()) {
+            
+        } else {
+            cmOptions = {
+            	mode: "javascript",
+            	theme: "base16-dark"
+            }
+        }
+        fun(
+        	title,
+        	oldText,
+        	callback,
+        	x, y,
+        	validate,
+        	cmOptions
+        )
     }
 }
 
@@ -13636,8 +13652,8 @@ function startEditText(nodeId) {
             [nodeId, node.type]
         )
         old = node.text
-        x = node.x + node.w
-        y = node.y - node.h
+        x = node.x - node.w - 5
+        y = node.y - node.h - 29
         setTextProc = function(text) {
             setNodeText(nodeId, text)
         }

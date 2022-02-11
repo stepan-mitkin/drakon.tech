@@ -1,0 +1,40 @@
+/*
+
+    Name:       Base16 Default Dark
+    Author:     Chris Kempson (http://chriskempson.com)
+
+    CodeMirror template by Jan T. Sott (https://github.com/idleberg/base16-codemirror)
+    Original Base16 color scheme by Chris Kempson (https://github.com/chriskempson/base16)
+
+*/
+
+.cm-s-red.CodeMirror { background: black; color: #95DCFC; }
+.cm-s-red div.CodeMirror-selected { background: #303030; }
+.cm-s-red .CodeMirror-line::selection, .cm-s-red .CodeMirror-line > span::selection, .cm-s-red .CodeMirror-line > span > span::selection { background: rgba(48, 48, 48, .99); }
+.cm-s-red .CodeMirror-line::-moz-selection, .cm-s-red .CodeMirror-line > span::-moz-selection, .cm-s-red .CodeMirror-line > span > span::-moz-selection { background: rgba(48, 48, 48, .99); }
+.cm-s-red .CodeMirror-gutters { background: #151515; border-right: 0px; }
+.cm-s-red .CodeMirror-guttermarker { color: #ac4142; }
+.cm-s-red .CodeMirror-guttermarker-subtle { color: #505050; }
+.cm-s-red .CodeMirror-linenumber { color: #505050; }
+.cm-s-red .CodeMirror-cursor { border-left: 1px solid #b0b0b0; }
+.cm-s-red.cm-fat-cursor .CodeMirror-cursor { background-color: #8e8d8875 !important; }
+.cm-s-red .cm-animate-fat-cursor { background-color: #8e8d8875 !important; }
+
+.cm-s-red span.cm-comment { color: #8f5536; }
+.cm-s-red span.cm-atom { color: #aa759f; }
+.cm-s-red span.cm-number { color: #ffffff; }
+
+.cm-s-red span.cm-property, .cm-s-red span.cm-attribute { color: #ffffcc; }
+.cm-s-red span.cm-keyword { color: #80ff80; }
+.cm-s-red span.cm-string { color: #CF8E60; }
+
+.cm-s-red span.cm-variable { color: #ffffcc; }
+.cm-s-red span.cm-variable-2 { color: #ffffcc; }
+.cm-s-red span.cm-def { color: #ffffcc; }
+.cm-s-red span.cm-bracket { color: #e0e0e0; }
+.cm-s-red span.cm-tag { color: #ac4142; }
+.cm-s-red span.cm-link { color: #aa759f; }
+.cm-s-red span.cm-error { background: #ac4142; color: #b0b0b0; }
+
+.cm-s-red .CodeMirror-activeline-background { background: #202020; }
+.cm-s-red .CodeMirror-matchingbracket { text-decoration: underline; color: white !important; }

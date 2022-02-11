@@ -5,6 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"></meta>
 <link rel="shortcut icon" href="/static/favicon.ico" />
 <link rel="icon" type="image/png" href="/static/favicon.png" />
+<link rel="stylesheet" href="/static/libs/codemirror.css" />
+<link rel="stylesheet" href="/static/libs/base16-dark.css" />
+<link rel="stylesheet" href="/static/libs/parrot.css" />
+<link rel="stylesheet" href="/static/libs/strict.css" />
+<link rel="stylesheet" href="/static/libs/cloud.css" />
+<link rel="stylesheet" href="/static/libs/white1.css" />
+<link rel="stylesheet" href="/static/libs/white2.css" />
+<link rel="stylesheet" href="/static/libs/dark1.css" />
+<link rel="stylesheet" href="/static/libs/night.css" />
+<link rel="stylesheet" href="/static/libs/red.css" />
+<link rel="stylesheet" href="/static/libs/black.css" />
+<link rel="stylesheet" href="/static/libs/dark3.css" />
+<link rel="stylesheet" href="/static/libs/night2.css" />
 
 <title>DrakonHub</title>
 
@@ -730,6 +743,11 @@ window.onerror = pagePanic
 
 <script src="/static/libs/mousetrap.js"></script>
 <script src="/static/libs/fontfaceobserver.js"></script>
+<script src="/static/libs/codemirror.js"></script>
+<script src="/static/libs/javascript.js"></script>
+<script src="/static/libs/css.js"></script>
+<script src="/static/libs/xml.js"></script>
+<script src="/static/libs/htmlmixed.js"></script>
 
 <%==include("Logon")%>
 <%==include("Signup")%>

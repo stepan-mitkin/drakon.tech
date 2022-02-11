@@ -1,0 +1,46 @@
+/* strict theme for codemirror */
+
+/* Color scheme */
+
+.cm-s-strict.CodeMirror {
+    background-color:#ffffff;
+    color:magenta;
+    line-height:1.2;
+  }
+  .cm-s-strict .cm-comment { color:#75787b; }
+  .cm-s-strict .cm-keyword { color: #003399}
+  .cm-s-strict .cm-property { color:black; }
+  .cm-s-strict .cm-def { color:black; }
+  .cm-s-strict .cm-atom,.cm-s-strict .cm-number { color:#004d00; }
+  .cm-s-strict .cm-node,.cm-s-strict .cm-tag { color:#9c3328; }
+  .cm-s-strict .cm-string { color:#800000; }
+  .cm-s-strict .cm-variable, .cm-s-strict .cm-qualifier { color:black; }
+  
+  
+  /* Editor styling */
+  
+  .cm-s-strict pre {
+    padding:0;
+  }
+  
+  .cm-s-strict .CodeMirror-gutters {
+    border:none;
+    border-right:10px solid transparent;
+    background-color:transparent;
+  }
+  
+  .cm-s-strict .CodeMirror-linenumber {
+    padding:0;
+    color:#e0e2e5;
+  }
+  
+  .cm-s-strict .CodeMirror-guttermarker { color: #1d75b3; }
+  .cm-s-strict .CodeMirror-guttermarker-subtle { color: #e0e2e5; }
+  
+  .cm-s-strict .CodeMirror-cursor {
+    border-left: 1px solid black;
+    border-right: none;
+    width: 0;
+    background: rgba(155,157,162,0.37);
+    z-index: 1;
+  }

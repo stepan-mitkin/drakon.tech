@@ -2204,6 +2204,42 @@ function getTag() {
     return globals.tag
 }
 
+function getThemeKey(theme) {
+    if (theme) {
+        var keys = [
+        	"default",
+        	"parrot",
+        	"strict",
+        	"cloud",
+        	"white1",
+        	"white2",
+        	"dark1",
+        	"night",
+        	"red",
+        	"black",
+        	"dark3",
+        	"night2"
+        ]
+        var _ind4200 = 0;
+        var _col4200 = keys;
+        var _len4200 = _col4200.length;
+        while (true) {
+            if (_ind4200 < _len4200) {
+                
+            } else {
+                return "parrot"
+            }
+            var key = _col4200[_ind4200];
+            if (themeMatchesKey(theme, key)) {
+                return key
+            }
+            _ind4200++;
+        }
+    } else {
+        return "parrot"
+    }
+}
+
 function handleSearchShortcuts(evt) {
     if (isCodeKey(evt, "F3")) {
         HtmlUtils.preventDefaultHandling(evt)
@@ -2601,7 +2637,7 @@ function init(cfg) {
     finishIconGroups()
 }
 
-function inputBox(title, oldText, onSave, x, y, validate) {
+function inputBox(title, oldText, onSave, x, y, validate, cmOptions) {
     var pos = diagramToClient(
     	x,
     	y
@@ -2610,13 +2646,17 @@ function inputBox(title, oldText, onSave, x, y, validate) {
     	onSave(text)
     	globals.view.redraw()
     }
+    if ((cmOptions) && (globals.theme)) {
+        cmOptions.theme = globals.theme
+    }
     globals.inputBox.show(
     	title,
     	oldText,
     	wrapped,
     	validate,
     	pos.x,
-    	pos.y
+    	pos.y,
+    	cmOptions
     )
 }
 
@@ -4042,6 +4082,7 @@ function setTextColor(color) {
 }
 
 function setTheme(key) {
+    globals.theme = key
     Theme.selectTheme(key)
     
     var theme = Theme.getTheme(key)
@@ -4071,7 +4112,11 @@ function setUserSettings(settings) {
         globals.view.zoomTo(settings.zoom)
     }
     if (settings.theme) {
+        globals.theme = getThemeKey(settings.theme)
+        console.log(globals.theme)
         Theme.setThemeValues(settings.theme)
+    } else {
+        globals.theme = "parrot"
     }
     if (settings.toolbar) {
         setToolName(settings.toolbar)
@@ -4818,6 +4863,28 @@ function switchButton(data, on) {
         data.div.style.background = data.idle
     }
     data.on = on
+}
+
+function themeMatchesKey(theme, key) {
+    var savedTheme = Theme.getTheme(key)
+    var _ind4215 = 0;
+    var _col4215 = theme.props;
+    var _keys4215 = Object.keys(_col4215); 
+    var _len4215 = _keys4215.length;
+    while (true) {
+        if (_ind4215 < _len4215) {
+            
+        } else {
+            return true
+        }
+        var key = _keys4215[_ind4215]; var value = _col4215[key];
+        if (value === savedTheme.props[key]) {
+            
+        } else {
+            return false
+        }
+        _ind4215++;
+    }
 }
 
 function toggleSelectionMode(cell) {
