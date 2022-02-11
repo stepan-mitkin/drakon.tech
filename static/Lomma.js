@@ -13191,18 +13191,9 @@ function showFirstCaseSocket(node, op) {
     socket.node = node
 }
 
-function showInputBox(title, oldText, callback, x, y, validate) {
-    var cmOptions = undefined
+function showInputBox(title, oldText, callback, x, y, validate, cmOptions) {
     var fun = module.callbacks.showInputBox
     if (fun) {
-        if (isHuman()) {
-            
-        } else {
-            cmOptions = {
-            	mode: "javascript",
-            	theme: "base16-dark"
-            }
-        }
         fun(
         	title,
         	oldText,
@@ -13638,7 +13629,7 @@ function startEdit() {
 }
 
 function startEditText(nodeId) {
-    var node, old, setTextProc, title, validate, x, y
+    var cmOptions, node, old, setTextProc, title, validate, x, y
     node = getNode(nodeId)
     if (node.type == "params") {
         addTrace(
@@ -13657,10 +13648,19 @@ function startEditText(nodeId) {
         setTextProc = function(text) {
             setNodeText(nodeId, text)
         }
+        cmOptions = undefined
         if (node.type == "header") {
             title = tr("MES_RENAME_DIAGRAM")
             validate = validateModuleName
         } else {
+            if (isHuman()) {
+                
+            } else {
+                cmOptions = {
+                	mode: "javascript",
+                	theme: "base16-dark"
+                }
+            }
             title = tr("MES_CHANGE_ITEM_TEXT") +
              ": " + node.itemId
             validate = validateItemText
@@ -13671,7 +13671,8 @@ function startEditText(nodeId) {
             setTextProc,
             x,
             y,
-            validate
+            validate,
+            cmOptions
         )
     }
 }

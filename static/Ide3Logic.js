@@ -4592,11 +4592,10 @@ function getImage(type) {
                                         image = "list-mind.png"
                                     } else {
                                         if (type === "free") {
-                                            
+                                            image = "list-free.png"
                                         } else {
-                                            throw "Unexpected switch value: " + type;
+                                            image = "list-drakon2.png"
                                         }
-                                        image = "list-free.png"
                                     }
                                 }
                             }
