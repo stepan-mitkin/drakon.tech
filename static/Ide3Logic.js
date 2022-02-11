@@ -1037,17 +1037,37 @@ function FolderCutterDeleter_Start_onData(self, data) {
             self,
             null
         )
+        self.state = "RunningOperation";
     } else {
-        sendDelete(
-            data.folders,
-            self
-        )
+        browser.hideWorking()
+        var dialog = makeSureDelete()
+        browser.createCentral(dialog, self)
+        self.state = "Sure1";
     }
-    self.state = "RunningOperation";
 }
 
 function FolderCutterDeleter_Start_onError(self, data) {
     self.state = "Start";
+}
+
+function FolderCutterDeleter_Sure1_cancel(self, data) {
+    browser.hideCentral()
+    complete(self, data)
+    self.state = null;
+}
+
+function FolderCutterDeleter_Sure1_onData(self, data) {
+    browser.hideCentral()
+    sendDelete(
+        self.folders,
+        self
+    )
+    self.state = "RunningOperation";
+}
+
+function FolderCutterDeleter_Sure1_onError(self, data) {
+    forwardError(self, data)
+    self.state = null;
 }
 
 function FolderGetter_GettingFolder_onData(self, data) {
@@ -5547,6 +5567,59 @@ function makeSure2(spaceId) {
     return root
 }
 
+function makeSureDelete() {
+    var text = translate("MES_SURE_DELETE_OBJECTS")
+    var titleLabel = {
+    	type: "wlabel",
+    	text: "MES_DELETE",
+    	textAlign: "center",
+    	style: {
+    		fontSize: "110%",
+    		fontWeight: "bold"
+    	}
+    }
+    var lab = {
+    	type: "wlabel",
+    	text: text,
+    	raw: true,
+    	style: {
+    		fontSize: "100%",
+    		textAlign: "left"
+    	}
+    }
+    var confirm = {
+    	signalId: "sendToCentralMachine",
+    	type: "wbutton",
+    	text: "MES_DELETE",
+    	style: {
+    		color: "white",
+    		background: "red",
+    		padding: "12px",
+    		textAlign: "center"
+    	}
+    }
+    var cancel = {
+    	signalId: "hideCentral",
+    	type: "wbutton",
+    	text: "MES_CANCEL",
+    	style: {
+    		color: "white",
+    		background: DarkBackground,
+    		padding: "12px",
+    		textAlign: "center"
+    	}
+    }
+    var root = {
+    	type: "page",
+    	style: {
+    		background: "white"
+    	},
+    	padding: 10,
+    	kids: [titleLabel, lab, confirm, cancel]
+    }
+    return root
+}
+
 function makeSureLoad(spaceId) {
     var titleLabel = {
     	type: "wlabel",
@@ -8799,10 +8872,20 @@ function FolderCutterDeleter() {
   var _self = this;
   _self.type_name = "FolderCutterDeleter";
   _self.state = "Start";
+  _self.cancel = function(data) {
+    var _state_ = _self.state;
+    if (_state_ == "Sure1") {
+      return FolderCutterDeleter_Sure1_cancel(_self, data);
+    }
+    return null;
+  };
   _self.onData = function(data) {
     var _state_ = _self.state;
     if (_state_ == "Start") {
       return FolderCutterDeleter_Start_onData(_self, data);
+    }
+    else if (_state_ == "Sure1") {
+      return FolderCutterDeleter_Sure1_onData(_self, data);
     }
     else if (_state_ == "RunningOperation") {
       return FolderCutterDeleter_RunningOperation_onData(_self, data);
@@ -8819,6 +8902,9 @@ function FolderCutterDeleter() {
     var _state_ = _self.state;
     if (_state_ == "Start") {
       return FolderCutterDeleter_Start_onError(_self, data);
+    }
+    else if (_state_ == "Sure1") {
+      return FolderCutterDeleter_Sure1_onError(_self, data);
     }
     else if (_state_ == "RunningOperation") {
       return FolderCutterDeleter_RunningOperation_onError(_self, data);

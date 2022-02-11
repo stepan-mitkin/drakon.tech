@@ -42,6 +42,7 @@
 	"MES_RENAME": "Переименовать",
 	"MES_DESCRIPTION": "Описание",
 	"MES_DELETE": "Удалить",
+	"MES_SURE_DELETE_OBJECTS": "Вы уверены, что хотите удалить объекты?",
 	"MES_ACCESS": "Права доступа",
 	"MES_ACCESS_TO": "Права доступа к проекту ",
 	"MES_RENAME_FOLDER": "Переименовать папку",

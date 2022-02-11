@@ -42,6 +42,7 @@
 	"MES_RENAME": "Rename",
 	"MES_DESCRIPTION": "Description",
 	"MES_DELETE": "Delete",
+	"MES_SURE_DELETE_OBJECTS": "Are you sure you want to delete the objects?",
 	"MES_ACCESS": "Access rights",
 	"MES_ACCESS_TO": "Access rights to project ",
 	"MES_RENAME_FOLDER": "Rename folder",
