@@ -1122,17 +1122,27 @@ function FolderShower_GettingFolder_onData(self, data) {
         complete(self, data)
         self.state = null;
     } else {
-        addToRecent(self.id, data)
-        self.diagram = data
-        if (gUserId) {
-            requestTheme(self)
-        } else {
-            scheduleNextState(
-            	self,
-            	null
+        if (globs.current.type === "app") {
+            setActiveScreen(
+                "middle_app",
+                data.access
             )
+            showApp(data)
+            complete(self, data)
+            self.state = null;
+        } else {
+            addToRecent(self.id, data)
+            self.diagram = data
+            if (gUserId) {
+                requestTheme(self)
+            } else {
+                scheduleNextState(
+                	self,
+                	null
+                )
+            }
+            self.state = "GettingTheme";
         }
-        self.state = "GettingTheme";
     }
 }
 
@@ -3015,13 +3025,19 @@ function addNewItems(parentId, list) {
                         createFolderCore(parentId, "folder")
                     }
                 } else {
-                    if (_sw86300000_ === "module") {
-                        
+                    if (_sw86300000_ === "app") {
+                        op = function() {
+                            createFolderCore(parentId, "app")
+                        }
                     } else {
-                        throw "Unexpected switch value: " + _sw86300000_;
-                    }
-                    op = function() {
-                        createFolderCore(parentId, "module")
+                        if (_sw86300000_ === "module") {
+                            
+                        } else {
+                            throw "Unexpected switch value: " + _sw86300000_;
+                        }
+                        op = function() {
+                            createFolderCore(parentId, "module")
+                        }
                     }
                 }
             }
@@ -3827,6 +3843,13 @@ function createAccess(spaceId, data) {
     return access
 }
 
+function createApp() {
+    createFolderCore(
+        null,
+        "app"
+    )
+}
+
 function createDiagram() {
     createDiagramCore(null)
 }
@@ -3928,7 +3951,7 @@ function createSearch(input) {
     defs = makeDiagramSearchDefs()
     killSearchMachine()
     _sw66160000_ = globs.current.screen;
-    if (_sw66160000_ === "middle_folder") {
+    if ((_sw66160000_ === "middle_folder") || (_sw66160000_ === "middle_app")) {
         machine = new DiagramSearch()
         items = []
         machine.input = input
@@ -4468,6 +4491,9 @@ function getChildObjectTypes(folderId) {
                     makeChoiceModule()
                 )
                 result.push(
+                    makeChoiceApp()
+                )
+                result.push(
                     makeChoiceFolder()
                 )
             }
@@ -4593,28 +4619,32 @@ function getImage(type) {
             if (type === "module") {
                 image = "module.png"
             } else {
-                if (type === "folder") {
-                    image = "folder-s2.png"
+                if (type === "app") {
+                    image = "app-icon.png"
                 } else {
-                    if (type === "drakon") {
-                        image = "list-drakon2.png"
+                    if (type === "folder") {
+                        image = "folder-s2.png"
                     } else {
-                        if (type === "drakon_scen") {
-                            image = "list-scen.png"
+                        if (type === "drakon") {
+                            image = "list-drakon2.png"
                         } else {
-                            if (type === "drakon_exp") {
-                                image = "list-drakon2-exp.png"
+                            if (type === "drakon_scen") {
+                                image = "list-scen.png"
                             } else {
-                                if (type === "drakon_algoprop") {
-                                    image = "list-algoprop.png"
+                                if (type === "drakon_exp") {
+                                    image = "list-drakon2-exp.png"
                                 } else {
-                                    if (type === "mind") {
-                                        image = "list-mind.png"
+                                    if (type === "drakon_algoprop") {
+                                        image = "list-algoprop.png"
                                     } else {
-                                        if (type === "free") {
-                                            image = "list-free.png"
+                                        if (type === "mind") {
+                                            image = "list-mind.png"
                                         } else {
-                                            image = "list-drakon2.png"
+                                            if (type === "free") {
+                                                image = "list-free.png"
+                                            } else {
+                                                image = "list-drakon2.png"
+                                            }
                                         }
                                     }
                                 }
@@ -5119,10 +5149,14 @@ function isDiagramOrFolder() {
         if (_sw45860000_ === "middle_diagram") {
             return true
         } else {
-            if (_sw45860000_ === "middle_spaces") {
-                return false
+            if (_sw45860000_ === "middle_app") {
+                return true
             } else {
-                return false
+                if (_sw45860000_ === "middle_spaces") {
+                    return false
+                } else {
+                    return false
+                }
             }
         }
     }
@@ -5281,6 +5315,13 @@ function logonFirst() {
     var url
     url = makeLogonUrl()
     browser.goToUrl(url)
+}
+
+function makeChoiceApp() {
+    return {
+        type : "app",
+        text : "MES_NEW_APP"
+    }
 }
 
 function makeChoiceDiagram() {
@@ -5705,6 +5746,7 @@ function makeTitle(spaceId, folderId, name) {
 function makeTopCodes() {
     return {
         "middle_folder" : "top_folder",
+        "middle_app" : "top_app",
         "middle_diagram" : "top_diagram",
         "middle_recent" : "top_empty",
         "middle_trash" : "top_empty",
@@ -5717,7 +5759,8 @@ function makeTopCodesNu() {
     return {
         "middle_folder" : "top_folder_nu",
         "middle_diagram" : "top_diagram_nu",
-        "middle_spaces" : "top_spaces_nu"
+        "middle_spaces" : "top_spaces_nu",
+        "middle_app" : "top_app_nu"
     }
 }
 
@@ -5727,7 +5770,8 @@ function makeTopCodesRo() {
         "middle_diagram" : "top_diagram_ro",
         "middle_recent" : "top_empty",
         "middle_trash" : "top_empty",
-        "middle_spaces" : "top_spaces"
+        "middle_spaces" : "top_spaces",
+        "middle_app" : "top_app_ro"
     }
 }
 
@@ -6897,6 +6941,10 @@ function saveAccessData(access) {
     }
 }
 
+function saveApp(data) {
+    console.log("saveApp", data)
+}
+
 function saveChange(spaceId, folderId, change, target) {
     var url
     url = "/api/edit/" +
@@ -7326,6 +7374,10 @@ function setItemsInFolderGrid(rows) {
             	action: createModule,
             	text: "MES_NEW_MODULE"
             })
+            buttons.push({
+            	action: createApp,
+            	text: "MES_NEW_APP"
+            })
         }
         buttons.push({
         	action: createFolder,
@@ -7468,6 +7520,12 @@ function showAccessScreen(spaceId, target) {
         spaceId,
         target
     )
+}
+
+function showApp(data) {
+    var app
+    app = getWidget("middle_app")
+    app.setData(data)
 }
 
 function showBuild() {
@@ -10299,4 +10357,5 @@ this.showBuild = showBuild
 this.cancelBuild = cancelBuild
 this.createModule = createModule
 this.changeDiagramProperties = changeDiagramProperties
+this.saveApp = saveApp
 }

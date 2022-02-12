@@ -503,6 +503,11 @@ function addWriter() {
     onAddUserClicked("write")
 }
 
+function appSetData(widget, div, data) {
+    widget.data = data
+    console.log("appSetData", data)
+}
+
 function applyDashStyle(div) {
     var style = div.style
     style.padding = "5px"
@@ -585,6 +590,23 @@ function build() {
             showBuild(error)
             console.log("build")
         }
+    }
+}
+
+function buildAppWidget(div, node, widget) {
+    var dummy = make(div, "div")
+    dummy.style.display = "inline-block"
+    dummy.style.width = "500px"
+    dummy.style.height = "300px"
+    dummy.style.background = "orange"
+    dummy.addEventListener(
+    	"click",
+    	function() {
+    		saveApp(widget)
+    	}
+    )
+    widget.setData = function(data) {
+    	appSetData(widget, div, data)
     }
 }
 
@@ -1341,6 +1363,9 @@ function createState() {
     state.myHandlers.drakon = function() {
     	sendToCentralMachine("drakon")
     }
+    state.myHandlers.app = function() {
+    	sendToCentralMachine("app")
+    }
     state.myHandlers.sendToCentralMachine = function() {
     	sendToCentralMachine()
     }
@@ -1950,6 +1975,8 @@ function initControls(wide, isTryMe) {
     } else {
         tops = makeTopWidgetsDescMob()
     }
+    var app = makeAppDesc()
+    app.id = "middle_app"
     var folders = makeFolderListDesc()
     folders.id = "middle_folder"
     var diagram = makeDiagramDesc()
@@ -1976,7 +2003,7 @@ function initControls(wide, isTryMe) {
     	]
     }
     var middles = [folders, diagram, spacesGrid,
-       trash, mrecentGrid, dashboard]
+       trash, mrecentGrid, dashboard, app]
     var rootNode = {
     	type: "vdock",
     	id: "root",
@@ -2224,6 +2251,13 @@ function makeAccessSubheader(header, actionId) {
     	rights: [add]
     }
     return stack
+}
+
+function makeAppDesc() {
+    return {
+    	type: "custom",
+    	builder: buildAppWidget
+    }
 }
 
 function makeBigPictureButton(div, node, widget) {
@@ -2978,6 +3012,17 @@ function makeTopWidgetsDesc() {
     		type: "path"
     	}
     }
+    var appTop = {
+    	id: "top_app",
+    	type: "hdock",
+    	height: TopPanelHeight,
+    	lefts: [mainMenu, create0, sSpacer, folder],
+    	rights: [user, search],
+    	style:{background:DarkBackground},
+    	center: {
+    		type: "path"
+    	}
+    }
     var empty = {
     	id: "top_empty",
     	type: "hdock",
@@ -3011,6 +3056,17 @@ function makeTopWidgetsDesc() {
     	type: "hdock",
     	height: TopPanelHeight,
     	lefts: [mainMenu, oneButtSpace, buildStub, folder],
+    	rights: [user, search],
+    	style:{background:DarkBackground},
+    	center: {
+    		type: "path"
+    	}
+    }
+    var appTopRo = {
+    	id: "top_app_ro",
+    	type: "hdock",
+    	height: TopPanelHeight,
+    	lefts: [mainMenu, sSpacer, folder],
     	rights: [user, search],
     	style:{background:DarkBackground},
     	center: {
@@ -3076,6 +3132,17 @@ function makeTopWidgetsDesc() {
     		type: "path"
     	}
     }
+    var appTopNu = {
+    	id: "top_app_nu",
+    	type: "hdock",
+    	height: TopPanelHeight,
+    	lefts: [mainMenu, nuSpace, folder],
+    	rights: [search],
+    	style:{background:DarkBackground},
+    	center: {
+    		type: "path"
+    	}
+    }
     var exp4 = Utils.copyObject(exp)
     exp4.id = "export_button_try"
     var diagramTopTry = {
@@ -3097,9 +3164,10 @@ function makeTopWidgetsDesc() {
     	style:{background: "#ffd0d0"}
     }
     return [dummy, spacesTop, folderTop, diagramTop, 
+      appTop, appTopRo, appTopNu, 
       empty, folderTopRo, diagramTopRo, 
       folderTopNu, diagramTopNu, spacesTopNu,
-      diagramTopTry]
+      diagramTopTry ]
 }
 
 function makeTopWidgetsDescMob() {
@@ -3261,6 +3329,16 @@ function makeTopWidgetsDescMob() {
     		fontSize: "11pt"
     	}
     }
+    var appLabel = {
+    	id: "appLabel",
+    	type: "wlabel",
+    	text: "Ololo!",
+    	style: {
+    		background: DockHeaderColor,
+    		borderBottom: "solid 1px grey",
+    		fontSize: "11pt"
+    	}
+    }
     var spacesTop = {
     	id: "top_spaces",
     	type: "hdock",
@@ -3305,12 +3383,28 @@ function makeTopWidgetsDescMob() {
     		type: "path"
     	}
     }
+    var appTop = {
+    	type: "hdock",
+    	height: TopPanelHeight,
+    	lefts: [mainMenu, create],
+    	rights: [up],
+    	style:{background: DarkBackground}
+    }
+    var appHead = {
+    	id: "top_app",
+    	type: "vpanel",
+    	kids: [appTop, appLabel]
+    }
     var exp2 = Utils.copyObject(exp)
     exp2.id = "export_button_ro"
     var diaLabelRo = Utils.copyObject(diaLabel)
     diaLabelRo.id = "diaLabelRo"
     var folderLabelRo = Utils.copyObject(folderLabel)
     folderLabelRo.id = "folderLabelRo"
+    var appLabelRo = Utils.copyObject(appLabel)
+    appLabelRo.id = "appLabelRo"
+    var appLabelNu = Utils.copyObject(appLabel)
+    appLabelNu.id = "appLabelNu"
     var diagramTopRo = {
     	type: "hdock",
     	height: TopPanelHeight,
@@ -3334,6 +3428,18 @@ function makeTopWidgetsDescMob() {
     	id: "top_folder_ro",
     	type: "vpanel",
     	kids: [folderTopRo, folderLabelRo]
+    }
+    var appTopRo = {
+    	type: "hdock",
+    	height: TopPanelHeight,
+    	lefts: [mainMenu],
+    	rights: [up],
+    	style:{background: DarkBackground}
+    }
+    var appHeadRo = {
+    	id: "top_app_ro",
+    	type: "vpanel",
+    	kids: [appTopRo, appLabelRo]
     }
     var exp3 = Utils.copyObject(exp)
     exp3.id = "export_button_nu"
@@ -3385,6 +3491,18 @@ function makeTopWidgetsDescMob() {
     	rights: [],
     	style:{background: DarkBackground}
     }
+    var appTopNu = {
+    	type: "hdock",
+    	height: TopPanelHeight,
+    	lefts: [mainMenu],
+    	rights: [up],
+    	style:{background: DarkBackground}
+    }
+    var appHeadNu = {
+    	id: "top_app_nu",
+    	type: "vpanel",
+    	kids: [appTopNu, appLabelNu]
+    }
     var exp4 = Utils.copyObject(exp)
     exp4.id = "export_button_try"
     var diagramTopTry = {
@@ -3405,6 +3523,7 @@ function makeTopWidgetsDescMob() {
     	style:{background: "#ffd0d0"}
     }
     return [dummy, spacesTop, folderHead, diagramHead, empty,
+    appHead, appHeadRo, appHeadNu,
     folderHeadRo, diagramHeadRo,
     folderHeadNu, diagramHeadNu, spacesTopNu,
     diagramTopTry]
@@ -4043,6 +4162,10 @@ function saveAccess() {
     sendToCentralMachine(null)
 }
 
+function saveApp(widget) {
+    self.logic.saveApp(widget.data)
+}
+
 function saveAsPng(zoom) {
     var exportCanvas = make(
     	document.body,
@@ -4504,7 +4627,10 @@ function setMobileHeader(text) {
         	"folderLabelRo",
         	"diaLabelRo",
         	"folderLabelNu",
-        	"diaLabelNu"
+        	"diaLabelNu",
+        	"appLabel",
+        	"appLabelRo",
+        	"appLabelNu",
         ]
         var _ind3096 = 0;
         var _col3096 = widgets;

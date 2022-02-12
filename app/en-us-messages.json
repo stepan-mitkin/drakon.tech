@@ -431,6 +431,7 @@
 	"MES_RENAME_OBJECT": "Rename object",
 	"MES_NEW_OBJECT": "Create object",
 	"MES_NEW_MODULE": "Create module",
+	"MES_NEW_APP": "Create app",
 	"MES_NO_MODULES": "This project does not contain any modules in a programming language",
 	"MES_CHOOSE_MODULE": "Choose a module",
 	"MES_IDENTIFIER_FIRST": "The first charater of an identifier cannot be a digit",
