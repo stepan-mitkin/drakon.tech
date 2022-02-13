@@ -741,6 +741,7 @@ window.onerror = pagePanic
 </script>
 
 
+<script src="https://app.drakon.tech/gen/qQZFlU3W9R5yQn4d9rgp1V13Y4Im6Wsr/appedit.js"></script>
 <script src="/static/libs/mousetrap.js"></script>
 <script src="/static/libs/fontfaceobserver.js"></script>
 <script src="/static/libs/codemirror.js"></script>

@@ -489,5 +489,15 @@
 	"MES_ALGOPROP": "Алго-свойство",
 	"MES_MULTI_MACHINE": "Автомат со многими сообщениями",
 	"MES_SINGLE_MACHINE": "Автомат с одним сообщением",
-	"ERR_NO_PRIM_MACHINE": "Нельзя превратить автомат в примитив"
+	"ERR_NO_PRIM_MACHINE": "Нельзя превратить автомат в примитив",
+	"MES_DOWNLOAD": "Скачать",
+	"MES_NAME": "Имя",
+	"MES_BUILD_ALL_MODULES": "Сгенерировать все модули",
+	"MES_COULD_NOT_SAVE_CHANGES": "Не удалось сохранить изменения",
+	"MES_APPLICATION": "Приложение",
+	"MES_HTML": "HTML",
+	"ERR_NAME_IS_TOO_LONG": "Слишком длинное имя",
+	"ERR_NAME_CANNOT_BE_EMPTY": "Имя не может быть пустым",
+	"ERR_NAME_CONTAINS_ILLEGAL_CHARACTERS": "Разрешены только цифры, латинские буквы и знаки -_.",	
+	"ERR_NAME_SHOULD_START_WITH_ALPHA": "Имя должно начинаться с латинской буквы"	
 }

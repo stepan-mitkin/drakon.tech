@@ -594,20 +594,17 @@ function build() {
 }
 
 function buildAppWidget(div, node, widget) {
-    var dummy = make(div, "div")
-    dummy.style.display = "inline-block"
-    dummy.style.width = "500px"
-    dummy.style.height = "300px"
-    dummy.style.background = "orange"
-    dummy.addEventListener(
-    	"click",
-    	function() {
-    		saveApp(widget)
-    	}
+    var app = appedit()
+    app.tr = translate
+    app.main(
+        div,
+        self.logic.goToFolder,
+        showNotification,
+        showWorking,
+        hideWorking
     )
-    widget.setData = function(data) {
-    	appSetData(widget, div, data)
-    }
+    var logic = app.widget
+    widget.setData = logic.setData
 }
 
 function buildDashboardWidget(div, node, widget) {

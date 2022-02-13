@@ -2085,7 +2085,7 @@ function ReferencesSearch_Start_onData(self, data) {
 function Renamer_EnteringName_onData(self, data) {
     self.name = data
     browser.showWorking()
-    if ((self.type == "drakon") || (self.type == "mind")) {
+    if (((self.type == "drakon") || (self.type == "app")) || (self.type == "mind")) {
         CallTrace.add("rename diagram",
          [self.id, data])
         var payload = {
@@ -10358,4 +10358,5 @@ this.cancelBuild = cancelBuild
 this.createModule = createModule
 this.changeDiagramProperties = changeDiagramProperties
 this.saveApp = saveApp
+this.goToFolder = goToFolder
 }

@@ -485,5 +485,15 @@
 	"MES_ALGOPROP": "Algo-property",
 	"MES_MULTI_MACHINE": "Multi-message state machine",
 	"MES_SINGLE_MACHINE": "Single-message state machine",
-	"ERR_NO_PRIM_MACHINE": "Cannot shift a state machine to primitive"
+	"ERR_NO_PRIM_MACHINE": "Cannot shift a state machine to primitive",
+	"MES_DOWNLOAD": "Download",
+	"MES_NAME": "Name",
+	"MES_BUILD_ALL_MODULES": "Build all modules",
+	"MES_COULD_NOT_SAVE_CHANGES": "Could not save the changes",
+	"MES_APPLICATION": "Application",
+	"MES_HTML": "HTML",
+	"ERR_NAME_IS_TOO_LONG": "The name is too long",
+	"ERR_NAME_CANNOT_BE_EMPTY": "A name cannot be empty",
+	"ERR_NAME_CONTAINS_ILLEGAL_CHARACTERS": "Only digits, Latin characters and -_. symbols are allowed",	
+	"ERR_NAME_SHOULD_START_WITH_ALPHA": "A name should start with a Latin character"
 }
