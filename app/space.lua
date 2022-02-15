@@ -1759,14 +1759,10 @@ function get_folder_props(space_id, folder_id, user_id, roles)
     if space_error then
         return false, space_error
     else
-        local props = db.folder_props_get_by_folder(
+        local result = get_folder_props_core(
         	space_id,
         	folder_id
         )
-        local result = {}
-        for _, prop in ipairs(props) do
-            result[prop[3]] = prop[4]
-        end
         add_default_html(
         	space_id,
         	folder_id,
@@ -1776,6 +1772,18 @@ function get_folder_props(space_id, folder_id, user_id, roles)
         )
         return true, result
     end
+end
+
+function get_folder_props_core(space_id, folder_id)
+    local props = db.folder_props_get_by_folder(
+    	space_id,
+    	folder_id
+    )
+    local result = {}
+    for _, prop in ipairs(props) do
+        result[prop[3]] = prop[4]
+    end
+    return result
 end
 
 function get_item_text(item)
@@ -1868,6 +1876,45 @@ function get_module(space_id, folder_id, user_id, roles)
         else
             return false, "ERR_NOT_FOUND"
         end
+    end
+end
+
+function get_modules(space_id, language, user_id, roles)
+    local space_error, access, is_public = check_read_access(
+    	space_id,
+    	user_id,
+    	roles
+    )
+    if space_error then
+        return false, space_error
+    else
+        local folders = db.folder_get_by_space(
+        	space_id
+        )
+        local all_modules = {}
+        for _, folder in ipairs(folders) do
+            local fdata = folder[3]
+            if (fdata.type == "module") and (not (fdata.deleted)) then
+                local module = {
+                	space_id = space_id,
+                	id = folder[2],
+                	name = fdata.name
+                }
+                table.insert(all_modules, module)
+            end
+        end
+        local modules = {}
+        for _, mod in ipairs(all_modules) do
+            local folder_id = mod.id
+            mod.props = get_folder_props_core(
+            	space_id,
+            	folder_id
+            )
+            if mod.props.language == language then
+                table.insert(modules, mod)
+            end
+        end
+        return true, {modules=modules}
     end
 end
 
@@ -3397,5 +3444,6 @@ return {
 	get_module = get_module,
 	check_write_access = check_write_access,
 	backup = backup,
-	restore_backup = restore_backup
+	restore_backup = restore_backup,
+	get_modules = get_modules
 }

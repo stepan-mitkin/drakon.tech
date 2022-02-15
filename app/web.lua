@@ -1435,6 +1435,23 @@ function api_many(req, session, headers)
     end
 end
 
+function api_modules(req, session, headers)
+    local space_id = req:stash("first")
+    local language = req:stash("second")
+    local ok, result = space.get_modules(
+    	space_id,
+    	language,
+    	session.user_id,
+    	session.roles
+    )
+    if ok then
+        result.user_name = session.name
+        return make_json_success(headers, result)
+    else
+        return result_from_message(headers, result)
+    end
+end
+
 function api_multi_access(req, session, headers)
     local data = req:json()
     local msg, count = space.multi_access(
@@ -4581,6 +4598,7 @@ function start()
     api("multi_access", "POST", true, false, api_multi_access)
     api("reset_pass", "POST", false, false, api_reset_pass)
     api("def_query", "POST", false, false, api_def_query)
+    api("modules", "GET", true, false, api_modules)
     api("gentoken", "GET", false, false, api_get_gentoken)
     api("prog_modules", "GET", false, false, api_get_prog_modules)
     api("module", "GET", false, false, api_get_module)

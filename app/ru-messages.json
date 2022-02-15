@@ -499,5 +499,8 @@
 	"ERR_NAME_IS_TOO_LONG": "Слишком длинное имя",
 	"ERR_NAME_CANNOT_BE_EMPTY": "Имя не может быть пустым",
 	"ERR_NAME_CONTAINS_ILLEGAL_CHARACTERS": "Разрешены только цифры, латинские буквы и знаки -_.",	
-	"ERR_NAME_SHOULD_START_WITH_ALPHA": "Имя должно начинаться с латинской буквы"	
+	"ERR_NAME_SHOULD_START_WITH_ALPHA": "Имя должно начинаться с латинской буквы",
+	"MES_ADD_MODULE": "Добавить модуль",
+	"MES_STARTUP": "Стартовый",
+	"MES_PROJECT": "Проект"
 }
