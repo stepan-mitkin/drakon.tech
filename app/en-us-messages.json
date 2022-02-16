@@ -498,5 +498,9 @@
 	"ERR_NAME_SHOULD_START_WITH_ALPHA": "A name should start with a Latin character",
 	"MES_ADD_MODULE": "Add module",
 	"MES_STARTUP": "Startup",
-	"MES_PROJECT": "Project"
+	"MES_SET_STARTUP": "Make startup",
+	"MES_PROJECT": "Project",
+	"ERR_NO_STARTUP_MODULE": "Choose a startup module",
+	"ERR_UNRESOLVED_DEPENDENCIES": "Module has unresolved dependencies",
+	"ERR_ADD_AT_LEAST_ONE_MODULE": "Add at least one module"
 }

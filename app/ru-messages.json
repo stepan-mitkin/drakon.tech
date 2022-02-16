@@ -502,5 +502,9 @@
 	"ERR_NAME_SHOULD_START_WITH_ALPHA": "Имя должно начинаться с латинской буквы",
 	"MES_ADD_MODULE": "Добавить модуль",
 	"MES_STARTUP": "Стартовый",
-	"MES_PROJECT": "Проект"
+	"MES_SET_STARTUP": "Сделать стартовым",
+	"MES_PROJECT": "Проект",
+	"ERR_NO_STARTUP_MODULE": "Выберите стартовый модуль",
+	"ERR_UNRESOLVED_DEPENDENCIES": "Зависимости не привязаны к модулям",
+	"ERR_ADD_AT_LEAST_ONE_MODULE": "Добавьте хотя бы один модуль"	
 }
