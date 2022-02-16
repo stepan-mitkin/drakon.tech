@@ -831,6 +831,22 @@ function api_gen_coupons(req, session, headers)
     end
 end
 
+function api_genapp(req, session, headers)
+    local space_id = req:stash("first")
+    local folder_id = req:stash("second")
+    local error = space.genapp(
+    	space_id,
+    	folder_id,
+    	session.user_id,
+    	session.roles
+    )
+    if error then
+        return result_from_message(headers, error)
+    else
+        return make_empty_response(headers)
+    end
+end
+
 function api_get_access(req, session, headers)
     local space_id = req:stash("first")
     local ok, result = space.read_access(
@@ -4605,6 +4621,7 @@ function start()
     api("find_module", "POST", false, false, api_find_module)
     api("build", "POST", false, false, api_build)
     api("build", "GET", false, false, api_get_build_status)
+    api("genapp", "POST", true, false, api_genapp)
     api("folder_props", "GET", false, false, api_get_folder_props)
     api("folder_props", "POST", true, false, api_set_folder_props)
     api("search", "POST", false, false, api_start_search)

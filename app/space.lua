@@ -1371,6 +1371,15 @@ function find_move_cycle(dst_space_id, dst_folder_id, space_id, folder_id)
     end
 end
 
+function find_startup(modules)
+    for _, mod in ipairs(modules) do
+        if mod.startup then
+            return mod.name
+        end
+    end
+    return nil
+end
+
 function folder_matches(space_id, folder_id, folder, needle, result)
     if norm_contains(folder.name, needle) then
         local folder_info = make_found_folder(
@@ -1414,6 +1423,110 @@ function for_space_folders(space_id, action)
             )
         end
     end
+end
+
+function genapp(space_id, folder_id, user_id, roles)
+    local html
+    local message = check_write_access(
+    	space_id,
+    	user_id,
+    	roles
+    )
+    if message then
+        
+    else
+        local ok, gen_result = get_create_gentoken(
+        	space_id,
+        	user_id,
+        	roles
+        )
+        if ok then
+            local module = db.folder_get(
+            	space_id,
+            	folder_id
+            )
+            local modules_item = db.item_get(
+            	space_id,
+            	folder_id,
+            	"modules"
+            )
+            if ((modules_item) and (modules_item.text)) and (not (modules_item.text == "")) then
+                local mods = json.decode(modules_item.text)
+                local modules = {}
+                local instances = {}
+                for _, mod in ipairs(mods) do
+                    modules[mod.name] = mod
+                    instances[mod.name] = "_inst_" .. mod.name
+                end
+                local html_item = db.item_get(
+                	space_id,
+                	folder_id,
+                	"html"
+                )
+                if ((html_item) and (html_item.text)) and (not (html_item.text == "")) then
+                    html = html_item.text
+                    local jsfolder = global_cfg.gen_dir .. "/" .. 
+                      gen_result.gentoken ..
+                      "/" .. module.name
+                    fio.mkdir(jsfolder)
+                    local src = "(function() {\n"
+                    for _, mod in ipairs(mods) do
+                        local inst = instances[mod.name]
+                        src = src .. "var " .. inst .. " = " ..
+                          mod.name .. "();\n"
+                    end
+                    for _, mod in ipairs(mods) do
+                        src = resolve_deps(src, mod, instances)
+                    end
+                    local startup = find_startup(mods)
+                    src = src .. instances[startup] .. ".main();\n"
+                    src = src .. "})();\n"
+                    local jsname = jsfolder .. "/" .. 
+                    	module.name .. ".js"
+                    utils.write_all_bytes(jsname, src)
+                    local scripts = "\n"
+                    local normal_4272
+                    normal_4272 = 1
+                    for _, mod in ipairs(mods) do
+                        ok, modgen = get_create_gentoken(
+                        	mod.spaceId,
+                        	user_id,
+                        	roles
+                        )
+                        if ok then
+                            
+                        else
+                            message = modgen
+                            normal_4272 = 0
+                            break
+                        end
+                        local surl = "/gen/" .. modgen.gentoken ..
+                        	"/" .. mod.name .. ".js"
+                        scripts = scripts .. "    <script src=\"" ..
+                        	surl ..	"\"></script>\n"
+                    end
+                    if normal_4272 == 1 then
+                        scripts = scripts .. "    <script src=\"" .. module.name ..
+                        	".js\"></script>\n"
+                        local final_html = replace_string(
+                        	html,
+                        	"%SCRIPT%",
+                        	scripts
+                        )
+                        local html_name = jsfolder .. "/index.html"
+                        utils.write_all_bytes(html_name, final_html)
+                    end
+                else
+                    message = "ERR_HTML_NOT_SPECIFIED"
+                end
+            else
+                message = "ERR_MODULES_NOT_SPECIFIED"
+            end
+        else
+            message = gen_result
+        end
+    end
+    return message
 end
 
 function generate_folder_id(space_id)
@@ -2627,6 +2740,22 @@ function remove_gen_folder(gentoken)
     return os.remove(path)
 end
 
+function replace_string(text, needle, with)
+    local first, last = string.find(
+    	text,
+    	needle,
+    	1,
+    	true
+    )
+    if first then
+        local before = string.sub(text, 1, first - 1)
+        local after = string.sub(text, last + 1, #text)
+        return before .. with .. after
+    else
+        return text
+    end
+end
+
 function reset_gentoken(space_id, user_id, roles)
     local result = nil
     local ok = nil
@@ -2669,6 +2798,17 @@ function reset_gentoken(space_id, user_id, roles)
         end
     end
     return ok, result
+end
+
+function resolve_deps(src, module, instances)
+    local mod_var = instances[module.name]
+    for _, dep in ipairs(module.deps) do
+        local dep_var = instances[dep.module]
+        src = src .. mod_var .. "." ..
+        	dep.name .. " = " ..
+        	dep_var .. ";\n"
+    end
+    return src
 end
 
 function restore(space_id, folder_id, user_id, roles)
@@ -3445,5 +3585,6 @@ return {
 	check_write_access = check_write_access,
 	backup = backup,
 	restore_backup = restore_backup,
-	get_modules = get_modules
+	get_modules = get_modules,
+	genapp = genapp
 }

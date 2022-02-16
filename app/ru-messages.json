@@ -506,5 +506,6 @@
 	"MES_PROJECT": "Проект",
 	"ERR_NO_STARTUP_MODULE": "Выберите стартовый модуль",
 	"ERR_UNRESOLVED_DEPENDENCIES": "Зависимости не привязаны к модулям",
-	"ERR_ADD_AT_LEAST_ONE_MODULE": "Добавьте хотя бы один модуль"	
+	"ERR_ADD_AT_LEAST_ONE_MODULE": "Добавьте хотя бы один модуль",
+	"ERR_MODULE_WITH_THIS_NAME_ALREADY_ADDED": "Модуль с этим именем уже добавлен"
 }
