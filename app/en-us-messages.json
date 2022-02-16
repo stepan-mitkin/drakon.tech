@@ -503,5 +503,7 @@
 	"ERR_NO_STARTUP_MODULE": "Choose a startup module",
 	"ERR_UNRESOLVED_DEPENDENCIES": "Module has unresolved dependencies",
 	"ERR_ADD_AT_LEAST_ONE_MODULE": "Add at least one module",
-	"ERR_MODULE_WITH_THIS_NAME_ALREADY_ADDED": "A module with this name was already added"
+	"ERR_MODULE_WITH_THIS_NAME_ALREADY_ADDED": "A module with this name was already added",
+	"ERR_SCRIPT_MISSING": "The %SCRIPT% keyword is missing in HTML",
+	"ERR_PLEASE_PROVIDE_HTML": "HTML is missing"	
 }

@@ -4848,7 +4848,7 @@ function goToDashboard(onCompleted) {
 
 function goToFolder(id, onCompleted) {
     var start
-    if (((id === globs.current.id) && (!(globs.current.type === "folder"))) && (!(globs.current.type === "module"))) {
+    if ((((id === globs.current.id) && (!(globs.current.type === "folder"))) && (!(globs.current.type === "module"))) && (!(globs.current.type === "app"))) {
         if (onCompleted) {
             browser.setTimeout(onCompleted, 1, "goToFolder")
         }
@@ -7566,8 +7566,13 @@ function showCreateDialog(type, target, language) {
                 validate = validateModuleName
                 title = "MES_NEW_OBJECT"
             } else {
-                validate = softCheck
-                title = "MES_CREATE_FUNCTION"
+                if (type === "app") {
+                    validate = validateModuleName
+                    title = "MES_NEW_APP"
+                } else {
+                    validate = softCheck
+                    title = "MES_CREATE_FUNCTION"
+                }
             }
         }
     }

@@ -507,5 +507,7 @@
 	"ERR_NO_STARTUP_MODULE": "Выберите стартовый модуль",
 	"ERR_UNRESOLVED_DEPENDENCIES": "Зависимости не привязаны к модулям",
 	"ERR_ADD_AT_LEAST_ONE_MODULE": "Добавьте хотя бы один модуль",
-	"ERR_MODULE_WITH_THIS_NAME_ALREADY_ADDED": "Модуль с этим именем уже добавлен"
+	"ERR_MODULE_WITH_THIS_NAME_ALREADY_ADDED": "Модуль с этим именем уже добавлен",
+	"ERR_SCRIPT_MISSING": "Ключевое слово %SCRIPT% отсутствует в HTML-коде",
+	"ERR_PLEASE_PROVIDE_HTML": "HTML-код отсутствует"
 }
