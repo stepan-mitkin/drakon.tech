@@ -350,7 +350,7 @@ async function findModule(record, spaceId, moduleName) {
         module_name: moduleName
     }
 
-    var url = `http://localhost:${config.dtPort}/api/find_module`
+    var url = `http://${config.server}:${config.dtPort}/api/find_module`
     try {
         var response = await postToDt(url, payload)
         response.fid = spaceId + " " + response.id
@@ -918,28 +918,28 @@ function createBuildRecord(spaceId, folderId, props, userLanguage, userId) {
 }
 
 async function getGenToken(spaceId) {
-    var url = `http://localhost:${config.dtPort}/api/gentoken/${spaceId}`
+    var url = `http://${config.server}:${config.dtPort}/api/gentoken/${spaceId}`
     var result = await getFromDt(url, 1)
     return result.gentoken
 }
 
 async function getProperties(spaceId, folderId) {
-    var url = `http://localhost:${config.dtPort}/api/folder_props/${spaceId}/${folderId}`
+    var url = `http://${config.server}:${config.dtPort}/api/folder_props/${spaceId}/${folderId}`
     return await getFromDt(url, 1)
 }
 
 async function getGeneric(url) {
-    var fullUrl = `http://localhost:${config.dtPort}${url}`
+    var fullUrl = `http://${config.server}:${config.dtPort}${url}`
     return await getFromDt(fullUrl, 1)
 }
 
 async function getFolder(spaceId, folderId) {
-    var url = `http://localhost:${config.dtPort}/api/folder/${spaceId}/${folderId}`
+    var url = `http://${config.server}:${config.dtPort}/api/folder/${spaceId}/${folderId}`
     return await getFromDt(url, 1)
 }
 
 async function getModule(spaceId, folderId) {
-    var url = `http://localhost:${config.dtPort}/api/module/${spaceId}/${folderId}`
+    var url = `http://${config.server}:${config.dtPort}/api/module/${spaceId}/${folderId}`
     return await getFromDt(url, 1)
 }
 
@@ -988,7 +988,7 @@ async function getFromDt(url, retries) {
 
 async function getAuthorization() {
     if (!globals.auth) {
-        var url = `http://localhost:${config.dtPort}/api/logon`
+        var url = `http://${config.server}:${config.dtPort}/api/logon`
 
         var options = {
             url,

@@ -2,8 +2,6 @@ const esprima = require("esprima")
 const escodegen = require("escodegen")
 
 
-
-
 function AlgopropCompiler02_module() {
     var unit = {};
     
@@ -2543,12 +2541,24 @@ function AlgopropCompiler02_module() {
     }
     
     function expandAsyncs(project, diagram, item, body, start) {
-        var _sw_13, _sw_20, _sw_34, body2, expr, i, node, right;
+        var body2;
         item.body = {
             "type": "BlockStatement",
             "body": []
         }
         body2 = item.body.body
+        expandAsyncsCore(
+            project,
+            diagram,
+            item,
+            body,
+            start,
+            body2
+        )
+    }
+    
+    function expandAsyncsCore(project, diagram, item, body, start, body2) {
+        var _sw_13, _sw_34, expr, i, node;
         i = start;
         while (true) {
             if (i < body.length) {
@@ -2557,55 +2567,35 @@ function AlgopropCompiler02_module() {
                 if (_sw_34 === "ExpressionStatement") {
                     expr = node.expression
                     _sw_13 = expr.type;
-                    if (_sw_13 === "CallExpression") {
-                        body2.push(node)
-                    } else {
-                        if (_sw_13 === "AssignmentExpression") {
-                            right = expr.right
-                            _sw_20 = right.type;
-                            if (_sw_20 === "AwaitExpression") {
-                                expandAwait(
-                                    project,
-                                    diagram,
-                                    item,
-                                    body,
-                                    i + 1,
-                                    expr,
-                                    addValueThen
-                                )
-                                return 
-                            } else {
-                                if (_sw_20 === "CallExpression") {
-                                    if (right.callee.name === "createObject") {
-                                        expandCreateObject(
-                                            project,
-                                            diagram,
-                                            item,
-                                            expr,
-                                            body2
-                                        )
-                                    } else {
-                                        body2.push(node)
-                                    }
-                                } else {
-                                    body2.push(node)
-                                }
-                            }
+                    if (_sw_13 === "AssignmentExpression") {
+                        if (expr.right.type === "AwaitExpression") {
+                            expandAwait(
+                                project,
+                                diagram,
+                                item,
+                                body,
+                                i + 1,
+                                expr,
+                                addValueThen
+                            )
+                            return 
                         } else {
-                            if (_sw_13 === "AwaitExpression") {
-                                expandAwait(
-                                    project,
-                                    diagram,
-                                    item,
-                                    body,
-                                    i + 1,
-                                    expr,
-                                    addVoidThen
-                                )
-                                return 
-                            } else {
-                                body2.push(node)
-                            }
+                            body2.push(node)
+                        }
+                    } else {
+                        if (_sw_13 === "AwaitExpression") {
+                            expandAwait(
+                                project,
+                                diagram,
+                                item,
+                                body,
+                                i + 1,
+                                expr,
+                                addVoidThen
+                            )
+                            return 
+                        } else {
+                            body2.push(node)
                         }
                     }
                 } else {
@@ -2722,6 +2712,7 @@ function AlgopropCompiler02_module() {
                         item: item,
                         root: true,
                         before: [],
+                        depth: 0,
                         rewrite: expandCallsIdle
                     }
                     item.body = traverseAstCore2(
@@ -2758,7 +2749,8 @@ function AlgopropCompiler02_module() {
             diagram: context.diagram,
             item: context.item,
             body: [],
-            rewrite: expandCallsIdle
+            rewrite: expandCallsIdle,
+            depth: context.depth + 1
         }
         if (context.root) {
             context2.before = context.before
@@ -2808,7 +2800,17 @@ function AlgopropCompiler02_module() {
                     return extractCall(context, type, node)
                 } else {
                     if (_sw_9 === "AwaitExpression") {
-                        return extractAwait(context, type, node)
+                        if (context.depth == 1) {
+                            return extractAwait(context, type, node)
+                        } else {
+                            addError(
+                                context.project,
+                                context.diagram,
+                                "ERR_AWAIT_MUST_BE_TOP_LEVEL",
+                                context.item
+                            )
+                            return undefined
+                        }
                     } else {
                         if (_sw_9 === "MemberExpression") {
                             if (node.computed) {
