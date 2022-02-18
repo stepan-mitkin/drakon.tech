@@ -1126,6 +1126,92 @@ function delete_theme(user_id)
     end
 end
 
+function downloadapp(space_id, folder_id, user_id, roles)
+    local result = nil
+    local module = db.folder_get(
+    	space_id,
+    	folder_id
+    )
+    local names, message = prepare_app_download(
+    	space_id,
+    	module.name,
+    	user_id,
+    	roles
+    )
+    if message then
+        
+    else
+        log.info(names.tmp)
+        local mods_text = get_text_from_item(
+        	space_id,
+        	folder_id,
+        	"modules"
+        )
+        if mods_text then
+            local mods = json.decode(mods_text)
+            message = get_tokens_for_modules(
+            	mods,
+            	user_id,
+            	roles
+            )
+            if message then
+                
+            else
+                local html = get_text_from_item(
+                	space_id,
+                	folder_id,
+                	"html"
+                )
+                if html then
+                    local jsname = names.tmp .. "/" .. 
+                    	module.name .. ".js"
+                    write_index_js(mods, jsname)
+                    local normal_4500
+                    normal_4500 = 1
+                    for _, mod in ipairs(mods) do
+                        local src = global_cfg.gen_dir .. "/" ..
+                        	mod.gentoken .. "/" ..
+                        	mod.name .. ".js"
+                        local command = "cp " .. src .. " " .. 
+                        	names.tmp .. "/"
+                        local cmd_result = os.execute(command)
+                        if cmd_result == 0 then
+                            
+                        else
+                            message = "Module not built: " .. mod.name
+                            normal_4500 = 0
+                            break
+                        end
+                    end
+                    if normal_4500 == 1 then
+                        local html_name = names.tmp .. "/index.html"
+                        generate_html_without_paths(
+                        	html,
+                        	module.name,
+                        	mods,
+                        	html_name
+                        )
+                        local command = "zip -r -j " .. names.path ..
+                        	" " .. names.tmp
+                        log.info(command)
+                        local cmd_result = os.execute(command)
+                        log.info(cmd_result)
+                        result = {
+                        	filename = names.filename,
+                        	url = names.url
+                        }
+                    end
+                else
+                    message = "ERR_HTML_NOT_SPECIFIED"
+                end
+            end
+        else
+            message = "ERR_MODULES_NOT_SPECIFIED"
+        end
+    end
+    return result, message
+end
+
 function edit(space_id, folder_id, data, user_id, roles)
     db.begin()
     local message = nil
@@ -1426,7 +1512,6 @@ function for_space_folders(space_id, action)
 end
 
 function genapp(space_id, folder_id, user_id, roles)
-    local html
     local message = check_write_access(
     	space_id,
     	user_id,
@@ -1445,76 +1530,41 @@ function genapp(space_id, folder_id, user_id, roles)
             	space_id,
             	folder_id
             )
-            local modules_item = db.item_get(
+            local mods_text = get_text_from_item(
             	space_id,
             	folder_id,
             	"modules"
             )
-            if ((modules_item) and (modules_item.text)) and (not (modules_item.text == "")) then
-                local mods = json.decode(modules_item.text)
-                local modules = {}
-                local instances = {}
-                for _, mod in ipairs(mods) do
-                    modules[mod.name] = mod
-                    instances[mod.name] = "_inst_" .. mod.name
-                end
-                local html_item = db.item_get(
+            if mods_text then
+                local mods = json.decode(mods_text)
+                local html = get_text_from_item(
                 	space_id,
                 	folder_id,
                 	"html"
                 )
-                if ((html_item) and (html_item.text)) and (not (html_item.text == "")) then
-                    html = html_item.text
+                if html then
                     local jsfolder = global_cfg.gen_dir .. "/" .. 
                       gen_result.gentoken ..
                       "/" .. module.name
                     fio.mkdir(jsfolder)
-                    local src = "(function() {\n"
-                    for _, mod in ipairs(mods) do
-                        local inst = instances[mod.name]
-                        src = src .. "var " .. inst .. " = " ..
-                          mod.name .. "();\n"
-                    end
-                    for _, mod in ipairs(mods) do
-                        src = resolve_deps(src, mod, instances)
-                    end
-                    local startup = find_startup(mods)
-                    src = src .. instances[startup] .. ".main();\n"
-                    src = src .. "})();\n"
                     local jsname = jsfolder .. "/" .. 
                     	module.name .. ".js"
-                    utils.write_all_bytes(jsname, src)
-                    local scripts = "\n"
-                    local normal_4272
-                    normal_4272 = 1
-                    for _, mod in ipairs(mods) do
-                        ok, modgen = get_create_gentoken(
-                        	mod.spaceId,
-                        	user_id,
-                        	roles
-                        )
-                        if ok then
-                            
-                        else
-                            message = modgen
-                            normal_4272 = 0
-                            break
-                        end
-                        local surl = "/gen/" .. modgen.gentoken ..
-                        	"/" .. mod.name .. ".js"
-                        scripts = scripts .. "    <script src=\"" ..
-                        	surl ..	"\"></script>\n"
-                    end
-                    if normal_4272 == 1 then
-                        scripts = scripts .. "    <script src=\"" .. module.name ..
-                        	".js\"></script>\n"
-                        local final_html = replace_string(
-                        	html,
-                        	"%SCRIPT%",
-                        	scripts
-                        )
+                    write_index_js(mods, jsname)
+                    message = get_tokens_for_modules(
+                    	mods,
+                    	user_id,
+                    	roles
+                    )
+                    if message then
+                        
+                    else
                         local html_name = jsfolder .. "/index.html"
-                        utils.write_all_bytes(html_name, final_html)
+                        generate_html_with_paths(
+                        	html,
+                        	module.name,
+                        	mods,
+                        	html_name
+                        )
                     end
                 else
                     message = "ERR_HTML_NOT_SPECIFIED"
@@ -1541,6 +1591,41 @@ function generate_folder_id(space_id)
         end
     end
     return id
+end
+
+function generate_html_with_paths(html, module_name, mods, filename)
+    local scripts = "\n"
+    for _, mod in ipairs(mods) do
+        local surl = "/gen/" .. mod.gentoken ..
+        	"/" .. mod.name .. ".js"
+        scripts = scripts .. "    <script src=\"" ..
+        	surl ..	"\"></script>\n"
+    end
+    scripts = scripts .. "    <script src=\"" .. module_name ..
+    	".js\"></script>\n"
+    local final_html = replace_string(
+    	html,
+    	"%SCRIPT%",
+    	scripts
+    )
+    utils.write_all_bytes(filename, final_html)
+end
+
+function generate_html_without_paths(html, module_name, mods, filename)
+    local scripts = "\n"
+    for _, mod in ipairs(mods) do
+        local surl = mod.name .. ".js"
+        scripts = scripts .. "    <script src=\"" ..
+        	surl ..	"\"></script>\n"
+    end
+    scripts = scripts .. "    <script src=\"" .. module_name ..
+    	".js\"></script>\n"
+    local final_html = replace_string(
+    	html,
+    	"%SCRIPT%",
+    	scripts
+    )
+    utils.write_all_bytes(filename, final_html)
 end
 
 function get_access(sdata, space_id, user_id, roles)
@@ -2252,6 +2337,24 @@ function get_tag(space_id, folder_id)
     end
 end
 
+function get_text_from_item(space_id, folder_id, item_id)
+    local item = db.item_get(
+    	space_id,
+    	folder_id,
+    	item_id
+    )
+    if (item) and (item.text) then
+        local result = utils.trim(item.text)
+        if result == "" then
+            return nil
+        else
+            return result
+        end
+    else
+        return nil
+    end
+end
+
 function get_theme(user_id)
     local rows = db.user_props_get_by_user(user_id)
     local result = {}
@@ -2259,6 +2362,23 @@ function get_theme(user_id)
         result[row[2]] = row[3]
     end
     return true, result
+end
+
+function get_tokens_for_modules(mods, user_id, roles)
+    for _, mod in ipairs(mods) do
+        ok, modgen = get_create_gentoken(
+        	mod.spaceId,
+        	user_id,
+        	roles
+        )
+        if ok then
+            
+        else
+            return modgen
+        end
+        mod.gentoken = modgen.gentoken
+    end
+    return nil
 end
 
 function get_trash(space_id, user_id, roles)
@@ -2641,6 +2761,45 @@ function norm_contains(haystack, needle)
         return contains
     else
         return false
+    end
+end
+
+function prepare_app_download(space_id, module_name, user_id, roles)
+    local message = check_read_access(
+    	space_id,
+    	user_id,
+    	roles
+    )
+    if message then
+        return false, message
+    else
+        local ok, gentoken_result = get_create_gentoken(
+        	space_id,
+        	user_id,
+        	roles
+        )
+        if ok then
+            local names = {}
+            names.filename = module_name .. ".zip"
+            names.url = "/gen/" .. gentoken_result.gentoken ..
+            	"/" .. names.filename
+            names.folder = global_cfg.gen_dir .. "/" .. 
+            	gentoken_result.gentoken .. "/"
+            names.path = names.folder .. names.filename
+            names.tmp = os.tmpname()
+            os.remove(names.tmp)
+            os.remove(names.path)
+            ok, message = fio.mktree(names.tmp)
+            if ok then
+                return names
+            else
+                log.error("Could not re-create tmp dir for backup/restore: " ..
+                	message)
+                return false, "ERR_SERVER"
+            end
+        else
+            return false, gentoken_result
+        end
     end
 end
 
@@ -3508,6 +3667,26 @@ function update_space_limits_core(space_id, admins)
     )
 end
 
+function write_index_js(mods, jsname)
+    local instances = {}
+    for _, mod in ipairs(mods) do
+        instances[mod.name] = "_inst_" .. mod.name
+    end
+    local src = "(function() {\n"
+    for _, mod in ipairs(mods) do
+        local inst = instances[mod.name]
+        src = src .. "var " .. inst .. " = " ..
+          mod.name .. "();\n"
+    end
+    for _, mod in ipairs(mods) do
+        src = resolve_deps(src, mod, instances)
+    end
+    local startup = find_startup(mods)
+    src = src .. instances[startup] .. ".main();\n"
+    src = src .. "})();\n"
+    utils.write_all_bytes(jsname, src)
+end
+
 
 function search_machine()
     local obj = {}
@@ -3586,5 +3765,6 @@ return {
 	backup = backup,
 	restore_backup = restore_backup,
 	get_modules = get_modules,
-	genapp = genapp
+	genapp = genapp,
+	downloadapp = downloadapp
 }

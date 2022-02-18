@@ -712,6 +712,22 @@ function api_download_table_rows(req, session, headers)
     end
 end
 
+function api_downloadapp(req, session, headers)
+    local space_id = req:stash("first")
+    local folder_id = req:stash("second")
+    local result, message = space.downloadapp(
+    	space_id,
+    	folder_id,
+    	session.user_id,
+    	session.roles
+    )
+    if result then
+        return make_json_success(headers, result)
+    else
+        return result_from_message(headers, message)
+    end
+end
+
 function api_edit(req, session, headers)
     local space_id = req:stash("first")
     local folder_id = req:stash("second")
@@ -4622,6 +4638,7 @@ function start()
     api("build", "POST", false, false, api_build)
     api("build", "GET", false, false, api_get_build_status)
     api("genapp", "POST", true, false, api_genapp)
+    api("downloadapp", "POST", false, false, api_downloadapp)
     api("folder_props", "GET", false, false, api_get_folder_props)
     api("folder_props", "POST", true, false, api_set_folder_props)
     api("search", "POST", false, false, api_start_search)
