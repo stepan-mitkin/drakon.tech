@@ -596,12 +596,16 @@ function build() {
 function buildAppWidget(div, node, widget) {
     var app = appedit()
     app.tr = translate
+    var startBuild = function(url) {
+    	self.logic.startBuildAll(url)
+    }
     app.main(
         div,
         self.logic.goToFolder,
         showNotification,
         showWorking,
-        hideWorking
+        hideWorking,
+        startBuild
     )
     var logic = app.widget
     widget.setData = logic.setData

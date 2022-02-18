@@ -171,6 +171,72 @@ function AccessShower_Start_onError(self, data) {
     self.state = null;
 }
 
+function AllBuilder_Checking_cancelBuild(self, msg) {
+    stopBuild(
+        self
+    )
+    self.state = null;
+}
+
+function AllBuilder_Checking_onData(self, msg) {
+    var options
+    options = {
+        state : msg.state,
+        module : msg.name,
+        url : msg.url
+    }
+    if (msg.state == "working") {
+        browser.showBuild(
+            options
+        )
+        scheduleBuildCheck(
+            self
+        )
+        self.state = "Working";
+    } else {
+        if (msg.state == "error") {
+            options.errors = msg.errors || []
+        }
+        browser.showBuild(
+            options
+        )
+        self.target.onData(msg)
+        self.state = null;
+    }
+}
+
+function AllBuilder_Checking_onError(self, msg) {
+    onBuilderError(self, msg)
+    self.state = null;
+}
+
+function AllBuilder_Created_default(self, msg) {
+    self.state = "Created";
+}
+
+function AllBuilder_Created_onData(self, msg) {
+    self.module = msg.module
+    self.url = msg.url
+    scheduleBuildCheck(
+        self
+    )
+    self.state = "Working";
+}
+
+function AllBuilder_Working_cancelBuild(self, msg) {
+    stopBuild(
+        self
+    )
+    self.state = null;
+}
+
+function AllBuilder_Working_timeout(self, msg) {
+    checkBuild(
+        self
+    )
+    self.state = "Checking";
+}
+
 function BuildManager_Building_cancelBuild(self, msg) {
     self.builder.cancelBuild()
     self.builder = undefined
@@ -8082,6 +8148,26 @@ function startBuild(self, spaceId, folderId) {
     )
 }
 
+function startBuildAll(buildInfo) {
+    var msg, options
+    msg = {
+        module : buildInfo.name,
+        url : buildInfo.url
+    }
+    self.builder = startMachine(
+        new AllBuilder(),
+        msg,
+        undefined
+    )
+    options = {
+        state : "working",
+        module : buildInfo.name
+    }
+    browser.showBuild(
+        options
+    )
+}
+
 function startFindReferences(needle, target) {
     var data, id
     id = parseId(globs.current.id)
@@ -10338,6 +10424,55 @@ function ProjectLoader() {
   };
 }
 
+function AllBuilder() {
+  var _self = this;
+  _self.type_name = "AllBuilder";
+  _self.state = "Created";
+  _self.cancelBuild = function(msg) {
+    var _state_ = _self.state;
+    if (_state_ == "Created") {
+      return AllBuilder_Created_default(_self, msg);
+    }
+    else if (_state_ == "Working") {
+      return AllBuilder_Working_cancelBuild(_self, msg);
+    }
+    else if (_state_ == "Checking") {
+      return AllBuilder_Checking_cancelBuild(_self, msg);
+    }
+    return null;
+  };
+  _self.onData = function(msg) {
+    var _state_ = _self.state;
+    if (_state_ == "Created") {
+      return AllBuilder_Created_onData(_self, msg);
+    }
+    else if (_state_ == "Checking") {
+      return AllBuilder_Checking_onData(_self, msg);
+    }
+    return null;
+  };
+  _self.onError = function(msg) {
+    var _state_ = _self.state;
+    if (_state_ == "Created") {
+      return AllBuilder_Created_default(_self, msg);
+    }
+    else if (_state_ == "Checking") {
+      return AllBuilder_Checking_onError(_self, msg);
+    }
+    return null;
+  };
+  _self.timeout = function(msg) {
+    var _state_ = _self.state;
+    if (_state_ == "Created") {
+      return AllBuilder_Created_default(_self, msg);
+    }
+    else if (_state_ == "Working") {
+      return AllBuilder_Working_timeout(_self, msg);
+    }
+    return null;
+  };
+}
+
 
 globs = createState()
 bindHandlers()
@@ -10364,4 +10499,5 @@ this.createModule = createModule
 this.changeDiagramProperties = changeDiagramProperties
 this.saveApp = saveApp
 this.goToFolder = goToFolder
+this.startBuildAll = startBuildAll
 }

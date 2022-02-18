@@ -75,6 +75,8 @@ local AUTOPAY_RETRY_DELAY_SEC = 3600
 
 local db = require(global_cfg.db)
 
+local global_builds = {}
+
 setfenv(1, {}) 
 
 local module = nil
@@ -163,6 +165,7 @@ end
 function api_build(req, session, headers)
     local space_id = req:stash("first")
     local folder_id = req:stash("second")
+    local body = req:read()
     local error = space.check_write_access(
     	space_id,
     	session.user_id,
@@ -171,18 +174,10 @@ function api_build(req, session, headers)
     if error then
         return result_from_message(headers, error)
     else
-        local method = "POST"
-        local options = {headers={}}
-        options.headers["Content-Type"] = "application/json"
-        local body = req:read()
-        local url = "http://localhost:" ..
-         tostring(global_cfg.gen_port) .. "/private/" ..
-         space_id .. "/" .. folder_id
-        local result = http_client:request(
-        	method,
-        	url,
-        	body or "{}",
-        	options
+        local result = start_module_build(
+        	space_id,
+        	folder_id,
+        	body
         )
         local output = json.decode(
         	result.body or "{}"
@@ -196,6 +191,84 @@ function api_build(req, session, headers)
             	headers, 
             	message
             )
+        end
+    end
+end
+
+function api_buildall(req, session, headers)
+    local space_id = req:stash("first")
+    local folder_id = req:stash("second")
+    local body = req:read()
+    local error = space.check_write_access(
+    	space_id,
+    	session.user_id,
+    	session.roles
+    )
+    if error then
+        return result_from_message(headers, error)
+    else
+        local modules, error = space.get_modules_for_app(
+        	space_id,
+        	folder_id,
+        	session.user_id,
+        	session.roles
+        )
+        if error then
+            return result_from_message(headers, error)
+        else
+            local ok, gen = space.get_create_gentoken(
+            	space_id,
+            	session.user_id,
+            	session.roles
+            )
+            local ok, folder = space.get_folder(
+            	space_id,
+            	folder_id,
+            	false,
+            	session.user_id,
+            	session.roles
+            )
+            local url = "/gen/" .. gen.gentoken ..
+            	"/" .. folder.name .. "/"
+            local build_id = utils.random_password(20)
+            local build_info = {
+            	url = url,
+            	body = body,
+            	build = build,
+            	current = 0,
+            	modules = modules
+            }
+            global_builds[build_id] = build_info
+            modules = utils.filter(
+            	modules,
+            	function(mod)
+            		return mod.access ~= "read"
+            	end
+            )
+            if #modules == 0 then
+                build_info.last_state = {
+                	url = url,
+                	state = "success",
+                	name = folder.name,
+                	errors = {}
+                }
+                local output2 = {
+                	url = "/api/build/" .. build_id,
+                	name = ""
+                }
+                return make_json_success(headers, output2)
+            else
+                local output, message = next_build(build_info)
+                if message then
+                    return result_from_message(headers, message)
+                else
+                    local output2 = {
+                    	url = "/api/build/" .. build_id,
+                    	name = modules[1].name
+                    }
+                    return make_json_success(headers, output2)
+                end
+            end
         end
     end
 end
@@ -721,6 +794,8 @@ function api_downloadapp(req, session, headers)
     	session.user_id,
     	session.roles
     )
+    log.info(result)
+    log.info(message)
     if result then
         return make_json_success(headers, result)
     else
@@ -892,30 +967,77 @@ end
 
 function api_get_build_status(req, session, headers)
     local build_id = req:stash("first")
-    local method = "GET"
-    local options = {headers={}}
-    options.headers["Content-Type"] = "application/json"
-    local url = "http://localhost:" ..
-     tostring(global_cfg.gen_port) .. "/build/" ..
-     build_id
-    local result = http_client:request(
-    	method,
-    	url,
-    	"",
-    	options
-    )
-    local output = json.decode(
-    	result.body or "{}"
-    )
-    if result.status == 200 then
-        return make_json_success(headers, output)
+    local build_info = global_builds[build_id]
+    if build_info then
+        if build_info.last_state then
+            global_builds[build_id] = nil
+            return make_json_success(
+            	headers,
+            	build_info.last_state
+            )
+        else
+            local result = check_build_status(
+            	build_info.internal_build_id
+            )
+            local output = json.decode(
+            	result.body or "{}"
+            )
+            if result.status == 200 then
+                local module = build_info.modules[
+                	build_info.current
+                ]
+                output.name = module.name
+                if output.state == "working" then
+                    
+                else
+                    if output.state == "error" then
+                        build_info.last_state = output
+                    else
+                        if build_info.current == #build_info.modules then
+                            output.url = build_info.url
+                            build_info.last_state = output
+                        else
+                            local output2, message = next_build(build_info)
+                            if message then
+                                return make_json_error(
+                                	result.status,
+                                	headers, 
+                                	message
+                                )
+                            else
+                                output = output2
+                            end
+                        end
+                    end
+                end
+                return make_json_success(headers, output)
+            else
+                global_builds[build_id] = nil
+                local message = output.message or result.reason
+                return make_json_error(
+                	result.status,
+                	headers, 
+                	message
+                )
+            end
+        end
     else
-        local message = output.message or result.reason
-        return make_json_error(
-        	result.status,
-        	headers, 
-        	message
+        local result = check_build_status(
+        	build_id
         )
+        local output = json.decode(
+        	result.body or "{}"
+        )
+        if result.status == 200 then
+            return make_json_success(headers, output)
+        else
+            local message = output.message or result.reason
+            return make_json_error(
+            	result.status,
+            	headers, 
+            	message
+            )
+        end
     end
 end
 
@@ -2403,6 +2525,22 @@ function calculate_payment(product_id, users, old_license)
     end
 end
 
+function check_build_status(build_id)
+    local method = "GET"
+    local options = {headers={}}
+    options.headers["Content-Type"] = "application/json"
+    local url = "http://localhost:" ..
+     tostring(global_cfg.gen_port) .. "/build/" ..
+     build_id
+    local result = http_client:request(
+    	method,
+    	url,
+    	"",
+    	options
+    )
+    return result
+end
+
 function check_license(user_id)
     local action = function()
     	check_license_core(user_id)
@@ -3766,6 +3904,37 @@ function make_trans(language, page)
     end
 end
 
+function next_build(build_info)
+    build_info.current = build_info.current + 1
+    local module = build_info.modules[
+    	build_info.current
+    ]
+    local result = start_module_build(
+    	module.spaceId,
+    	module.id,
+    	build_info.body
+    )
+    local output = json.decode(
+    	result.body or "{}"
+    )
+    if result.status == 200 then
+        local parts = utils.split(
+        	output.url,
+        	"/"
+        )
+        build_info.internal_build_id = parts[3]
+        output = {
+        	state = "working",
+        	name = module.name,
+        	errors = {}
+        }
+        return output, nil
+    else
+        local message = output.message or result.reason
+        return false, message
+    end
+end
+
 function norm_language(language)
     local norm = language_list[language]
     if norm then
@@ -4636,6 +4805,7 @@ function start()
     api("module", "GET", false, false, api_get_module)
     api("find_module", "POST", false, false, api_find_module)
     api("build", "POST", false, false, api_build)
+    api("buildall", "POST", true, false, api_buildall)
     api("build", "GET", false, false, api_get_build_status)
     api("genapp", "POST", true, false, api_genapp)
     api("downloadapp", "POST", false, false, api_downloadapp)
@@ -4665,6 +4835,22 @@ function start()
     api("diatest", "POST", true, true, api_save_diatest)
     api("diatest", "DELETE", true, true, api_delete_diatest)
     httpd:start()
+end
+
+function start_module_build(space_id, folder_id, body)
+    local method = "POST"
+    local options = {headers={}}
+    options.headers["Content-Type"] = "application/json"
+    local url = "http://localhost:" ..
+     tostring(global_cfg.gen_port) .. "/private/" ..
+     space_id .. "/" .. folder_id
+    local result = http_client:request(
+    	method,
+    	url,
+    	body or "{}",
+    	options
+    )
+    return result
 end
 
 function start_trial(session_id, user_id, old_license_id, product_id)

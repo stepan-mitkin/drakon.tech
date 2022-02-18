@@ -1142,71 +1142,57 @@ function downloadapp(space_id, folder_id, user_id, roles)
         
     else
         log.info(names.tmp)
-        local mods_text = get_text_from_item(
+        local mods, message = get_modules_for_app(
         	space_id,
         	folder_id,
-        	"modules"
+        	user_id,
+        	roles
         )
-        if mods_text then
-            local mods = json.decode(mods_text)
-            message = get_tokens_for_modules(
-            	mods,
-            	user_id,
-            	roles
-            )
-            if message then
-                
-            else
-                local html = get_text_from_item(
-                	space_id,
-                	folder_id,
-                	"html"
-                )
-                if html then
-                    local jsname = names.tmp .. "/" .. 
-                    	module.name .. ".js"
-                    write_index_js(mods, jsname)
-                    local normal_4500
-                    normal_4500 = 1
-                    for _, mod in ipairs(mods) do
-                        local src = global_cfg.gen_dir .. "/" ..
-                        	mod.gentoken .. "/" ..
-                        	mod.name .. ".js"
-                        local command = "cp " .. src .. " " .. 
-                        	names.tmp .. "/"
-                        local cmd_result = os.execute(command)
-                        if cmd_result == 0 then
-                            
-                        else
-                            message = "Module not built: " .. mod.name
-                            normal_4500 = 0
-                            break
-                        end
-                    end
-                    if normal_4500 == 1 then
-                        local html_name = names.tmp .. "/index.html"
-                        generate_html_without_paths(
-                        	html,
-                        	module.name,
-                        	mods,
-                        	html_name
-                        )
-                        local command = "zip -r -j " .. names.path ..
-                        	" " .. names.tmp
-                        log.info(command)
-                        local cmd_result = os.execute(command)
-                        log.info(cmd_result)
-                        result = {
-                        	filename = names.filename,
-                        	url = names.url
-                        }
-                    end
-                else
-                    message = "ERR_HTML_NOT_SPECIFIED"
-                end
-            end
+        if message then
+            
         else
-            message = "ERR_MODULES_NOT_SPECIFIED"
+            local html = get_text_from_item(
+            	space_id,
+            	folder_id,
+            	"html"
+            )
+            if html then
+                local jsname = names.tmp .. "/" .. 
+                	module.name .. ".js"
+                write_index_js(mods, jsname)
+                for _, mod in ipairs(mods) do
+                    local src = global_cfg.gen_dir .. "/" ..
+                    	mod.gentoken .. "/" ..
+                    	mod.name .. ".js"
+                    local command = "cp " .. src .. " " .. 
+                    	names.tmp .. "/"
+                    local cmd_result = os.execute(command)
+                    if cmd_result == 0 then
+                        
+                    else
+                        message = "Module not built: " .. mod.name
+                        return nil, message
+                    end
+                end
+                local html_name = names.tmp .. "/index.html"
+                generate_html_without_paths(
+                	html,
+                	module.name,
+                	mods,
+                	html_name
+                )
+                local command = "zip -r -j " .. names.path ..
+                	" " .. names.tmp
+                log.info(command)
+                local cmd_result = os.execute(command)
+                log.info(cmd_result)
+                result = {
+                	filename = names.filename,
+                	url = names.url
+                }
+            else
+                message = "ERR_HTML_NOT_SPECIFIED"
+            end
         end
     end
     return result, message
@@ -1530,13 +1516,15 @@ function genapp(space_id, folder_id, user_id, roles)
             	space_id,
             	folder_id
             )
-            local mods_text = get_text_from_item(
+            local mods, message = get_modules_for_app(
             	space_id,
             	folder_id,
-            	"modules"
+            	user_id,
+            	roles
             )
-            if mods_text then
-                local mods = json.decode(mods_text)
+            if message then
+                
+            else
                 local html = get_text_from_item(
                 	space_id,
                 	folder_id,
@@ -1550,27 +1538,16 @@ function genapp(space_id, folder_id, user_id, roles)
                     local jsname = jsfolder .. "/" .. 
                     	module.name .. ".js"
                     write_index_js(mods, jsname)
-                    message = get_tokens_for_modules(
+                    local html_name = jsfolder .. "/index.html"
+                    generate_html_with_paths(
+                    	html,
+                    	module.name,
                     	mods,
-                    	user_id,
-                    	roles
+                    	html_name
                     )
-                    if message then
-                        
-                    else
-                        local html_name = jsfolder .. "/index.html"
-                        generate_html_with_paths(
-                        	html,
-                        	module.name,
-                        	mods,
-                        	html_name
-                        )
-                    end
                 else
                     message = "ERR_HTML_NOT_SPECIFIED"
                 end
-            else
-                message = "ERR_MODULES_NOT_SPECIFIED"
             end
         else
             message = gen_result
@@ -2116,6 +2093,31 @@ function get_modules(space_id, language, user_id, roles)
     end
 end
 
+function get_modules_for_app(space_id, folder_id, user_id, roles)
+    local message = nil
+    local mods_text = get_text_from_item(
+    	space_id,
+    	folder_id,
+    	"modules"
+    )
+    if mods_text then
+        local mods = json.decode(mods_text)
+        message = get_tokens_for_modules(
+        	mods,
+        	user_id,
+        	roles
+        )
+        if message then
+            return false, message
+        else
+            return mods, nil
+        end
+    else
+        message = "ERR_MODULES_NOT_SPECIFIED"
+        return false, message
+    end
+end
+
 function get_parent_id_for_restore(space_id, folder_id)
     local parent_id = db.folder_tree_get(
     	space_id,
@@ -2376,7 +2378,15 @@ function get_tokens_for_modules(mods, user_id, roles)
         else
             return modgen
         end
+        local sdata = db.space_get(mod.spaceId)
+        local access = get_access(
+        	sdata,
+        	mod.spaceId,
+        	user_id,
+        	roles
+        )
         mod.gentoken = modgen.gentoken
+        mod.access = access
     end
     return nil
 end
@@ -3766,5 +3776,6 @@ return {
 	restore_backup = restore_backup,
 	get_modules = get_modules,
 	genapp = genapp,
-	downloadapp = downloadapp
+	downloadapp = downloadapp,
+	get_modules_for_app = get_modules_for_app
 }
