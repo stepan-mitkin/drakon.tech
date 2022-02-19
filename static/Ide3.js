@@ -4630,7 +4630,7 @@ function setMobileHeader(text) {
         	"diaLabelNu",
         	"appLabel",
         	"appLabelRo",
-        	"appLabelNu",
+        	"appLabelNu"
         ]
         var _ind3096 = 0;
         var _col3096 = widgets;
@@ -6362,9 +6362,6 @@ function updateFormatList() {
             ]
             def = "MES_PROGRAM"
         } else {
-            if (((_sw51980000_ === "LANG_S4") || (_sw51980000_ === "LANG_S42")) || (_sw51980000_ === "LANG_HUMAN")) {
-                
-            }
             addOption(select, "MES_NONE", translate("MES_NONE"))
             allowed = [
             	"MES_NONE"
