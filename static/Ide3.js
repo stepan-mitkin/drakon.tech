@@ -6364,8 +6364,6 @@ function updateFormatList() {
         } else {
             if (((_sw51980000_ === "LANG_S4") || (_sw51980000_ === "LANG_S42")) || (_sw51980000_ === "LANG_HUMAN")) {
                 
-            } else {
-                throw "Unexpected switch value: " + _sw51980000_;
             }
             addOption(select, "MES_NONE", translate("MES_NONE"))
             allowed = [
@@ -6413,14 +6411,16 @@ function updatePropButtons() {
                         hideDiv(human)
                     } else {
                         if (_sw52480000_ === "LANG_HUMAN") {
-                            
+                            hideDiv(js1)
+                            hideDiv(js2)
+                            hideDiv(js3)
+                            showDiv(human, "")
                         } else {
-                            throw "Unexpected switch value: " + _sw52480000_;
+                            hideDiv(js1)
+                            hideDiv(js2)
+                            hideDiv(js3)
+                            showDiv(human, "")
                         }
-                        hideDiv(js1)
-                        hideDiv(js2)
-                        hideDiv(js3)
-                        showDiv(human, "")
                     }
                 }
             }
