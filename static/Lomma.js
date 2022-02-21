@@ -2999,7 +2999,7 @@ function branchInsert(socket) {
 }
 
 function branchInsertAt(branchId) {
-    var edits, fields, name, targetId
+    var edits, fields, items, name, newId, oldTargets, targetId
     edits = moveBranchIdsRight(
         branchId
     )
@@ -3013,9 +3013,18 @@ function branchInsertAt(branchId) {
         text : name,
         one : targetId
     }
-    createItem(
+    newId = createItem(
         edits,
         fields
+    )
+    items = module.storage.items
+    oldTargets = {}
+    oldTargets[targetId] = true
+    redirectBranch(
+        items,
+        oldTargets,
+        newId,
+        edits
     )
     return edits
 }
@@ -13998,7 +14007,7 @@ function toSilhouette() {
     edits = []
     b1 = branchLabel() + "1"
     b2 = branchLabel() + "2"
-    b3 = branchLabel() + "3"
+    b3 = "Exit"
     fb = firstBranchNode(visuals)
     branch3 = createItem(
         edits,
