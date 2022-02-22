@@ -1552,11 +1552,6 @@ function ObjectCreator_ChooseObjectType_onData(self, msg) {
     if (msg === "drakon") {
         machine = new DiagramCreator()
     } else {
-        if ((msg === "folder") || (msg === "module")) {
-            
-        } else {
-            throw "Unexpected switch value: " + msg;
-        }
         machine = new FolderCreator()
     }
     startMachine(
