@@ -866,6 +866,7 @@ function FolderCreatorGeneric_CreateFolder_onData(self, data) {
     self.spaceId = data.spaceId
     self.parentFolder = data.parentFolder
     self.parentId = data.parentId
+    self.folderType = data.folderType
     browser.showWorking()
     sendCreateFolder(
         data.spaceId,
@@ -883,6 +884,27 @@ function FolderCreatorGeneric_CreateFolder_onData(self, data) {
 }
 
 function FolderCreatorGeneric_CreateFolder_onError(self, data) {
+    forwardError(self, data)
+    self.state = null;
+}
+
+function FolderCreatorGeneric_CreateMain_onData(self, data) {
+    var props
+    props = {
+        name : "main",
+        type : "drakon",
+        keywords : {"export":true,"function":true}
+    }
+    sendCreateDiagram(
+        self.spaceId,
+        self.id,
+        props,
+        self
+    )
+    self.state = "Expand";
+}
+
+function FolderCreatorGeneric_CreateMain_onError(self, data) {
     forwardError(self, data)
     self.state = null;
 }
@@ -942,6 +964,7 @@ function FolderCreatorGeneric_RefreshParent_onError(self, data) {
 }
 
 function FolderCreatorGeneric_SaveProps_onData(self, data) {
+    self.id = data.folder_id
     self.folderId = makeId(
         self.spaceId,
         data.folder_id
@@ -952,7 +975,11 @@ function FolderCreatorGeneric_SaveProps_onData(self, data) {
         self.props,
         self
     )
-    self.state = "Expand";
+    if (self.folderType === "module") {
+        self.state = "CreateMain";
+    } else {
+        self.state = "Expand";
+    }
 }
 
 function FolderCreatorGeneric_SaveProps_onError(self, data) {
@@ -7236,6 +7263,20 @@ function sendBuild(self) {
     )
 }
 
+function sendCreateDiagram(spaceId, parentFolderId, props, target) {
+    var data, url
+    data = {
+        parent : parentFolderId
+    }
+    Object.assign(data, props)
+    url = "/api/folder/" + spaceId
+    browser.sendPost(
+        url,
+        data,
+        target
+    )
+}
+
 function sendCreateFolder(spaceId, parentFolderId, type, name, target, language) {
     var data, url
     data = {
@@ -10013,6 +10054,9 @@ function FolderCreatorGeneric() {
     else if (_state_ == "SaveProps") {
       return FolderCreatorGeneric_SaveProps_onData(_self, data);
     }
+    else if (_state_ == "CreateMain") {
+      return FolderCreatorGeneric_CreateMain_onData(_self, data);
+    }
     else if (_state_ == "Expand") {
       return FolderCreatorGeneric_Expand_onData(_self, data);
     }
@@ -10031,6 +10075,9 @@ function FolderCreatorGeneric() {
     }
     else if (_state_ == "SaveProps") {
       return FolderCreatorGeneric_SaveProps_onError(_self, data);
+    }
+    else if (_state_ == "CreateMain") {
+      return FolderCreatorGeneric_CreateMain_onError(_self, data);
     }
     else if (_state_ == "Expand") {
       return FolderCreatorGeneric_Expand_onError(_self, data);
