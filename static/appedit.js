@@ -2665,6 +2665,14 @@ function appedit() {
                 return;
             case '2':
                 module = convertModule(moduleRaw);
+                if (self.modules.length === 0) {
+                    module.startup = true;
+                    __state = '_item2';
+                } else {
+                    __state = '_item2';
+                }
+                break;
+            case '_item2':
                 _var2 = findByProperty(self.modules, 'name', module.name);
                 if (_var2) {
                     _var3 = tr('ERR_MODULE_WITH_THIS_NAME_ALREADY_ADDED');
