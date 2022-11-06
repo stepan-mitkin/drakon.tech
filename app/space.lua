@@ -1211,6 +1211,7 @@ function edit(space_id, folder_id, data, user_id, roles)
         local fdata = result
         if fdata.tag == data.oldTag then
             copyNotNil(data, "name", fdata)
+            copyNotNil(data, "style", fdata)
             copyNotNil(data, "keywords", fdata)
             copyNotNil(data, "params", fdata)
             copyNotNil(data, "tag", fdata)
@@ -1901,6 +1902,7 @@ function get_folder(space_id, folder_id, visit, user_id, roles)
             	id = folder_id,
             	space_id = space_id,
             	name = fdata.name,
+            	style = fdata.style,
             	type = fdata.type,
             	tag = fdata.tag,
             	params = fdata.params,
