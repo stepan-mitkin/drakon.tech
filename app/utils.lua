@@ -209,6 +209,7 @@ end
 function build_needle(text)
     local special = {}
     special[utf8.codepoint("%")] = true
+    special[utf8.codepoint("?")] = true
     special[utf8.codepoint("(")] = true
     special[utf8.codepoint(")")] = true
     special[utf8.codepoint("[")] = true
@@ -1163,6 +1164,76 @@ function remove(list, item)
     end
 end
 
+function remove_html_tags(original)
+    local html = 1
+    if original then
+        local trimmed = trim(original)
+        if #trimmed < 3 then
+            html = 0
+        else
+            local first = trimmed:sub(1, 1)
+            local last = trimmed:sub(#trimmed, #trimmed)
+            if (first == "<") and (last == ">") then
+                
+            else
+                html = 0
+            end
+        end
+        local less = utf8.codepoint("<")
+        local greater = utf8.codepoint(">")
+        local state = "normal"
+        local result = ""
+        local tag = ""
+        local prev = 0
+        for i, code in utf8.next, trimmed do
+            if state == "normal" then
+                if (html) and (code == less) then
+                    tag = "<"
+                    state = "tag"
+                else
+                    if (((((code == 10) or (code == 13)) or (code == 9)) or (code == 133)) or (code == 160)) or (code == 32) then
+                        if prev == 32 then
+                            tag = "<"
+                            state = "tag"
+                        else
+                            code = 32
+                            prev = code
+                            result = utf8.insert(
+                            	result,
+                            	utf8.char(code)
+                            )
+                        end
+                    else
+                        prev = code
+                        result = utf8.insert(
+                        	result,
+                        	utf8.char(code)
+                        )
+                    end
+                end
+            else
+                tag = utf8.insert(
+                	tag,
+                	utf8.char(code)
+                )
+                if code == greater then
+                    if (((tag == "</p>") or (tag == "<br>")) or (tag == "<br/>")) and (not (prev == 32)) then
+                        result = utf8.insert(
+                        	result,
+                        	" "
+                        )
+                        prev = 32
+                    end
+                    state = "normal"
+                end
+            end
+        end
+        return trim(result)
+    else
+        return original
+    end
+end
+
 function repeat_value(what, count)
     qs = {}
     i = 1
@@ -1774,6 +1845,7 @@ return {
 	replace_quoted_in_object = replace_quoted_in_object,
 	bulk_action = bulk_action,
 	bash_escape = bash_escape,
+	remove_html_tags = remove_html_tags,
 
 	map = map,
 	group_by = group_by,

@@ -2763,11 +2763,11 @@ end
 
 function norm_contains(haystack, needle)
     if haystack then
-        local norm_haystack = utf8.lower(
+        local low = utf8.lower(
         	haystack
         )
         local contains = utils.string_contains(
-        	norm_haystack,
+        	low,
         	needle
         )
         return contains
@@ -3225,10 +3225,13 @@ function save_try(data, user_id)
 end
 
 function seach_text_chunk(item_id, text, needle, found)
-    if norm_contains(text, needle) then
+    local plain = utils.remove_html_tags(
+    	text
+    )
+    if norm_contains(plain, needle) then
         local match = {
         	item_id = item_id,
-        	text = text
+        	text = plain
         }
         table.insert(found, match)
         return true
