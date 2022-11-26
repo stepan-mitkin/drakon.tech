@@ -1963,6 +1963,10 @@ function get_folder_props_core(space_id, folder_id)
     return result
 end
 
+function get_item_secondary(item)
+    return item.secondary or ""
+end
+
 function get_item_text(item)
     return item.text or ""
 end
@@ -3392,10 +3396,11 @@ function search_scan_items(diagram, needle, result)
         else
             local text = get_item_text(item)
             local text2 = get_item_text2(item)
-            if seach_text_chunk(item_id, text, needle, found) then
+            local secondary = get_item_secondary(item)
+            if (seach_text_chunk(item_id, text, needle, found)) or (seach_text_chunk(item_id, text2, needle, found)) then
                 
             else
-                seach_text_chunk(item_id, text2, needle, found)
+                seach_text_chunk(item_id, secondary, needle, found)
             end
         end
     end
