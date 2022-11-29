@@ -2,6 +2,7 @@ const esprima = require("esprima")
 const escodegen = require("escodegen")
 
 
+
 function AlgopropCompiler02_module() {
     var unit = {};
     
@@ -2384,82 +2385,6 @@ function AlgopropCompiler02_module() {
                 "kind": "var"
             }
         )
-        moduleFun.body.body.push(
-            {
-                "type": "ExpressionStatement",
-                "expression": {
-                    "type": "AssignmentExpression",
-                    "operator": "=",
-                    "left": {
-                        "type": "MemberExpression",
-                        "computed": false,
-                        "object": {
-                            "type": "Identifier",
-                            "name": "unit"
-                        },
-                        "property": {
-                            "type": "Identifier",
-                            "name": "onError"
-                        }
-                    },
-                    "right": {
-                        "type": "FunctionExpression",
-                        "id": null,
-                        "params": [
-                            {
-                                "type": "Identifier",
-                                "name": "error"
-                            }
-                        ],
-                        "body": {
-                            "type": "BlockStatement",
-                            "body": [
-                                {
-                                    "type": "ExpressionStatement",
-                                    "expression":
-                                    {
-                                        "type": "CallExpression",
-                                        "callee":
-                                        {
-                                            "type":
-                                            "MemberExpression",
-                                            "computed":
-                                            false,
-                                            "object":
-                                            {
-                                                "type":
-                                                "Identifier",
-                                                "name":
-                                                "console"
-                                            },
-                                            "property":
-                                            {
-                                                "type":
-                                                "Identifier",
-                                                "name":
-                                                "error"
-                                            }
-                                        },
-                                        "arguments":
-                                        [
-                                            {
-                                                "type":
-                                                "Identifier",
-                                                "name":
-                                                "error"
-                                            }
-                                        ]
-                                    }
-                                }
-                            ]
-                        },
-                        "generator": false,
-                        "expression": false,
-                        "async": false
-                    }
-                }
-            }
-        )
         return moduleFun
     }
     
@@ -3641,32 +3566,6 @@ function AlgopropCompiler02_module() {
         var errorHandler, errorStructure, ifst, output, state, tryHandler;
         function branch1() {
             tryHandler = mainTry.handlers[0].body.body
-            tryHandler.push(
-                {
-                    "type": "ExpressionStatement",
-                    "expression": {
-                        "type": "CallExpression",
-                        "callee": {
-                            "type": "MemberExpression",
-                            "computed": false,
-                            "object": {
-                                "type": "Identifier",
-                                "name": "unit"
-                            },
-                            "property": {
-                                "type": "Identifier",
-                                "name": "onError"
-                            }
-                        },
-                        "arguments": [
-                            {
-                                "type": "Identifier",
-                                "name": "ex"
-                            }
-                        ]
-                    }
-                }
-            )
             errorHandler = diagram.handlers.error
             if ((errorHandler) && (errorHandler.itemId)) {
                 ifst = {
@@ -5508,27 +5407,6 @@ function AlgopropCompiler02_module() {
                     "operator": "=",
                     "left": value,
                     "right": expr.argument
-                }
-            }
-        )
-        body.push(
-            {
-                "type": "ExpressionStatement",
-                "expression": {
-                    "type": "CallExpression",
-                    "callee": {
-                        "type": "MemberExpression",
-                        "computed": false,
-                        "object": {
-                            "type": "Identifier",
-                            "name": "unit"
-                        },
-                        "property": {
-                            "type": "Identifier",
-                            "name": "onError"
-                        }
-                    },
-                    "arguments": [value]
                 }
             }
         )
