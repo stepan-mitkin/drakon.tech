@@ -4679,12 +4679,12 @@ function AlgopropCompiler02_module() {
         return self;
     }
     
-    function markHandlerItem(diagram, visited, itemId) {
-        var _10_col, _10_it, _10_length, item, nextId;
+    function markHandlerItem(diagram, visited, item) {
+        var _10_col, _10_it, _10_length, itemId, nextId, nextItem;
+        itemId = item.id
         if (itemId in visited) {
         } else {
             visited[itemId] = true
-            item = diagram.items[itemId]
             item.isHandler = true
             _10_it = 0;
             _10_col = item.next;
@@ -4692,7 +4692,15 @@ function AlgopropCompiler02_module() {
             while (true) {
                 if (_10_it < _10_length) {
                     nextId = _10_col[_10_it];
-                    markHandlerItem(diagram, visited, nextId)
+                    nextItem = diagram.items[nextId]
+                    if (nextItem.type === "branch") {
+                    } else {
+                        markHandlerItem(
+                            diagram,
+                            visited,
+                            nextItem
+                        )
+                    }
                     _10_it++;
                 } else {
                     break;
@@ -4702,7 +4710,7 @@ function AlgopropCompiler02_module() {
     }
     
     function markHandlers(project, diagram) {
-        var _5_col, _5_it, _5_keys, _5_length, handler, info, visited;
+        var _5_col, _5_it, _5_keys, _5_length, handler, info, item, visited;
         visited = {}
         _5_it = 0;
         _5_col = diagram.handlers;
@@ -4713,11 +4721,8 @@ function AlgopropCompiler02_module() {
                 handler = _5_keys[_5_it];
                 info = _5_col[handler];
                 if (info.itemId) {
-                    markHandlerItem(
-                        diagram,
-                        visited,
-                        info.itemId
-                    )
+                    item = diagram.items[info.itemId]
+                    markHandlerItem(diagram, visited, item)
                 }
                 _5_it++;
             } else {
@@ -5964,6 +5969,7 @@ function AlgopropCompiler02_module() {
                 )
             }
             tryContinueItem(
+                srcItem,
                 context,
                 apVars,
                 outputBody,
@@ -5996,6 +6002,7 @@ function AlgopropCompiler02_module() {
                     }
                 } else {
                     tryContinueItem(
+                        srcItem,
                         context,
                         apVars,
                         outputBody,
@@ -6038,12 +6045,14 @@ function AlgopropCompiler02_module() {
     
         function branch5() {
             tryContinueItem(
+                srcItem,
                 context,
                 apVars.slice(),
                 ifst.consequent.body,
                 consequent
             )
             tryContinueItem(
+                srcItem,
                 context,
                 apVars.slice(),
                 ifst.alternate.body,
@@ -6277,7 +6286,7 @@ function AlgopropCompiler02_module() {
         }
     }
     
-    function tryContinueItem(context, apVars, outputBody, nextId) {
+    function tryContinueItem(srcItem, context, apVars, outputBody, nextId) {
         var nextItem;
         if (context.diagram.resumeNext) {
             addLiteralAssignment(
@@ -6288,7 +6297,14 @@ function AlgopropCompiler02_module() {
             nextChunk(context, nextId)
         } else {
             nextItem = context.diagram.items[nextId]
-            if ((nextItem.type === "branch") || (!(nextItem.refs.length === 1))) {
+            if (nextItem.type === "branch") {
+                if (srcItem.isHandler) {
+                    addLiteralAssignment(
+                        outputBody,
+                        "__inHandler",
+                        false
+                    )
+                }
                 addLiteralAssignment(
                     outputBody,
                     getSwitchVar(context.diagram),
@@ -6296,12 +6312,21 @@ function AlgopropCompiler02_module() {
                 )
                 nextChunk(context, nextId)
             } else {
-                streamExpressionsFromItem(
-                    context,
-                    nextItem,
-                    apVars,
-                    outputBody
-                )
+                if (nextItem.refs.length === 1) {
+                    streamExpressionsFromItem(
+                        context,
+                        nextItem,
+                        apVars,
+                        outputBody
+                    )
+                } else {
+                    addLiteralAssignment(
+                        outputBody,
+                        getSwitchVar(context.diagram),
+                        nextId
+                    )
+                    nextChunk(context, nextId)
+                }
             }
         }
     }
@@ -6339,5 +6364,5 @@ function AlgopropCompiler02_module() {
     unit.mainCore = mainCore;
     return unit;
 }
-
+    
 module.exports = AlgopropCompiler02_module
