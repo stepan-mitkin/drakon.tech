@@ -856,7 +856,7 @@ function api_find_folder(req, session, headers)
     	data.space_id,
     	data.name,
     	session.user_id,
-    	session.admin
+    	session.roles
     )
     if ok then
         return make_json_success(headers, result)

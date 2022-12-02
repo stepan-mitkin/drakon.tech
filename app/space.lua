@@ -1406,7 +1406,7 @@ function find_folder(space_id, folder_id)
     end
 end
 
-function find_folder_by_name(space_id, name, user_id, admin)
+function find_folder_by_name(space_id, name, user_id, roles)
     ej.info(
     	"find_folder_by_name",
     	{user_id=user_id, name=name,
@@ -1415,7 +1415,7 @@ function find_folder_by_name(space_id, name, user_id, admin)
     local space_error, a, p = check_read_access(
     	space_id,
     	user_id,
-    	admin
+    	roles
     )
     if space_error then
         return false, space_error
