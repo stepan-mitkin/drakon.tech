@@ -850,6 +850,21 @@ function api_feedback(req, session, headers)
     return make_empty_response(headers)
 end
 
+function api_find_folder(req, session, headers)
+    local data = req:json()
+    local ok, result = space.find_folder_by_name(
+    	data.space_id,
+    	data.name,
+    	session.user_id,
+    	session.admin
+    )
+    if ok then
+        return make_json_success(headers, result)
+    else
+        return result_from_message(headers, result)
+    end
+end
+
 function api_find_module(req, session, headers)
     local body = req:json()
     local roles = vud.get_user_roles(body.user_id)
@@ -4800,6 +4815,7 @@ function start()
     api("reset_pass", "POST", false, false, api_reset_pass)
     api("def_query", "POST", false, false, api_def_query)
     api("modules", "GET", true, false, api_modules)
+    api("find_folder", "POST", false, false, api_find_folder)
     api("gentoken", "GET", false, false, api_get_gentoken)
     api("prog_modules", "GET", false, false, api_get_prog_modules)
     api("module", "GET", false, false, api_get_module)

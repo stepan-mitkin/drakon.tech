@@ -1406,6 +1406,37 @@ function find_folder(space_id, folder_id)
     end
 end
 
+function find_folder_by_name(space_id, name, user_id, admin)
+    ej.info(
+    	"find_folder_by_name",
+    	{user_id=user_id, name=name,
+    	space_id=space_id}
+    )
+    local space_error, a, p = check_read_access(
+    	space_id,
+    	user_id,
+    	admin
+    )
+    if space_error then
+        return false, space_error
+    else
+        local needle = utf8.lower(name)
+        local folders = {}
+        local match = function(sid, fid, folder)
+        	folder_has_name(
+        		sid, fid, folder, 
+        		needle, folders
+        	)
+        end
+        for_space_folders(space_id, match)
+        if #folders == 0 then
+            return false, "ERR_NOT_FOUND"
+        else
+            return true, {id=folders[1]}
+        end
+    end
+end
+
 function find_folders(space_id, needle, user_id, roles)
     ej.info(
     	"find_folders",
@@ -1451,6 +1482,13 @@ function find_startup(modules)
         end
     end
     return nil
+end
+
+function folder_has_name(space_id, folder_id, folder, needle, result)
+    local fname = utf8.lower(folder.name)
+    if fname == needle then
+        table.insert(result, folder_id)
+    end
 end
 
 function folder_matches(space_id, folder_id, folder, needle, result)
@@ -3787,5 +3825,6 @@ return {
 	get_modules = get_modules,
 	genapp = genapp,
 	downloadapp = downloadapp,
-	get_modules_for_app = get_modules_for_app
+	get_modules_for_app = get_modules_for_app,
+	find_folder_by_name = find_folder_by_name
 }
