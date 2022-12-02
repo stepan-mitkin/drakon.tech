@@ -1168,9 +1168,7 @@ function remove_html_tags(original)
     local html = 1
     if original then
         local trimmed = trim(original)
-        if #trimmed < 3 then
-            html = 0
-        else
+        if #trimmed >= 3 then
             local first = trimmed:sub(1, 1)
             local last = trimmed:sub(#trimmed, #trimmed)
             if (first == "<") and (last == ">") then
@@ -1178,13 +1176,15 @@ function remove_html_tags(original)
             else
                 html = 0
             end
+        else
+            html = 0
         end
         local less = utf8.codepoint("<")
         local greater = utf8.codepoint(">")
         local state = "normal"
         local result = ""
         local tag = ""
-        local prev = 0
+        local space = 0
         for i, code in utf8.next, trimmed do
             if state == "normal" then
                 if (html) and (code == less) then
@@ -1192,19 +1192,18 @@ function remove_html_tags(original)
                     state = "tag"
                 else
                     if (((((code == 10) or (code == 13)) or (code == 9)) or (code == 133)) or (code == 160)) or (code == 32) then
-                        if prev == 32 then
-                            tag = "<"
-                            state = "tag"
+                        if space == 1 then
+                            
                         else
+                            space = 1
                             code = 32
-                            prev = code
                             result = utf8.insert(
                             	result,
                             	utf8.char(code)
                             )
                         end
                     else
-                        prev = code
+                        space = 0
                         result = utf8.insert(
                         	result,
                         	utf8.char(code)
@@ -1217,12 +1216,12 @@ function remove_html_tags(original)
                 	utf8.char(code)
                 )
                 if code == greater then
-                    if (((tag == "</p>") or (tag == "<br>")) or (tag == "<br/>")) and (not (prev == 32)) then
+                    if ((((tag == "</p>") or (tag == "<br>")) or (tag == "<br/>")) or (tag == "<li/>")) and (not (space == 1)) then
                         result = utf8.insert(
                         	result,
                         	" "
                         )
-                        prev = 32
+                        space = 1
                     end
                     state = "normal"
                 end
