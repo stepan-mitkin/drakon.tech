@@ -1482,13 +1482,13 @@ function api_handler_kernel(req)
     local method = req:method()
     local headers = {}
     expires_now(headers)
-    local session = handle_cookie_kernel(req, headers)
+    local session, old_sid = handle_cookie_kernel(req, headers)
     local handler, cookie = find_api_handler(
     	api_method,
     	method,
     	session
     )
-    if cookie then
+    if (cookie) and (not (old_sid == session.session_id)) then
         set_session_cookie(headers, session.session_id)
     end
     local resp = handler(req, session, headers)
@@ -3631,11 +3631,15 @@ function handle(filename)
 end
 
 function handle_cookie(req, headers)
-    local session = handle_cookie_kernel(
+    local session, old_session_id = handle_cookie_kernel(
     	req,
     	headers
     )
-    set_session_cookie(headers, session.session_id)
+    if session.session_id == old_session_id then
+        
+    else
+        set_session_cookie(headers, session.session_id)
+    end
     return session
 end
 
@@ -3651,7 +3655,7 @@ function handle_cookie_kernel(req, headers)
     	path,
     	true
     )
-    return session
+    return session, session_id
 end
 
 function handle_file_for_path(req, filename)
@@ -4676,10 +4680,10 @@ function set_content_type(headers, filename)
 end
 
 function set_session_cookie(headers, session_id)
-    local max_age = 3600 * 24 * 365 * 10
+    local max_age = 3600 * 24 * 30 * 6
     local expires_time = clock.time() + max_age
     local expires = cookie_date(expires_time)
-    local format = "session_id=%s; Expires=%s; Max-Age=%d; Path=/; HttpOnly;"
+    local format = "session_id=%s; Expires=%s; Max-Age=%d; Path=/; HttpOnly; SameSite=Strict;"
     if global_cfg.insecure_cookie then
         
     else

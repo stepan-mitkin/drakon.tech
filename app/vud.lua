@@ -158,10 +158,10 @@ function create_session_core(user_id, sdata, report)
         ej.info(
         	"create_session",
         	{
-        		ip = ip,
+        		ip = sdata.ip,
         		session_id = session_id,
-        		referer = referer,
-        		path = path		
+        		referer = sdata.referer,
+        		path = sdata.path		
         	}
         )
     end
