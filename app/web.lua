@@ -3365,7 +3365,8 @@ function get_access_for_user(user_id, output)
         local access = get_max_access(group)
         local space_info = {
         	space_id = space_id,
-        	access = access
+        	access = access,
+        	name = utf8.upper(space_id)
         }
         table.insert(
         	access_list,

@@ -2225,8 +2225,11 @@ function get_path(space_id, folder_id)
             break
         end
     end
+    local rpath = utils.reverse(path)
+    local first = rpath[1]
+    first.name = utf8.upper(space_id)
     return {
-    	path = utils.reverse(path),
+    	path = rpath,
     	language = language,
     	module = module,
     	module_name = module_name,

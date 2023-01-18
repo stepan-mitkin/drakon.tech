@@ -3,6 +3,7 @@ const escodegen = require("escodegen")
 
 
 
+
 function AlgopropCompiler02_module() {
     var unit = {};
     
@@ -4434,17 +4435,19 @@ function AlgopropCompiler02_module() {
         while (true) {
             if (i < prop.length) {
                 element = prop[i]
-                rewritten = context.rewrite(
-                    context,
-                    type,
-                    name,
-                    computed,
-                    element
-                )
-                if (rewritten) {
-                    prop[i] = rewritten
-                } else {
-                    injectObjInNode(context, element)
+                if (element) {
+                    rewritten = context.rewrite(
+                        context,
+                        type,
+                        name,
+                        computed,
+                        element
+                    )
+                    if (rewritten) {
+                        prop[i] = rewritten
+                    } else {
+                        injectObjInNode(context, element)
+                    }
                 }
                 i++;
             } else {
@@ -6363,6 +6366,6 @@ function AlgopropCompiler02_module() {
     unit.generateCode = generateCode;
     unit.mainCore = mainCore;
     return unit;
-}
-    
+}    
+
 module.exports = AlgopropCompiler02_module
