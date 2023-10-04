@@ -986,6 +986,13 @@ async function getFromDt(url, retries) {
     }
 }
 
+function scheduleLogoff() {
+	var delay = 10 * 24 * 3600 * 1000
+	setTimeout(function() {
+		globals.auth = undefined
+	}, delay)
+}
+
 async function getAuthorization() {
     if (!globals.auth) {
         var url = `http://${config.server}:${config.dtPort}/api/logon`
@@ -1002,8 +1009,9 @@ async function getAuthorization() {
         try {
             var resp = await axios(options)
             globals.auth = resp.data.authorization
+	        scheduleLogoff()
         } catch (e) {
-            logger.error("Could not logon to DT", e)
+            logger.error("Could not logon to DT: " + e.message, e)
             process.exit(1)
         }
     }
