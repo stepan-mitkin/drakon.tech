@@ -4743,7 +4743,6 @@ function start()
         route("/favicon.ico", handle("favicon.ico"))
         temp_route("", "ide3.html.el", false)
         temp_content_route("logon")
-        temp_content_route("signup")
         temp_content_route("team")
         temp_route("/welcome", "welcome.html.el", false)
         temp_content_route("start-drakon")
@@ -4755,6 +4754,11 @@ function start()
         temp_route("/ide/spaces", "ide3.html.el", false)
         temp_route("/ide/recent", "ide3.html.el", false)
         temp_route("/ide/dashboard", "ide3.html.el", false)
+        if global_cfg.dead then
+            route("/signup", handle("dead.html"))
+        else
+            temp_content_route("signup")
+        end
         if global_cfg.on_premises then
             
         else

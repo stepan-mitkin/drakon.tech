@@ -83,6 +83,23 @@ function addClickable(popup, text, action, style) {
     )
 }
 
+function addDrakonHubClosed(parent) {
+    if (Config.dead) {
+        var banner = make(parent, "div")
+        banner.style.padding = "10px"
+        banner.style.fontSize = "30px"
+        banner.style.cursor = "pointer"
+        banner.style.background = "black"
+        banner.style.color = "red"
+        banner.style.border = "solid 2px red"
+        var text = translate("MES_DRAKONTECH_CLOSED")
+        HtmlUtils.setDivText(banner, text)
+        banner.onclick = function() {
+        	goToUrl("/static/dead.html")
+        }
+    }
+}
+
 function addEmpty(text) {
     var popup = globs.search.popup
     var row = make(popup, "div")
@@ -1152,6 +1169,28 @@ function createCentralCore(node, centralMachine) {
     resizeCentral()
 }
 
+function createCloseBanner() {
+    if (Config.dead) {
+        var banner = make(document.body, "div")
+        banner.style.display = "inline-block"
+        banner.style.position = "fixed"
+        banner.style.left = "10px"
+        banner.style.bottom = "10px"
+        banner.style.padding = "10px"
+        banner.style.fontSize = "30px"
+        banner.style.zIndex = 1000
+        banner.style.cursor = "pointer"
+        banner.style.background = "black"
+        banner.style.color = "red"
+        banner.style.border = "solid 2px red"
+        var text = translate("MES_DRAKONTECH_CLOSED")
+        HtmlUtils.setDivText(banner, text)
+        banner.onclick = function() {
+        	goToUrl("/static/dead.html")
+        }
+    }
+}
+
 function createEditor() {
     var editor = new EditorCtrl(window, document, "middle_diagram", gUserId)
     var inputBox = {
@@ -1964,6 +2003,7 @@ function init() {
         //window.onbeforeunload = confirmExit
         window.onbeforeunload = null
     }
+    createCloseBanner()
 }
 
 function initControls(wide, isTryMe) {
@@ -5757,6 +5797,7 @@ function showMainMenu(menus) {
     main.style.background = "white"
     main.style.color = "black"
     main.className = "popup appearing"
+    addDrakonHubClosed(main)
     var header = make(main, "div")
     header.style.paddingLeft = "5px"
     header.style.paddingRight = "5px"

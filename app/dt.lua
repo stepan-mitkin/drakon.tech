@@ -54,6 +54,7 @@ global_cfg = {
 	on_premises = false,
 	capterra = false,
 	application = "Drakon.Tech",
+	dead = true,
 	gen_port = 7650
 }
 

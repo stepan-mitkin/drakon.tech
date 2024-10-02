@@ -55,7 +55,9 @@ var Config = {
 	CONTEXT_ITEM_LENGTH: 40,
 	
 	EMAIL_SIGNUP: true,
-	
+
+	dead: true,
+
 	FONT_TIMEOUT: 15,
 	SEARCH_PERIOD: 200,
 	DIAGRAM_VERSION: 20190320,

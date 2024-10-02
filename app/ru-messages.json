@@ -509,5 +509,6 @@
 	"ERR_ADD_AT_LEAST_ONE_MODULE": "Добавьте хотя бы один модуль",
 	"ERR_MODULE_WITH_THIS_NAME_ALREADY_ADDED": "Модуль с этим именем уже добавлен",
 	"ERR_SCRIPT_MISSING": "Ключевое слово %SCRIPT% отсутствует в HTML-коде",
+	"MES_DRAKONTECH_CLOSED": "Drakon.Tech будет навсегда отключен 7 декабря 2024 г.",
 	"ERR_PLEASE_PROVIDE_HTML": "HTML-код отсутствует"
 }

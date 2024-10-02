@@ -61,6 +61,7 @@ global_cfg = {
 	capterra = false,
 	application = "Drakon Tech",
 	insecure_cookie = true,
+	dead = true,
 	gen_port = 7650
 }
 
