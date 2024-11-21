@@ -56,7 +56,7 @@ var Config = {
 	
 	EMAIL_SIGNUP: true,
 
-	dead: true,
+	dead: false,
 
 	FONT_TIMEOUT: 15,
 	SEARCH_PERIOD: 200,
